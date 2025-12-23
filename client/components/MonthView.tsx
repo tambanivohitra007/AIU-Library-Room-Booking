@@ -42,13 +42,15 @@ const MonthView: React.FC<MonthViewProps> = ({
 
   const getBookingsForDate = (date: Date | null) => {
     if (!date) return [];
+    // Only show CONFIRMED bookings - hide COMPLETED and CANCELLED
     return bookings.filter((b) => {
       const bDate = new Date(b.startTime);
       return (
         b.roomId === room.id &&
         bDate.getDate() === date.getDate() &&
         bDate.getMonth() === date.getMonth() &&
-        bDate.getFullYear() === date.getFullYear()
+        bDate.getFullYear() === date.getFullYear() &&
+        b.status === 'CONFIRMED'
       );
     });
   };

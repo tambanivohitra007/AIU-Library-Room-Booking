@@ -31,7 +31,7 @@ const DayView: React.FC<DayViewProps> = ({
     return h;
   }, []);
 
-  // Filter bookings for this day and room
+  // Filter bookings for this day and room (only show CONFIRMED bookings)
   const dayBookings = useMemo(() => {
     return bookings.filter((b) => {
       const bDate = new Date(b.startTime);
@@ -39,7 +39,8 @@ const DayView: React.FC<DayViewProps> = ({
         b.roomId === room.id &&
         bDate.getDate() === selectedDate.getDate() &&
         bDate.getMonth() === selectedDate.getMonth() &&
-        bDate.getFullYear() === selectedDate.getFullYear()
+        bDate.getFullYear() === selectedDate.getFullYear() &&
+        b.status === 'CONFIRMED'
       );
     });
   }, [bookings, selectedDate, room.id]);

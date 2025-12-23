@@ -32,14 +32,18 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
     return h;
   }, []);
 
-  // Filter bookings for this week AND this room
+  // Filter bookings for this week AND this room (only show CONFIRMED bookings)
   const weekBookings = useMemo(() => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
-    
+
     return bookings.filter(b => {
       const bDate = new Date(b.startTime);
-      return b.roomId === room.id && bDate >= weekStart && bDate < weekEnd;
+      // Only show CONFIRMED bookings - hide COMPLETED and CANCELLED
+      return b.roomId === room.id &&
+             bDate >= weekStart &&
+             bDate < weekEnd &&
+             b.status === 'CONFIRMED';
     });
   }, [bookings, weekStart, room.id]);
 

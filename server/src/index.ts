@@ -8,6 +8,7 @@ import { roomRouter } from './routes/rooms.js';
 import { bookingRouter } from './routes/bookings.js';
 import { adminRouter } from './routes/admin.js';
 import { apiLimiter } from './middleware/security.js';
+import { startBookingScheduler } from './services/bookingScheduler.js';
 import logger from './utils/logger.js';
 
 dotenv.config();
@@ -63,4 +64,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 app.listen(PORT, () => {
   logger.info(`Server is running on http://localhost:${PORT}`);
   console.log(`Server is running on http://localhost:${PORT}`);
+
+  // Start booking status scheduler
+  startBookingScheduler();
 });

@@ -238,6 +238,21 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'You can only cancel your own bookings' });
     }
 
+    // Only allow canceling CONFIRMED bookings
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      return res.status(400).json({
+        error: `Cannot cancel a ${booking.status.toLowerCase()} booking`,
+      });
+    }
+
+    // Check if booking has already ended
+    const now = new Date();
+    if (booking.endTime <= now) {
+      return res.status(400).json({
+        error: 'Cannot cancel a booking that has already ended',
+      });
+    }
+
     const updated = await prisma.booking.update({
       where: { id: req.params.id },
       data: { status: BookingStatus.CANCELLED },
@@ -246,6 +261,8 @@ router.delete('/:id', async (req: AuthRequest, res) => {
         attendees: true,
       },
     });
+
+    logger.info(`Booking ${updated.id} cancelled by user ${req.userId}`);
 
     res.json({
       id: updated.id,

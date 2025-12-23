@@ -19,6 +19,11 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({ booking, room, currentU
   const end = new Date(booking.endTime);
   const duration = (end.getTime() - start.getTime()) / 60000;
 
+  // Check if booking has already ended
+  const now = new Date();
+  const hasEnded = end <= now;
+  const canCancelBooking = canCancel && booking.status === 'CONFIRMED' && !hasEnded;
+
   return (
     <div className="h-full flex flex-col bg-white border-l border-slate-200 shadow-xl">
        {/* Header */}
@@ -81,15 +86,25 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({ booking, room, currentU
        </div>
 
        {/* Actions */}
-       {canCancel && booking.status === 'CONFIRMED' && (
+       {canCancel && (
            <div className="p-4 bg-slate-50 border-t border-slate-200">
-               <button
-                  onClick={() => onCancelBooking(booking.id)}
-                  className="w-full flex justify-center items-center gap-2 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
-               >
-                  <TrashIcon className="w-4 h-4" />
-                  Release Booking
-               </button>
+               {canCancelBooking ? (
+                   <button
+                      onClick={() => onCancelBooking(booking.id)}
+                      className="w-full flex justify-center items-center gap-2 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
+                   >
+                      <TrashIcon className="w-4 h-4" />
+                      Release Booking
+                   </button>
+               ) : hasEnded ? (
+                   <div className="text-center py-2 text-sm text-slate-500">
+                       This booking has ended and cannot be cancelled
+                   </div>
+               ) : booking.status !== 'CONFIRMED' ? (
+                   <div className="text-center py-2 text-sm text-slate-500">
+                       This booking has already been {booking.status.toLowerCase()}
+                   </div>
+               ) : null}
            </div>
        )}
     </div>

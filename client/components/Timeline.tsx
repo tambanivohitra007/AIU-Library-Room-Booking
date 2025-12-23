@@ -218,10 +218,10 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                  <div key={dayIndex} className={`relative h-full group ${today ? 'bg-indigo-50/20' : ''}`}>
                     {/* Time Slots (Interactivity) */}
                     {hours.map((h, hIndex) => (
-                        <div key={h} className="h-[calc(100%/12)] flex flex-col">
+                        <div key={h} style={{ height: `${100 / hours.length}%` }} className="flex flex-col">
                             {/* 4 slots per hour for 15 min granularity */}
                             {[0, 15, 30, 45].map(m => (
-                                <div 
+                                <div
                                     key={m}
                                     className="flex-1 z-10 hover:bg-black/5 cursor-crosshair"
                                     onMouseDown={(e) => handleMouseDown(dayIndex, (hIndex * 60) + m, e)}

@@ -8,7 +8,8 @@
       "Bash(npx prisma init:*)",
       "Bash(npx prisma migrate:*)",
       "Bash(npm run prisma:seed:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"A\" npx prisma migrate reset:*)"
     ]
   }
 }

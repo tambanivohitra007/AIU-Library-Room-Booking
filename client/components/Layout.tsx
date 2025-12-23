@@ -7,9 +7,10 @@ interface LayoutProps {
   user: User;
   onNavigate: (page: string) => void;
   currentPage: string;
+  onLogout: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage, onLogout }) => {
   const navItems = [
     { id: 'home', label: 'Rooms', icon: HomeIcon },
     { id: 'my-bookings', label: 'My Bookings', icon: CalendarIcon },
@@ -33,6 +34,12 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
             <p className="text-xs text-slate-500">{user.role}</p>
           </div>
           <UserCircleIcon className="w-8 h-8 text-slate-400" />
+          <button
+            onClick={onLogout}
+            className="ml-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </header>
 

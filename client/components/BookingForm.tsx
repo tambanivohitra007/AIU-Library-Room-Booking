@@ -53,12 +53,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     attendees.unshift({ name: 'Me (Booker)', isCompanion: false });
 
     try {
-      // Get current user ID from localStorage
-      const currentUserId = localStorage.getItem('currentUserId') || 'u1';
-
       await api.createBooking({
         roomId: selectedRoom.id,
-        userId: currentUserId,
         startTime,
         endTime,
         purpose,

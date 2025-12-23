@@ -3,12 +3,17 @@ import Layout from './components/Layout';
 import Timeline from './components/Timeline';
 import BookingForm from './components/BookingForm';
 import BookingDetails from './components/BookingDetails';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'register'>('login');
+  const [authError, setAuthError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState('home');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -26,12 +31,26 @@ function App() {
   const refresh = () => setTick(t => t + 1);
 
   useEffect(() => {
-    // Init data
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const currentUser = await api.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Load data only if authenticated
     const loadData = async () => {
       try {
-        const currentUser = await api.getCurrentUser();
-        setUser(currentUser);
-
         const loadedRooms = await api.getRooms();
         setRooms(loadedRooms);
         if (loadedRooms.length > 0 && !selectedRoomId) {
@@ -46,7 +65,7 @@ function App() {
     };
 
     loadData();
-  }, [tick]);
+  }, [tick, isAuthenticated]);
 
   const handleRangeSelect = (start: Date, end: Date) => {
       setSelectedBooking(null);
@@ -102,15 +121,39 @@ function App() {
     document.body.removeChild(link);
   };
 
-  const switchUser = async (role: UserRole) => {
-      const users = await api.getUsers();
-      const u = users.find(x => x.role === role);
-      if (u) {
-          api.login(u.id);
-          setUser(u);
-          refresh();
-      }
-  }
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      setAuthError(null);
+      const { user: loggedInUser } = await api.login(email, password);
+      setUser(loggedInUser);
+      setIsAuthenticated(true);
+      refresh();
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Login failed');
+      throw error;
+    }
+  };
+
+  const handleRegister = async (name: string, email: string, password: string) => {
+    try {
+      setAuthError(null);
+      const { user: registeredUser } = await api.register(name, email, password);
+      setUser(registeredUser);
+      setIsAuthenticated(true);
+      refresh();
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Registration failed');
+      throw error;
+    }
+  };
+
+  const handleLogout = () => {
+    api.logout();
+    setUser(null);
+    setIsAuthenticated(false);
+    setBookings([]);
+    setRooms([]);
+  };
 
   // --- Date Navigation Helpers ---
   const getStartOfWeek = (d: Date) => {
@@ -128,7 +171,26 @@ function App() {
 
   const goToToday = () => setCurrentDate(new Date());
 
-  if (!user) return <div>Loading...</div>;
+  // Show login/register if not authenticated
+  if (!isAuthenticated || !user) {
+    if (authView === 'login') {
+      return (
+        <LoginForm
+          onLogin={handleLogin}
+          onSwitchToRegister={() => { setAuthView('register'); setAuthError(null); }}
+          error={authError}
+        />
+      );
+    } else {
+      return (
+        <RegisterForm
+          onRegister={handleRegister}
+          onSwitchToLogin={() => { setAuthView('login'); setAuthError(null); }}
+          error={authError}
+        />
+      );
+    }
+  }
 
   const activeRoom = rooms.find(r => r.id === selectedRoomId);
   const weekStart = getStartOfWeek(currentDate);
@@ -330,14 +392,7 @@ function App() {
   };
 
   return (
-    <Layout user={user} onNavigate={setCurrentPage} currentPage={currentPage}>
-      {/* Demo helper to switch roles */}
-      <div className="fixed bottom-20 right-4 sm:bottom-4 sm:right-4 z-40 bg-white p-2 rounded-lg shadow-lg border text-xs flex flex-col gap-2 opacity-75 hover:opacity-100 transition-opacity">
-          <div className="font-bold text-slate-500">Demo Role:</div>
-          <button onClick={() => switchUser(UserRole.STUDENT)} className={`px-2 py-1 rounded ${user.role === UserRole.STUDENT ? 'bg-primary text-white' : 'bg-slate-100'}`}>Student</button>
-          <button onClick={() => switchUser(UserRole.ADMIN)} className={`px-2 py-1 rounded ${user.role === UserRole.ADMIN ? 'bg-primary text-white' : 'bg-slate-100'}`}>Admin</button>
-      </div>
-
+    <Layout user={user} onNavigate={setCurrentPage} currentPage={currentPage} onLogout={handleLogout}>
       {currentPage === 'home' && renderHome()}
       {currentPage === 'my-bookings' && renderMyBookings()}
       {currentPage === 'admin' && renderAdmin()}

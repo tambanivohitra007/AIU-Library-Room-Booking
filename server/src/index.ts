@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { authRouter } from './routes/auth.js';
 import { userRouter } from './routes/users.js';
 import { roomRouter } from './routes/rooms.js';
 import { bookingRouter } from './routes/bookings.js';
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/rooms', roomRouter);
 app.use('/api/bookings', bookingRouter);

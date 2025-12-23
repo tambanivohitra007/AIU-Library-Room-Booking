@@ -1,11 +1,15 @@
 import { Router } from 'express';
 import { PrismaClient, BookingStatus } from '@prisma/client';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
+// Apply authentication to all booking routes
+router.use(authenticateToken);
+
 // Get all bookings with user and room details
-router.get('/', async (req, res) => {
+router.get('/', async (req: AuthRequest, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       include: {
@@ -44,7 +48,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get booking by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
@@ -77,9 +81,10 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create booking
-router.post('/', async (req, res) => {
+router.post('/', async (req: AuthRequest, res) => {
   try {
-    const { roomId, userId, startTime, endTime, purpose, attendees } = req.body;
+    const { roomId, startTime, endTime, purpose, attendees } = req.body;
+    const userId = req.userId!; // From JWT token
 
     // Check for overlapping bookings
     const overlapping = await prisma.booking.findFirst({
@@ -150,7 +155,7 @@ router.post('/', async (req, res) => {
 });
 
 // Cancel booking
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: AuthRequest, res) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
@@ -158,6 +163,11 @@ router.delete('/:id', async (req, res) => {
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Check if user owns the booking or is admin
+    if (booking.userId !== req.userId && req.userRole !== 'ADMIN') {
+      return res.status(403).json({ error: 'You can only cancel your own bookings' });
     }
 
     const updated = await prisma.booking.update({

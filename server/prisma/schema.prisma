@@ -25,6 +25,7 @@ model User {
   id        String    @id @default(uuid())
   email     String    @unique
   name      String
+  password  String
   role      UserRole  @default(STUDENT)
   avatarUrl String?
   createdAt DateTime  @default(now())

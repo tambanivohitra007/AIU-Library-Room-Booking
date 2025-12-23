@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -11,12 +12,17 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.room.deleteMany();
 
+  // Hash passwords
+  const studentPassword = await bcrypt.hash('student123', 10);
+  const adminPassword = await bcrypt.hash('admin123', 10);
+
   // Create users
   const alice = await prisma.user.create({
     data: {
       id: 'u1',
       name: 'Alice Student',
       email: 'alice@uni.edu',
+      password: studentPassword,
       role: UserRole.STUDENT,
     },
   });
@@ -26,11 +32,14 @@ async function main() {
       id: 'u2',
       name: 'Bob Admin',
       email: 'bob@uni.edu',
+      password: adminPassword,
       role: UserRole.ADMIN,
     },
   });
 
-  console.log('Created users:', { alice, bob });
+  console.log('Created users:');
+  console.log('  - Alice Student (alice@uni.edu) - Password: student123');
+  console.log('  - Bob Admin (bob@uni.edu) - Password: admin123');
 
   // Create rooms
   const roomA = await prisma.room.create({

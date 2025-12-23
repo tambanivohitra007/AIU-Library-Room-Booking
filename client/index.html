@@ -21,6 +21,58 @@
         }
       }
     </script>
+    <style>
+      @keyframes toast-enter {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes toast-exit {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes scale-in {
+        from {
+          transform: scale(0.95);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .animate-toast-enter {
+        animation: toast-enter 0.3s ease-out;
+      }
+      .animate-toast-exit {
+        animation: toast-exit 0.3s ease-in;
+      }
+      .animate-fade-in {
+        animation: fade-in 0.2s ease-out;
+      }
+      .animate-scale-in {
+        animation: scale-in 0.2s ease-out;
+      }
+    </style>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>

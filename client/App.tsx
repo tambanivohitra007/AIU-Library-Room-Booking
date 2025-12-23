@@ -6,11 +6,14 @@ import BookingDetails from './components/BookingDetails';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import AdminDashboard from './components/AdminDashboard';
+import ConfirmModal from './components/ConfirmModal';
 import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
+import { useToast } from './contexts/ToastContext';
 
 function App() {
+  const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
@@ -18,14 +21,27 @@ function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  
+
   // Calendar State
-  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>('');
-  
+
   // Selection State
   const [selectedRange, setSelectedRange] = useState<{start: Date, end: Date} | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Force refresh trigger
   const [tick, setTick] = useState(0);
@@ -84,15 +100,26 @@ function App() {
   };
 
   const handleCancelBooking = async (id: string) => {
-      if(window.confirm("Are you sure you want to cancel this booking?")) {
-          const success = await api.cancelBooking(id);
-          if (success) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Cancel Booking',
+        message: 'Are you sure you want to cancel this booking? This action cannot be undone.',
+        onConfirm: async () => {
+          setConfirmModal({ ...confirmModal, isOpen: false });
+          try {
+            const success = await api.cancelBooking(id);
+            if (success) {
+              toast.success('Booking cancelled successfully');
               refresh();
-              setSelectedBooking(null); // Close details if open
-          } else {
-              alert("Could not cancel booking.");
+              setSelectedBooking(null);
+            } else {
+              toast.error('Could not cancel booking');
+            }
+          } catch (error) {
+            toast.error('Failed to cancel booking');
           }
-      }
+        },
+      });
   }
 
   const handleExportCSV = async () => {
@@ -128,9 +155,12 @@ function App() {
       const { user: loggedInUser } = await api.login(email, password);
       setUser(loggedInUser);
       setIsAuthenticated(true);
+      toast.success(`Welcome back, ${loggedInUser.name}!`);
       refresh();
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Login failed');
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -141,9 +171,12 @@ function App() {
       const { user: registeredUser } = await api.register(name, email, password);
       setUser(registeredUser);
       setIsAuthenticated(true);
+      toast.success(`Welcome to LibBook, ${registeredUser.name}!`);
       refresh();
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Registration failed');
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -154,6 +187,7 @@ function App() {
     setIsAuthenticated(false);
     setBookings([]);
     setRooms([]);
+    toast.info('You have been logged out');
   };
 
   // --- Date Navigation Helpers ---
@@ -338,11 +372,23 @@ function App() {
   };
 
   return (
-    <Layout user={user} onNavigate={setCurrentPage} currentPage={currentPage} onLogout={handleLogout}>
-      {currentPage === 'home' && renderHome()}
-      {currentPage === 'my-bookings' && renderMyBookings()}
-      {currentPage === 'admin' && renderAdmin()}
-    </Layout>
+    <>
+      <Layout user={user} onNavigate={setCurrentPage} currentPage={currentPage} onLogout={handleLogout}>
+        {currentPage === 'home' && renderHome()}
+        {currentPage === 'my-bookings' && renderMyBookings()}
+        {currentPage === 'admin' && renderAdmin()}
+      </Layout>
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
+    </>
   );
 }
 

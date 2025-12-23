@@ -3,6 +3,7 @@ import { Room, Attendee } from '../types';
 import { api } from '../services/api';
 import { MAX_ATTENDEES, MIN_ATTENDEES } from '../constants';
 import { UsersIcon, ClockIcon } from './Icons';
+import { useToast } from '../contexts/ToastContext';
 
 interface BookingFormProps {
   selectedRoom: Room;
@@ -13,6 +14,7 @@ interface BookingFormProps {
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endTime, onSuccess, onCancel }) => {
+  const toast = useToast();
   const [purpose, setPurpose] = useState('');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendeeCount, setAttendeeCount] = useState(0);
@@ -61,9 +63,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
         attendees
       });
 
+      toast.success(`Booking confirmed for ${selectedRoom.name}!`);
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      toast.error(`Failed to create booking: ${errorMessage}`);
     }
   };
 

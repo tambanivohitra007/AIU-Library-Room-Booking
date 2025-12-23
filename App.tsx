@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Timeline from './components/Timeline';
 import BookingForm from './components/BookingForm';
+import BookingDetails from './components/BookingDetails';
 import { api } from './services/mockDb';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
@@ -16,8 +17,9 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedRoomId, setSelectedRoomId] = useState<string>('');
   
-  // Selection State (replaces modal state)
+  // Selection State
   const [selectedRange, setSelectedRange] = useState<{start: Date, end: Date} | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   // Force refresh trigger
   const [tick, setTick] = useState(0);
@@ -35,8 +37,14 @@ function App() {
   }, [tick]);
 
   const handleRangeSelect = (start: Date, end: Date) => {
+      setSelectedBooking(null);
       setSelectedRange({ start, end });
   };
+  
+  const handleBookingClick = (booking: Booking) => {
+      setSelectedRange(null);
+      setSelectedBooking(booking);
+  }
 
   const handleBookingSuccess = () => {
     setSelectedRange(null);
@@ -48,6 +56,7 @@ function App() {
           const success = api.cancelBooking(id);
           if (success) {
               refresh();
+              setSelectedBooking(null); // Close details if open
           } else {
               alert("Could not cancel booking.");
           }
@@ -111,6 +120,7 @@ function App() {
 
   const activeRoom = rooms.find(r => r.id === selectedRoomId);
   const weekStart = getStartOfWeek(currentDate);
+  const showSidePanel = selectedRange || selectedBooking;
 
   // --- PAGES ---
 
@@ -136,7 +146,7 @@ function App() {
             {rooms.map(room => (
                 <button
                     key={room.id}
-                    onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); }}
+                    onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                         selectedRoomId === room.id 
                         ? 'bg-white text-primary shadow-sm' 
@@ -166,14 +176,16 @@ function App() {
                         room={activeRoom}
                         currentUser={user}
                         onRangeSelect={handleRangeSelect}
+                        onBookingClick={handleBookingClick}
+                        selectedRange={selectedRange}
                     />
                 </div>
             </div>
 
-            {/* Right: Booking Panel (Conditional Slide-in) */}
+            {/* Right: Side Panel (Conditional Slide-in) */}
             <div 
                 className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white z-40 absolute inset-y-0 right-0 shadow-2xl sm:relative sm:shadow-none
-                    ${selectedRange ? 'w-full sm:w-80 translate-x-0' : 'w-0 translate-x-full sm:translate-x-0 overflow-hidden opacity-0 sm:opacity-100 sm:w-0'}
+                    ${showSidePanel ? 'w-full sm:w-80 translate-x-0' : 'w-0 translate-x-full sm:translate-x-0 overflow-hidden opacity-0 sm:opacity-100 sm:w-0'}
                 `}
             >
                 {selectedRange && (
@@ -183,6 +195,16 @@ function App() {
                         endTime={selectedRange.end}
                         onSuccess={handleBookingSuccess}
                         onCancel={() => setSelectedRange(null)}
+                    />
+                )}
+                
+                {selectedBooking && !selectedRange && (
+                    <BookingDetails
+                        booking={selectedBooking}
+                        room={activeRoom}
+                        currentUser={user}
+                        onCancelBooking={handleCancelBooking}
+                        onClose={() => setSelectedBooking(null)}
                     />
                 )}
             </div>

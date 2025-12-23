@@ -8,9 +8,11 @@ interface TimelineProps {
   room: Room;
   currentUser: User;
   onRangeSelect: (start: Date, end: Date) => void;
+  onBookingClick: (booking: Booking) => void;
+  selectedRange?: { start: Date; end: Date } | null;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentUser, onRangeSelect }) => {
+const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentUser, onRangeSelect, onBookingClick, selectedRange }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ dayIndex: number; minutes: number } | null>(null);
   const [dragCurrent, setDragCurrent] = useState<{ dayIndex: number; minutes: number } | null>(null);
@@ -200,6 +202,18 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     isDragValid = !checkOverlap(s, e);
                }
 
+               // Check if this day is the Selected Range (persisted)
+               let selectionStyle = null;
+               if (!isDragging && selectedRange) {
+                   const s = selectedRange.start;
+                   const e = selectedRange.end;
+                   if (s.getDate() === day.getDate() && 
+                       s.getMonth() === day.getMonth() && 
+                       s.getFullYear() === day.getFullYear()) {
+                       selectionStyle = getPositionStyle(s, e);
+                   }
+               }
+
                return (
                  <div key={dayIndex} className={`relative h-full group ${today ? 'bg-indigo-50/20' : ''}`}>
                     {/* Time Slots (Interactivity) */}
@@ -229,6 +243,18 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                         </div>
                     )}
 
+                    {/* Persisted Selection Block */}
+                    {selectionStyle && (
+                        <div 
+                            className="absolute left-0 right-0 z-20 rounded bg-indigo-50 border-2 border-indigo-400 border-dashed pointer-events-none animate-pulse"
+                            style={{ ...selectionStyle, left: '4px', right: '4px' }}
+                        >
+                             <div className="text-indigo-600 text-xs font-bold p-1">
+                                Selected
+                            </div>
+                        </div>
+                    )}
+
                     {/* Existing Events */}
                     {dayEvents.map(b => {
                         const style = getPositionStyle(new Date(b.startTime), new Date(b.endTime));
@@ -240,10 +266,14 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                           <div
                             key={b.id}
                             className={`absolute rounded px-1.5 py-0.5 text-[10px] leading-tight border-l-4 overflow-hidden shadow-sm z-20 transition-all hover:z-30 hover:shadow-md
-                              ${canView ? 'bg-indigo-100 border-primary text-primary' : 'bg-slate-200 border-slate-400 text-slate-500'}
+                              ${canView ? 'bg-indigo-100 border-primary text-primary cursor-pointer' : 'bg-slate-200 border-slate-400 text-slate-500 cursor-default'}
                             `}
                             style={{ ...style, left: '2px', right: '2px' }}
                             title={`${canView ? b.userDisplay : 'Reserved'}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (canView) onBookingClick(b);
+                            }}
                           >
                             <div className="font-bold truncate">{canView ? b.userDisplay : 'Reserved'}</div>
                             <div className="truncate opacity-75">{new Date(b.startTime).getHours()}:{new Date(b.startTime).getMinutes().toString().padStart(2,'0')} - {new Date(b.endTime).getHours()}:{new Date(b.endTime).getMinutes().toString().padStart(2,'0')}</div>

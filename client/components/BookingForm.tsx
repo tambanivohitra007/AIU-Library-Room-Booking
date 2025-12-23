@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Room, Attendee } from '../types';
-import { api } from '../services/mockDb';
+import { api } from '../services/api';
 import { MAX_ATTENDEES, MIN_ATTENDEES } from '../constants';
 import { UsersIcon, ClockIcon } from './Icons';
 
@@ -30,7 +30,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     setAttendeeCount(unique.size);
   }, [attendeeInput]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -52,19 +52,22 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     }));
     attendees.unshift({ name: 'Me (Booker)', isCompanion: false });
 
-    const result = api.createBooking({
-      roomId: selectedRoom.id,
-      userId: 'ignored-handled-by-service', 
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      purpose,
-      attendees
-    });
+    try {
+      // Get current user ID from localStorage
+      const currentUserId = localStorage.getItem('currentUserId') || 'u1';
 
-    if (result.success) {
+      await api.createBooking({
+        roomId: selectedRoom.id,
+        userId: currentUserId,
+        startTime,
+        endTime,
+        purpose,
+        attendees
+      });
+
       onSuccess();
-    } else {
-      setError(result.error || 'Unknown error');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     }
   };
 

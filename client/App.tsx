@@ -3,7 +3,7 @@ import Layout from './components/Layout';
 import Timeline from './components/Timeline';
 import BookingForm from './components/BookingForm';
 import BookingDetails from './components/BookingDetails';
-import { api } from './services/mockDb';
+import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
 
@@ -27,13 +27,25 @@ function App() {
 
   useEffect(() => {
     // Init data
-    setUser(api.getCurrentUser());
-    const loadedRooms = api.getRooms();
-    setRooms(loadedRooms);
-    if (loadedRooms.length > 0 && !selectedRoomId) {
-        setSelectedRoomId(loadedRooms[0].id);
-    }
-    setBookings(api.getBookings());
+    const loadData = async () => {
+      try {
+        const currentUser = await api.getCurrentUser();
+        setUser(currentUser);
+
+        const loadedRooms = await api.getRooms();
+        setRooms(loadedRooms);
+        if (loadedRooms.length > 0 && !selectedRoomId) {
+          setSelectedRoomId(loadedRooms[0].id);
+        }
+
+        const loadedBookings = await api.getBookings();
+        setBookings(loadedBookings);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      }
+    };
+
+    loadData();
   }, [tick]);
 
   const handleRangeSelect = (start: Date, end: Date) => {
@@ -51,9 +63,9 @@ function App() {
     refresh();
   };
 
-  const handleCancelBooking = (id: string) => {
+  const handleCancelBooking = async (id: string) => {
       if(window.confirm("Are you sure you want to cancel this booking?")) {
-          const success = api.cancelBooking(id);
+          const success = await api.cancelBooking(id);
           if (success) {
               refresh();
               setSelectedBooking(null); // Close details if open
@@ -63,8 +75,8 @@ function App() {
       }
   }
 
-  const handleExportCSV = () => {
-    const allBookings = api.getAllBookingsForAdmin();
+  const handleExportCSV = async () => {
+    const allBookings = await api.getAllBookingsForAdmin();
     const headers = ["Booking ID", "Room", "User Name", "User ID", "Start Time", "End Time", "Status", "Attendees Count", "Attendees List", "Purpose"];
     const rows = allBookings.map(b => [
         b.id,
@@ -90,8 +102,8 @@ function App() {
     document.body.removeChild(link);
   };
 
-  const switchUser = (role: UserRole) => {
-      const users = api.getUsers();
+  const switchUser = async (role: UserRole) => {
+      const users = await api.getUsers();
       const u = users.find(x => x.role === role);
       if (u) {
           api.login(u.id);
@@ -252,7 +264,7 @@ function App() {
 
   const renderAdmin = () => {
       if (user.role !== UserRole.ADMIN) return <div>Access Denied</div>;
-      const allBookings = api.getAllBookingsForAdmin();
+      const allBookings = bookings;
       return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">

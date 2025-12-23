@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  role      UserRole  @default(STUDENT)
+  avatarUrl String?
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Room {
+  id          String    @id @default(uuid())
+  name        String
+  capacity    Int
+  description String
+  features    String    // JSON string array
+  bookings    Booking[]
+}
+
+model Booking {
+  id        String         @id @default(uuid())
+  roomId    String
+  userId    String
+  startTime DateTime
+  endTime   DateTime
+  purpose   String
+  status    BookingStatus  @default(CONFIRMED)
+  createdAt DateTime       @default(now())
+
+  room      Room           @relation(fields: [roomId], references: [id])
+  user      User           @relation(fields: [userId], references: [id])
+  attendees Attendee[]
+}
+
+model Attendee {
+  id          String   @id @default(uuid())
+  bookingId   String
+  name        String
+  studentId   String?
+  isCompanion Boolean  @default(true)
+
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}

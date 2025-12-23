@@ -47,8 +47,31 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
     });
   }, [bookings, weekStart, room.id]);
 
-  // Check if a range overlaps with existing bookings
+  // Check if a time is during library closure (Friday 5 PM - Sunday 8 AM)
+  const isLibraryClosed = (date: Date) => {
+    const day = date.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
+    const hour = date.getHours();
+
+    // Saturday - all day closed
+    if (day === 6) return true;
+
+    // Friday after 5 PM (17:00)
+    if (day === 5 && hour >= 17) return true;
+
+    // Sunday before opening hour (8 AM)
+    if (day === 0 && hour < OPENING_HOUR) return true;
+
+    return false;
+  };
+
+  // Check if a range overlaps with existing bookings OR library closure
   const checkOverlap = (start: Date, end: Date) => {
+    // Check if time falls during library closure
+    if (isLibraryClosed(start) || isLibraryClosed(end)) {
+      return true;
+    }
+
+    // Check for booking conflicts
     return weekBookings.some(b => {
       const bStart = new Date(b.startTime);
       const bEnd = new Date(b.endTime);
@@ -211,11 +234,38 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                if (!isDragging && selectedRange) {
                    const s = selectedRange.start;
                    const e = selectedRange.end;
-                   if (s.getDate() === day.getDate() && 
-                       s.getMonth() === day.getMonth() && 
+                   if (s.getDate() === day.getDate() &&
+                       s.getMonth() === day.getMonth() &&
                        s.getFullYear() === day.getFullYear()) {
                        selectionStyle = getPositionStyle(s, e);
                    }
+               }
+
+               // Calculate closed hours overlay
+               const dayOfWeek = day.getDay();
+               let closedStyle = null;
+               let closedLabel = '';
+
+               if (dayOfWeek === 6) {
+                   // Saturday - all day closed
+                   closedStyle = { top: '0%', height: '100%' };
+                   closedLabel = 'Library Closed';
+               } else if (dayOfWeek === 5) {
+                   // Friday - closed from 5 PM (17:00) onwards
+                   const closedStart = new Date(day);
+                   closedStart.setHours(17, 0, 0, 0);
+                   const closedEnd = new Date(day);
+                   closedEnd.setHours(CLOSING_HOUR, 0, 0, 0);
+                   closedStyle = getPositionStyle(closedStart, closedEnd);
+                   closedLabel = 'Closed';
+               } else if (dayOfWeek === 0) {
+                   // Sunday - closed until opening hour
+                   const closedStart = new Date(day);
+                   closedStart.setHours(OPENING_HOUR, 0, 0, 0);
+                   const closedEnd = new Date(day);
+                   closedEnd.setHours(OPENING_HOUR, 0, 0, 0);
+                   closedStyle = getPositionStyle(closedStart, closedEnd);
+                   closedLabel = 'Closed';
                }
 
                return (
@@ -284,6 +334,21 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                           </div>
                         )
                     })}
+
+                    {/* Library Closed Overlay */}
+                    {closedStyle && (
+                        <div
+                            className="absolute left-0 right-0 z-40 bg-slate-700/80 pointer-events-none flex items-center justify-center"
+                            style={{ ...closedStyle, left: '2px', right: '2px' }}
+                        >
+                            <div className="text-white text-xs font-bold p-1 flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                {closedLabel}
+                            </div>
+                        </div>
+                    )}
                  </div>
                );
              })}

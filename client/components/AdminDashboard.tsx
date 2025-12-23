@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, Room, Booking, UserRole } from '../types';
 import { api } from '../services/api';
+import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon } from './Icons';
+import UserImportModal from './UserImportModal';
 
 interface AdminDashboardProps {
   bookings: Booking[];
@@ -23,6 +25,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -299,13 +302,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   );
 
   const renderUsers = () => (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-slate-800">User Management</h3>
-        <button className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors">
-          Add User
-        </button>
-      </div>
+    <>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800">User Management</h3>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setShowImportModal(true)}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium text-sm transition-colors"
+            >
+              Import Users
+            </button>
+            <button className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors">
+              Add User
+            </button>
+          </div>
+        </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
@@ -346,6 +358,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         </table>
       </div>
     </div>
+    {showImportModal && (
+      <UserImportModal
+        onClose={() => setShowImportModal(false)}
+        onImportSuccess={() => {
+          loadUsers();
+        }}
+      />
+    )}
+  </>
   );
 
   const renderRooms = () => (
@@ -399,21 +420,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       <div className="border-b border-slate-200">
         <nav className="flex space-x-8">
           {[
-            { id: 'overview', label: 'Overview', icon: '📊' },
-            { id: 'bookings', label: 'Bookings', icon: '📅' },
-            { id: 'users', label: 'Users', icon: '👥' },
-            { id: 'rooms', label: 'Rooms', icon: '🏢' },
+            { id: 'overview', label: 'Overview', Icon: BarChartIcon },
+            { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
+            { id: 'users', label: 'Users', Icon: UsersIcon },
+            { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors flex items-center ${
                 selectedTab === tab.id
                   ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <tab.Icon className="w-4 h-4 mr-2" />
               {tab.label}
             </button>
           ))}

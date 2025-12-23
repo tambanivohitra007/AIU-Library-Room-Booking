@@ -83,6 +83,20 @@ export const api = {
     return fetchAPI<User[]>('/users');
   },
 
+  importUsers: async (users: Array<{ name: string; email: string; role?: string }>): Promise<{
+    message: string;
+    defaultPassword: string;
+    results: {
+      success: Array<{ id: string; email: string; name: string }>;
+      failed: Array<{ email: string; reason: string }>;
+    };
+  }> => {
+    return fetchAPI('/users/import', {
+      method: 'POST',
+      body: JSON.stringify({ users }),
+    });
+  },
+
   // Rooms
   getRooms: async (): Promise<Room[]> => {
     return fetchAPI<Room[]>('/rooms');

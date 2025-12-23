@@ -5,3 +5,6 @@ export const MAX_DURATION_MINUTES = 720; // 12 hours (Full day)
 export const MIN_LEAD_TIME_MINUTES = 30;
 export const MAX_ATTENDEES = 10;
 export const MIN_ATTENDEES = 2; // Booker + 1 companion
+
+// Default password for imported users
+export const DEFAULT_USER_PASSWORD = 'Password123!';

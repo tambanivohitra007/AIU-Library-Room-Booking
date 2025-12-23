@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Room, Attendee } from '../types';
 import { api } from '../services/api';
 import { MAX_ATTENDEES, MIN_ATTENDEES } from '../constants';
-import { UsersIcon, ClockIcon } from './Icons';
+import { UsersIcon, ClockIcon, AlertTriangleIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -129,7 +129,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
 
             {hasConflict && !checkingConflict && (
                 <div className="bg-red-50 p-3 text-sm text-red-700 rounded border border-red-300">
-                    <div className="font-semibold mb-1">⚠️ Time Conflict Detected</div>
+                    <div className="font-semibold mb-1 flex items-center gap-2">
+                        <AlertTriangleIcon className="w-4 h-4" />
+                        Time Conflict Detected
+                    </div>
                     <div className="text-xs">{conflictDetails}</div>
                     <div className="text-xs mt-2 text-red-600">Please select a different time slot.</div>
                 </div>

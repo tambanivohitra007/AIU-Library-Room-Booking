@@ -137,16 +137,16 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
     <div className="flex flex-col h-full select-none">
       {/* Header Row: Days */}
       <div className="flex border-b border-slate-200">
-        <div className="w-14 shrink-0 bg-white border-r border-slate-100"></div> {/* Time Label Spacer */}
+        <div className="w-12 sm:w-14 shrink-0 bg-white border-r border-slate-100"></div> {/* Time Label Spacer */}
         <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
           {days.map((day, i) => {
              const today = isToday(day);
              return (
-              <div key={i} className={`text-center py-3 ${today ? 'bg-indigo-50/50' : 'bg-white'}`}>
-                <div className={`text-xs font-semibold uppercase mb-1 ${today ? 'text-primary' : 'text-slate-500'}`}>
+              <div key={i} className={`text-center py-2 sm:py-3 ${today ? 'bg-indigo-50/50' : 'bg-white'}`}>
+                <div className={`text-[10px] sm:text-xs font-semibold uppercase mb-0.5 sm:mb-1 ${today ? 'text-primary' : 'text-slate-500'}`}>
                   {day.toLocaleDateString('en-US', { weekday: 'short' })}
                 </div>
-                <div className={`text-xl font-light ${today ? 'text-primary font-normal bg-indigo-100 w-8 h-8 rounded-full flex items-center justify-center mx-auto' : 'text-slate-700'}`}>
+                <div className={`text-base sm:text-xl font-light ${today ? 'text-primary font-normal bg-indigo-100 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto text-sm sm:text-xl' : 'text-slate-700'}`}>
                   {day.getDate()}
                 </div>
               </div>
@@ -160,10 +160,10 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
         <div className="flex relative min-h-[600px] h-full">
           
           {/* Time Sidebar */}
-          <div className="w-14 shrink-0 bg-white border-r border-slate-100 text-xs text-slate-400 font-mono flex flex-col relative z-20 pt-2">
+          <div className="w-12 sm:w-14 shrink-0 bg-white border-r border-slate-100 text-[10px] sm:text-xs text-slate-400 font-mono flex flex-col relative z-20 pt-2">
              {hours.map((h, idx) => (
                <div key={h} className="flex-1 border-b border-transparent relative">
-                 <span className={`absolute right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}>{h}:00</span>
+                 <span className={`absolute right-1 sm:right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}>{h}:00</span>
                </div>
              ))}
           </div>

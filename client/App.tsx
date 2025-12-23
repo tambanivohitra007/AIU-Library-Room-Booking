@@ -7,6 +7,7 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import AdminDashboard from './components/AdminDashboard';
 import ConfirmModal from './components/ConfirmModal';
+import LoadingOverlay from './components/LoadingOverlay';
 import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
@@ -16,6 +17,8 @@ function App() {
   const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   const [authError, setAuthError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState('home');
@@ -50,12 +53,19 @@ function App() {
   useEffect(() => {
     // Check if user is authenticated
     const checkAuth = async () => {
-      const currentUser = await api.getCurrentUser();
-      if (currentUser) {
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } else {
+      setIsAuthLoading(true);
+      try {
+        const currentUser = await api.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
         setIsAuthenticated(false);
+      } finally {
+        setIsAuthLoading(false);
       }
     };
 
@@ -67,6 +77,7 @@ function App() {
 
     // Load data only if authenticated
     const loadData = async () => {
+      setIsDataLoading(true);
       try {
         const loadedRooms = await api.getRooms();
         setRooms(loadedRooms);
@@ -78,6 +89,9 @@ function App() {
         setBookings(loadedBookings);
       } catch (error) {
         console.error('Failed to load data:', error);
+        toast.error('Failed to load data');
+      } finally {
+        setIsDataLoading(false);
       }
     };
 
@@ -205,6 +219,11 @@ function App() {
   };
 
   const goToToday = () => setCurrentDate(new Date());
+
+  // Show loading overlay during initial auth check
+  if (isAuthLoading) {
+    return <LoadingOverlay message="Checking authentication..." />;
+  }
 
   // Show login/register if not authenticated
   if (!isAuthenticated || !user) {

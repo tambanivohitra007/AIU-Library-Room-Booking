@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -90,8 +91,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onSwitchToRegister, erro
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
+            {loading && <LoadingSpinner size="sm" color="white" />}
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

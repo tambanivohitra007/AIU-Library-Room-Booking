@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { MAX_ATTENDEES, MIN_ATTENDEES } from '../constants';
 import { UsersIcon, ClockIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
+import LoadingSpinner from './LoadingSpinner';
 
 interface BookingFormProps {
   selectedRoom: Room;
@@ -19,6 +20,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Reset form when times change
@@ -54,6 +56,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     }));
     attendees.unshift({ name: 'Me (Booker)', isCompanion: false });
 
+    setIsSubmitting(true);
     try {
       await api.createBooking({
         roomId: selectedRoom.id,
@@ -69,6 +72,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
       toast.error(`Failed to create booking: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -145,12 +150,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
              >
                 Cancel
              </button>
-             <button 
+             <button
                 onClick={handleSubmit}
-                disabled={!isCountValid}
-                className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={!isCountValid || isSubmitting}
+                className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
              >
-                Confirm
+                {isSubmitting && <LoadingSpinner size="sm" color="white" />}
+                {isSubmitting ? 'Booking...' : 'Confirm'}
              </button>
         </div>
     </div>

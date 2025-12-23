@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface RegisterFormProps {
   onRegister: (name: string, email: string, password: string) => Promise<void>;
@@ -125,8 +126,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
+            {loading && <LoadingSpinner size="sm" color="white" />}
             {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>

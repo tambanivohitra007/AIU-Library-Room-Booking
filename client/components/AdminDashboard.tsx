@@ -8,6 +8,7 @@ import EditUserModal from './EditUserModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import AddRoomModal from './AddRoomModal';
 import EditRoomModal from './EditRoomModal';
+import AttendeesModal from './AttendeesModal';
 import { useToast } from '../contexts/ToastContext';
 
 interface AdminDashboardProps {
@@ -43,6 +44,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [deletingRoom, setDeletingRoom] = useState<Room | null>(null);
+
+  // Attendees modal state
+  const [viewingAttendeesBooking, setViewingAttendeesBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -311,12 +315,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-full">
-                      <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button
+                      onClick={() => setViewingAttendeesBooking(booking)}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-indigo-100 rounded-full transition-colors cursor-pointer group"
+                      title="Click to view attendees"
+                    >
+                      <svg className="w-4 h-4 text-slate-600 group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
-                      <span className="text-sm font-medium text-slate-700">{booking.attendees.length}</span>
-                    </div>
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-primary">{booking.attendees.length}</span>
+                    </button>
                   </td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -348,6 +356,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           </div>
         )}
       </div>
+
+      {/* Attendees Modal */}
+      {viewingAttendeesBooking && (
+        <AttendeesModal
+          booking={viewingAttendeesBooking}
+          onClose={() => setViewingAttendeesBooking(null)}
+        />
+      )}
     </div>
   );
 

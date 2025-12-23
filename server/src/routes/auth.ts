@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { generateToken, authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/security.js';
 import { validateRegister, validateLogin } from '../middleware/validation.js';
@@ -9,6 +9,10 @@ import logger from '../utils/logger.js';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Allowed email domains
+const STUDENT_DOMAIN = '@my.apiu.edu';
+const STAFF_DOMAIN = '@apiu.edu';
+
 // Register new user (student only - admins created manually)
 router.post('/register', authLimiter, validateRegister, async (req, res) => {
   try {
@@ -16,6 +20,17 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
 
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+
+    // Validate email domain
+    const emailLower = email.toLowerCase();
+    const isStudentEmail = emailLower.endsWith(STUDENT_DOMAIN);
+    const isStaffEmail = emailLower.endsWith(STAFF_DOMAIN);
+
+    if (!isStudentEmail && !isStaffEmail) {
+      return res.status(400).json({ 
+        error: `Only university emails are allowed. Students must use ${STUDENT_DOMAIN} and staff must use ${STAFF_DOMAIN}` 
+      });
     }
 
     // Check if user already exists
@@ -30,13 +45,13 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user (always as STUDENT role)
+    // Create user (STUDENT role for students, could be STAFF for staff if needed)
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
-        role: 'STUDENT',
+        role: 'STUDENT', // All self-registered users are students
       },
     });
 

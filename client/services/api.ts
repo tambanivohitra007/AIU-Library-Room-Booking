@@ -105,6 +105,25 @@ export const api = {
     return fetchAPI<Booking[]>('/bookings');
   },
 
+  checkConflicts: async (data: {
+    roomId: string;
+    startTime: Date;
+    endTime: Date;
+  }): Promise<{
+    hasConflict: boolean;
+    conflicts: Array<{
+      id: string;
+      startTime: string;
+      endTime: string;
+      userDisplay: string;
+    }>;
+  }> => {
+    return fetchAPI('/bookings/check-conflicts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   createBooking: async (data: {
     roomId: string;
     startTime: Date;

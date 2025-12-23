@@ -49,6 +49,61 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+// Check for booking conflicts (real-time validation)
+router.post('/check-conflicts', async (req: AuthRequest, res) => {
+  try {
+    const { roomId, startTime, endTime } = req.body;
+
+    if (!roomId || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Find all overlapping bookings
+    const conflicts = await prisma.booking.findMany({
+      where: {
+        roomId,
+        status: BookingStatus.CONFIRMED,
+        OR: [
+          {
+            AND: [
+              { startTime: { lte: new Date(startTime) } },
+              { endTime: { gt: new Date(startTime) } },
+            ],
+          },
+          {
+            AND: [
+              { startTime: { lt: new Date(endTime) } },
+              { endTime: { gte: new Date(endTime) } },
+            ],
+          },
+          {
+            AND: [
+              { startTime: { gte: new Date(startTime) } },
+              { endTime: { lte: new Date(endTime) } },
+            ],
+          },
+        ],
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    res.json({
+      hasConflict: conflicts.length > 0,
+      conflicts: conflicts.map(c => ({
+        id: c.id,
+        startTime: c.startTime.toISOString(),
+        endTime: c.endTime.toISOString(),
+        userDisplay: c.user.name,
+      })),
+    });
+  } catch (error) {
+    console.error('Error checking conflicts:', error);
+    res.status(500).json({ error: 'Failed to check conflicts' });
+  }
+});
+
 // Get booking by ID
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
@@ -114,10 +169,21 @@ router.post('/', validateBooking, async (req: AuthRequest, res) => {
           },
         ],
       },
+      include: {
+        user: true,
+      },
     });
 
     if (overlapping) {
-      return res.status(409).json({ error: 'Time slot is already booked' });
+      logger.warn(`Booking conflict detected for room ${roomId} at ${startTime}-${endTime}`);
+      return res.status(409).json({
+        error: 'This time slot conflicts with an existing booking',
+        conflict: {
+          startTime: overlapping.startTime.toISOString(),
+          endTime: overlapping.endTime.toISOString(),
+          bookedBy: overlapping.user.name,
+        }
+      });
     }
 
     // Create booking with attendees

@@ -160,10 +160,10 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
         <div className="flex relative min-h-[600px] h-full">
           
           {/* Time Sidebar */}
-          <div className="w-14 shrink-0 bg-white border-r border-slate-100 text-xs text-slate-400 font-mono flex flex-col relative z-20">
-             {hours.map(h => (
+          <div className="w-14 shrink-0 bg-white border-r border-slate-100 text-xs text-slate-400 font-mono flex flex-col relative z-20 pt-2">
+             {hours.map((h, idx) => (
                <div key={h} className="flex-1 border-b border-transparent relative">
-                 <span className="absolute -top-2.5 right-2">{h}:00</span>
+                 <span className={`absolute right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}>{h}:00</span>
                </div>
              ))}
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon } from './Icons';
+import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon } from './Icons';
 import { User, UserRole } from '../types';
 
 interface LayoutProps {
@@ -34,12 +34,6 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
             <p className="text-xs text-slate-500">{user.role}</p>
           </div>
           <UserCircleIcon className="w-8 h-8 text-slate-400" />
-          <button
-            onClick={onLogout}
-            className="ml-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            Logout
-          </button>
         </div>
       </header>
 
@@ -65,6 +59,13 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
             </button>
           );
         })}
+        <button
+          onClick={onLogout}
+          className="flex flex-col items-center gap-1 text-slate-400 hover:text-red-500"
+        >
+          <LogOutIcon className="w-6 h-6" />
+          <span className="text-xs font-medium">Logout</span>
+        </button>
       </nav>
 
       {/* Desktop Navigation (Sidebar-ish but simpler for this demo) */}
@@ -82,6 +83,15 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
             </button>
            )
         })}
+        {/* Spacer to push logout button to bottom */}
+        <div className="flex-1"></div>
+        <button
+          onClick={onLogout}
+          className="p-3 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+          title="Logout"
+        >
+          <LogOutIcon className="w-6 h-6" />
+        </button>
       </div>
     </div>
   );

@@ -202,12 +202,20 @@ function App() {
   };
 
   const handleLogout = () => {
-    api.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-    setBookings([]);
-    setRooms([]);
-    toast.info('You have been logged out');
+    setConfirmModal({
+      isOpen: true,
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      onConfirm: () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        api.logout();
+        setUser(null);
+        setIsAuthenticated(false);
+        setBookings([]);
+        setRooms([]);
+        toast.info('You have been logged out');
+      },
+    });
   };
 
   // --- Date Navigation Helpers ---

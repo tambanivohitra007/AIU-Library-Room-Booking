@@ -11,6 +11,7 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import AdminDashboard from './components/AdminDashboard';
 import ConfirmModal from './components/ConfirmModal';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
@@ -51,6 +52,9 @@ function App() {
     message: '',
     onConfirm: () => {},
   });
+
+  // Change Password Modal State
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
 
   // Force refresh trigger
   const [tick, setTick] = useState(0);
@@ -216,6 +220,17 @@ function App() {
         toast.info('You have been logged out');
       },
     });
+  };
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      await api.changePassword(currentPassword, newPassword);
+      toast.success('Password changed successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      toast.error(errorMessage);
+      throw error;
+    }
   };
 
   // --- Date Navigation Helpers ---
@@ -506,7 +521,13 @@ function App() {
 
   return (
     <>
-      <Layout user={user} onNavigate={setCurrentPage} currentPage={currentPage} onLogout={handleLogout}>
+      <Layout
+        user={user}
+        onNavigate={setCurrentPage}
+        currentPage={currentPage}
+        onLogout={handleLogout}
+        onChangePassword={() => setShowChangePasswordModal(true)}
+      >
         {currentPage === 'home' && renderHome()}
         {currentPage === 'my-bookings' && renderMyBookings()}
         {currentPage === 'admin' && renderAdmin()}
@@ -520,6 +541,11 @@ function App() {
         confirmVariant="danger"
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onSubmit={handleChangePassword}
       />
     </>
   );

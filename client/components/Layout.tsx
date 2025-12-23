@@ -1,5 +1,5 @@
-import React from 'react';
-import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon } from './Icons';
+import React, { useState } from 'react';
+import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon, LockIcon } from './Icons';
 import { User, UserRole } from '../types';
 
 interface LayoutProps {
@@ -8,9 +8,12 @@ interface LayoutProps {
   onNavigate: (page: string) => void;
   currentPage: string;
   onLogout: () => void;
+  onChangePassword: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage, onLogout, onChangePassword }) => {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const navItems = [
     { id: 'home', label: 'Rooms', icon: HomeIcon },
     { id: 'my-bookings', label: 'My Bookings', icon: CalendarIcon },
@@ -28,12 +31,39 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">L</div>
            <h1 className="font-bold text-xl text-slate-800 tracking-tight">LibBook</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-slate-900">{user.name}</p>
             <p className="text-xs text-slate-500">{user.role}</p>
           </div>
-          <UserCircleIcon className="w-8 h-8 text-slate-400" />
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="hover:bg-slate-100 rounded-full p-1 transition-colors"
+          >
+            <UserCircleIcon className="w-8 h-8 text-slate-400" />
+          </button>
+
+          {/* User Dropdown Menu */}
+          {showUserMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-30"
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className="absolute right-0 top-12 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[200px] z-40">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onChangePassword();
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <LockIcon className="w-4 h-4" />
+                  Change Password
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </header>
 

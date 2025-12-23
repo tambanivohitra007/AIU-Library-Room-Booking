@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon, LockIcon } from './Icons';
 import { User, UserRole } from '../types';
+import logo from '../assets/logo_small.jpg';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -26,21 +27,21 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-        <div className="flex items-center gap-2">
-           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">L</div>
-           <h1 className="font-bold text-xl text-slate-800 tracking-tight">LibBook</h1>
+      <header className="px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-md" style={{ backgroundColor: '#024c6f' }}>
+        <div className="flex items-center gap-3">
+           <img src={logo} alt="AIU Logo" className="w-10 h-10 rounded-lg" />
+           <h1 className="font-bold text-xl text-white tracking-tight">AIU Library Room Booking</h1>
         </div>
         <div className="flex items-center gap-3 relative">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-slate-900">{user.name}</p>
-            <p className="text-xs text-slate-500">{user.role}</p>
+            <p className="text-sm font-medium text-white">{user.name}</p>
+            <p className="text-xs text-slate-300">{user.role}</p>
           </div>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="hover:bg-slate-100 rounded-full p-1 transition-colors"
+            className="hover:bg-white/10 rounded-full p-1 transition-colors"
           >
-            <UserCircleIcon className="w-8 h-8 text-slate-400" />
+            <UserCircleIcon className="w-8 h-8 text-white" />
           </button>
 
           {/* User Dropdown Menu */}

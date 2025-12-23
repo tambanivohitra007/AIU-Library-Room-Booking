@@ -195,7 +195,7 @@ function App() {
       const { user: registeredUser } = await api.register(name, email, password);
       setUser(registeredUser);
       setIsAuthenticated(true);
-      toast.success(`Welcome to LibBook, ${registeredUser.name}!`);
+      toast.success(`Welcome to AIU Library, ${registeredUser.name}!`);
       refresh();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';

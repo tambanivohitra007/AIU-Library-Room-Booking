@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
+import logo from '../assets/logo.webp';
 
 interface RegisterFormProps {
   onRegister: (name: string, email: string, password: string) => Promise<void>;
@@ -51,11 +52,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative z-10 border border-slate-200">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
-            <span className="text-white text-2xl font-bold">L</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src={logo} alt="AIU Logo" className="w-20 h-20" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-2">Create Account</h1>
-          <p className="text-slate-500">Join LibBook today</p>
+          <p className="text-slate-500">Join AIU Library Room Booking</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -133,6 +133,26 @@ export const api = {
     return fetchAPI<Room>(`/rooms/${id}`);
   },
 
+  createRoom: async (roomData: { name: string; description: string; capacity: number; features: string[] }): Promise<Room> => {
+    return fetchAPI<Room>('/rooms', {
+      method: 'POST',
+      body: JSON.stringify(roomData),
+    });
+  },
+
+  updateRoom: async (id: string, roomData: { name: string; description: string; capacity: number; features: string[] }): Promise<Room> => {
+    return fetchAPI<Room>(`/rooms/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(roomData),
+    });
+  },
+
+  deleteRoom: async (id: string): Promise<{ message: string }> => {
+    return fetchAPI(`/rooms/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Bookings
   getBookings: async (): Promise<Booking[]> => {
     return fetchAPI<Booking[]>('/bookings');

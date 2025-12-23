@@ -515,6 +515,7 @@ function App() {
           rooms={rooms}
           onExportCSV={handleExportCSV}
           onCancelBooking={handleCancelBooking}
+          onRefresh={refresh}
         />
       );
   };

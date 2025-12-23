@@ -6,12 +6,16 @@ import UserImportModal from './UserImportModal';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
+import AddRoomModal from './AddRoomModal';
+import EditRoomModal from './EditRoomModal';
+import { useToast } from '../contexts/ToastContext';
 
 interface AdminDashboardProps {
   bookings: Booking[];
   rooms: Room[];
   onExportCSV: () => void;
   onCancelBooking: (id: string) => void;
+  onRefresh: () => void;
 }
 
 interface Stats {
@@ -21,7 +25,8 @@ interface Stats {
   roomUtilization: { [key: string]: number };
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExportCSV, onCancelBooking }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExportCSV, onCancelBooking, onRefresh }) => {
+  const toast = useToast();
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms'>('overview');
@@ -33,6 +38,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Room management state
+  const [showAddRoomModal, setShowAddRoomModal] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
+  const [deletingRoom, setDeletingRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -50,6 +60,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
     } catch (error) {
       console.error('Failed to delete user:', error);
       alert('Failed to delete user. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!deletingRoom) return;
+
+    setIsDeleting(true);
+    try {
+      await api.deleteRoom(deletingRoom.id);
+      toast.success('Room deleted successfully');
+      setDeletingRoom(null);
+      onRefresh();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete room';
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -429,44 +456,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   );
 
   const renderRooms = () => (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-slate-800">Room Management</h3>
-        <button className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors">
-          Add Room
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-        {rooms.map(room => (
-          <div key={room.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h4 className="font-semibold text-slate-800 text-lg">{room.name}</h4>
-                <p className="text-sm text-slate-500 mt-1">{room.description}</p>
-              </div>
-              <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-700">
-                Cap: {room.capacity}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {room.features.map((feature, idx) => (
-                <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
-                  {feature}
+    <>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-slate-800">Room Management</h3>
+          <button
+            onClick={() => setShowAddRoomModal(true)}
+            className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors"
+          >
+            Add Room
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+          {rooms.map(room => (
+            <div key={room.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="font-semibold text-slate-800 text-lg">{room.name}</h4>
+                  <p className="text-sm text-slate-500 mt-1">{room.description}</p>
+                </div>
+                <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-700">
+                  Cap: {room.capacity}
                 </span>
-              ))}
+              </div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {room.features.map((feature, idx) => (
+                  <span key={idx} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+                    {feature}
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingRoom(room)}
+                  className="flex-1 px-3 py-1.5 border border-slate-300 hover:bg-slate-50 rounded text-sm font-medium text-slate-700 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setDeletingRoom(room)}
+                  className="flex-1 px-3 py-1.5 border border-red-300 hover:bg-red-50 rounded text-sm font-medium text-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button className="flex-1 px-3 py-1.5 border border-slate-300 hover:bg-slate-50 rounded text-sm font-medium text-slate-700 transition-colors">
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-1.5 border border-red-300 hover:bg-red-50 rounded text-sm font-medium text-red-600 transition-colors">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* Modals */}
+      {showAddRoomModal && (
+        <AddRoomModal
+          onClose={() => setShowAddRoomModal(false)}
+          onSuccess={onRefresh}
+        />
+      )}
+      {editingRoom && (
+        <EditRoomModal
+          room={editingRoom}
+          onClose={() => setEditingRoom(null)}
+          onSuccess={onRefresh}
+        />
+      )}
+      {deletingRoom && (
+        <ConfirmDeleteModal
+          title="Delete Room"
+          message={`Are you sure you want to delete "${deletingRoom.name}"? This action cannot be undone. Rooms with existing bookings cannot be deleted.`}
+          confirmText="Delete"
+          onConfirm={handleDeleteRoom}
+          onCancel={() => setDeletingRoom(null)}
+          isLoading={isDeleting}
+        />
+      )}
+    </>
   );
 
   return (

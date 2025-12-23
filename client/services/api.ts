@@ -90,6 +90,19 @@ export const api = {
     });
   },
 
+  updateUser: async (id: string, userData: { name?: string; email?: string; role?: string; password?: string }): Promise<User> => {
+    return fetchAPI<User>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  deleteUser: async (id: string): Promise<{ message: string }> => {
+    return fetchAPI(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   importUsers: async (users: Array<{ name: string; email: string; role?: string }>): Promise<{
     message: string;
     defaultPassword: string;

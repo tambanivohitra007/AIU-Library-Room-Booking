@@ -4,6 +4,8 @@ import { api } from '../services/api';
 import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon } from './Icons';
 import UserImportModal from './UserImportModal';
 import AddUserModal from './AddUserModal';
+import EditUserModal from './EditUserModal';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 interface AdminDashboardProps {
   bookings: Booking[];
@@ -28,11 +30,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadStats();
     loadUsers();
   }, [bookings]);
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+
+    setIsDeleting(true);
+    try {
+      await api.deleteUser(deletingUser.id);
+      setDeletingUser(null);
+      loadUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      alert('Failed to delete user. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const loadStats = () => {
     const now = new Date();
@@ -350,10 +371,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="p-4">
-                  <button className="text-primary hover:text-indigo-700 font-medium text-sm mr-3">
+                  <button 
+                    onClick={() => setEditingUser(user)}
+                    className="text-primary hover:text-indigo-700 font-medium text-sm mr-3"
+                  >
                     Edit
                   </button>
-                  <button className="text-red-600 hover:text-red-700 font-medium text-sm">
+                  <button 
+                    onClick={() => setDeletingUser(user)}
+                    className="text-red-600 hover:text-red-700 font-medium text-sm"
+                  >
                     Delete
                   </button>
                 </td>
@@ -377,6 +404,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         onSuccess={() => {
           loadUsers();
         }}
+      />
+    )}
+    {editingUser && (
+      <EditUserModal
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onSuccess={() => {
+          loadUsers();
+        }}
+      />
+    )}
+    {deletingUser && (
+      <ConfirmDeleteModal
+        title="Delete User"
+        message={`Are you sure you want to delete ${deletingUser.name}? This action cannot be undone and will also delete all their bookings.`}
+        confirmText="Delete"
+        onConfirm={handleDeleteUser}
+        onCancel={() => setDeletingUser(null)}
+        isLoading={isDeleting}
       />
     )}
   </>

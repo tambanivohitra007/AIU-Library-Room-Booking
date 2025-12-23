@@ -144,4 +144,78 @@ router.post('/import', async (req, res) => {
   }
 });
 
+// Update user
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, password } = req.body;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // If email is being changed, check if new email is already in use
+    if (email && email !== existingUser.email) {
+      const emailInUse = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (emailInUse) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    res.json(userWithoutPassword);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to update user', details: error.message });
+  }
+});
+
+// Delete user
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete user (this will cascade delete their bookings due to foreign key)
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to delete user', details: error.message });
+  }
+});
+
 export { router as userRouter };

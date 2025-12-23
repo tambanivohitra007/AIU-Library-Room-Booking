@@ -1,6 +1,6 @@
-# LibBook - Library Room Booking System
+# AIU Library Room Booking System
 
-A production-ready full-stack library room booking application with React + TypeScript frontend and Node.js + Express + Prisma backend.
+A production-ready full-stack library room booking application for Adventist International University with React + TypeScript frontend and Node.js + Express + Prisma backend.
 
 ## Features
 
@@ -147,11 +147,13 @@ npm run dev
 ```
 Client runs on http://localhost:3000
 
-### Default Users
+### Default Users (Development Only)
 
-After seeding:
+After seeding the database in development:
 - **Student**: alice@uni.edu / student123
 - **Admin**: bob@uni.edu / admin123
+
+**Important**: For production, create admin users through the database or API, and users should register with their official university email addresses.
 
 ## Production Deployment
 
@@ -219,11 +221,11 @@ Serve the `client/dist` folder using:
 #### Server (.env)
 
 ```env
-DATABASE_URL="mysql://user:pass@host:3306/libbook"
-JWT_SECRET="your-super-secret-key"
+DATABASE_URL="mysql://user:pass@host:3306/aiu_library_booking"
+JWT_SECRET="your-super-secret-key-change-this"
 PORT=5000
 NODE_ENV=production
-CLIENT_URL="https://yourdomain.com"
+CLIENT_URL="https://library.aiu.edu"
 ```
 
 #### Client
@@ -298,8 +300,8 @@ In production, configure log rotation:
 ```bash
 # Install pm2 or use logrotate
 npm install -g pm2
-pm2 start npm --name "libbook-api" -- run start:prod
-pm2 logs libbook-api
+pm2 start npm --name "aiu-library-api" -- run start:prod
+pm2 logs aiu-library-api
 ```
 
 ## Database Schema
@@ -330,7 +332,7 @@ datasource db {
 
 2. Update DATABASE_URL in `.env`:
 ```env
-DATABASE_URL="mysql://user:password@localhost:3306/libbook"
+DATABASE_URL="mysql://user:password@localhost:3306/aiu_library_booking"
 ```
 
 3. Run migration:
@@ -349,7 +351,7 @@ datasource db {
 ```
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/libbook"
+DATABASE_URL="postgresql://user:password@localhost:5432/aiu_library_booking"
 ```
 
 ## Troubleshooting

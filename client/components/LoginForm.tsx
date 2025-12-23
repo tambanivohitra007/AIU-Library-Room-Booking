@@ -23,17 +23,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onSwitchToRegister, erro
     }
   };
 
-  // Quick login buttons for demo
-  const quickLogin = async (userEmail: string, userPassword: string) => {
-    setEmail(userEmail);
-    setPassword(userPassword);
-    setLoading(true);
-    try {
-      await onLogin(userEmail, userPassword);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -110,26 +99,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onSwitchToRegister, erro
               Register
             </button>
           </p>
-        </div>
-
-        <div className="mt-8 pt-6 border-t border-slate-200">
-          <p className="text-xs text-slate-500 text-center mb-3">Demo Accounts:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => quickLogin('alice@uni.edu', 'student123')}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded text-sm font-medium text-slate-700 transition-colors"
-            >
-              Student Login
-            </button>
-            <button
-              type="button"
-              onClick={() => quickLogin('bob@uni.edu', 'admin123')}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded text-sm font-medium text-slate-700 transition-colors"
-            >
-              Admin Login
-            </button>
-          </div>
         </div>
         </div>
       </div>

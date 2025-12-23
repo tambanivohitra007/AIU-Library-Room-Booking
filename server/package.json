@@ -1,7 +1,7 @@
 {
-  "name": "libbook-server",
+  "name": "aiu-library-booking-server",
   "version": "1.0.0",
-  "description": "LibBook API Server",
+  "description": "AIU Library Room Booking API Server",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

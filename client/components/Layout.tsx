@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
-      <header className="px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-md" style={{ backgroundColor: '#024c6f' }}>
+      <header className="px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-md" style={{ backgroundColor: '#17365f' }}>
         <div className="flex items-center gap-3">
            <img src={logo} alt="AIU Logo" className="w-10 h-10 rounded-lg" />
            <h1 className="font-bold text-xl text-white tracking-tight">AIU Library Room Booking</h1>

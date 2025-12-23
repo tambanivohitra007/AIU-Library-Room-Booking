@@ -143,6 +143,23 @@ router.post('/', validateBooking, async (req: AuthRequest, res) => {
     const { roomId, startTime, endTime, purpose, attendees } = req.body;
     const userId = req.userId!; // From JWT token
 
+    // Validate booking is not in the past
+    const now = new Date();
+    const bookingStart = new Date(startTime);
+    const bookingEnd = new Date(endTime);
+
+    if (bookingStart <= now) {
+      return res.status(400).json({
+        error: 'Cannot book a time slot in the past. Please select a future time.',
+      });
+    }
+
+    if (bookingEnd <= now) {
+      return res.status(400).json({
+        error: 'Booking end time cannot be in the past.',
+      });
+    }
+
     // Check for overlapping bookings
     const overlapping = await prisma.booking.findFirst({
       where: {

@@ -70,6 +70,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     e.preventDefault();
     setError(null);
 
+    // Validate booking is not in the past
+    const now = new Date();
+    if (startTime <= now) {
+      setError('Cannot book a time slot in the past. Please select a future time.');
+      return;
+    }
+
+    if (endTime <= now) {
+      setError('Booking end time cannot be in the past.');
+      return;
+    }
+
     const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
     const uniqueRaw = Array.from(new Set(rawLines));
 

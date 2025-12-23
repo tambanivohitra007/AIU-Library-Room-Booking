@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { validateBooking } from '../middleware/validation.js';
+import logger from '../utils/logger.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -81,7 +83,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 });
 
 // Create booking
-router.post('/', async (req: AuthRequest, res) => {
+router.post('/', validateBooking, async (req: AuthRequest, res) => {
   try {
     const { roomId, startTime, endTime, purpose, attendees } = req.body;
     const userId = req.userId!; // From JWT token

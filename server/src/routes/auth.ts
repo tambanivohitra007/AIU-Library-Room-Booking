@@ -2,12 +2,15 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { generateToken, authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/security.js';
+import { validateRegister, validateLogin } from '../middleware/validation.js';
+import logger from '../utils/logger.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Register new user (student only - admins created manually)
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, validateRegister, async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
@@ -56,7 +59,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, validateLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
 

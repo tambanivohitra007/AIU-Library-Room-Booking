@@ -5,6 +5,7 @@ import BookingForm from './components/BookingForm';
 import BookingDetails from './components/BookingDetails';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import AdminDashboard from './components/AdminDashboard';
 import { api } from './services/api';
 import { User, Room, Booking, UserRole } from './types';
 import { TrashIcon } from './components/Icons';
@@ -326,69 +327,14 @@ function App() {
 
   const renderAdmin = () => {
       if (user.role !== UserRole.ADMIN) return <div>Access Denied</div>;
-      const allBookings = bookings;
       return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-               <h2 className="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
-               <button 
-                className="text-sm font-medium text-white bg-slate-700 hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors" 
-                onClick={handleExportCSV}
-               >
-                Export CSV
-               </button>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b">
-                        <tr>
-                            <th className="p-4">Room</th>
-                            <th className="p-4">User</th>
-                            <th className="p-4">Time</th>
-                            <th className="p-4">Attendees</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {allBookings.map(b => (
-                            <tr key={b.id} className="border-b last:border-0 hover:bg-slate-50">
-                                <td className="p-4">{rooms.find(r => r.id === b.roomId)?.name}</td>
-                                <td className="p-4">
-                                    <div className="font-medium">{b.userDisplay}</div>
-                                    <div className="text-xs text-slate-400">{b.userId}</div>
-                                </td>
-                                <td className="p-4">
-                                    <div>{new Date(b.startTime).toLocaleDateString()}</div>
-                                    <div className="text-slate-500">{new Date(b.startTime).toLocaleTimeString()}</div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="text-xs bg-slate-100 rounded px-2 py-1 inline-block">
-                                        {b.attendees.length} people
-                                    </div>
-                                    <div className="text-xs text-slate-400 mt-1 truncate max-w-[150px]">
-                                        {b.attendees.map(a => a.name).join(', ')}
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                        b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    }`}>
-                                        {b.status}
-                                    </span>
-                                </td>
-                                <td className="p-4">
-                                    {b.status === 'CONFIRMED' && (
-                                        <button onClick={() => handleCancelBooking(b.id)} className="text-red-600 hover:underline">Cancel</button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-          </div>
-      )
+        <AdminDashboard
+          bookings={bookings}
+          rooms={rooms}
+          onExportCSV={handleExportCSV}
+          onCancelBooking={handleCancelBooking}
+        />
+      );
   };
 
   return (

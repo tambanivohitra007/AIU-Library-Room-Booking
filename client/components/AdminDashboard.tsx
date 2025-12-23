@@ -3,6 +3,7 @@ import { User, Room, Booking, UserRole } from '../types';
 import { api } from '../services/api';
 import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon } from './Icons';
 import UserImportModal from './UserImportModal';
+import AddUserModal from './AddUserModal';
 
 interface AdminDashboardProps {
   bookings: Booking[];
@@ -26,6 +27,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -313,7 +315,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             >
               Import Users
             </button>
-            <button className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors">
+            <button 
+              onClick={() => setShowAddUserModal(true)}
+              className="px-4 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors"
+            >
               Add User
             </button>
           </div>
@@ -362,6 +367,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       <UserImportModal
         onClose={() => setShowImportModal(false)}
         onImportSuccess={() => {
+          loadUsers();
+        }}
+      />
+    )}
+    {showAddUserModal && (
+      <AddUserModal
+        onClose={() => setShowAddUserModal(false)}
+        onSuccess={() => {
           loadUsers();
         }}
       />

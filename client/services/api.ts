@@ -83,6 +83,13 @@ export const api = {
     return fetchAPI<User[]>('/users');
   },
 
+  createUser: async (userData: { name: string; email: string; password: string; role: string }): Promise<User> => {
+    return fetchAPI<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  },
+
   importUsers: async (users: Array<{ name: string; email: string; role?: string }>): Promise<{
     message: string;
     defaultPassword: string;

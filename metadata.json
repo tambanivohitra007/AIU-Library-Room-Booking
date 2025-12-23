@@ -1,0 +1,5 @@
+{
+  "name": "LibBook: Library Room Manager",
+  "description": "A booking management system for library rooms with real-time availability, attendee tracking, and administrative controls.",
+  "requestFramePermissions": []
+}

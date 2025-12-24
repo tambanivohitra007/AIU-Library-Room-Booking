@@ -53,16 +53,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
         }}></div>
       </div>
 
-      <div className="glass rounded-3xl shadow-strong w-full max-w-md relative z-10 overflow-hidden border border-white/20 animate-slide-up hover-lift">
+      <div className="glass rounded-lg shadow-strong w-full max-w-md relative z-10 overflow-hidden border border-white/20 animate-slide-up hover-lift">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-shimmer opacity-30 animate-shimmer"></div>
         </div>
 
-        <div className="relative text-center py-10 px-8 bg-gradient-to-br from-primary via-primary-light to-primary rounded-t-3xl">
+        <div className="relative text-center py-10 px-8 bg-gradient-to-br from-primary via-primary-light to-primary rounded-t-lg">
           <div className="flex items-center justify-center mb-6 animate-float">
-            <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 shadow-glow">
+            <div className="relative bg-white/10 backdrop-blur-sm rounded-lg p-4 shadow-glow">
               <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain mix-blend-luminosity opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-white/10 rounded-2xl mix-blend-overlay"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-white/10 rounded-lg mix-blend-overlay"></div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Join AIU Library</h1>
@@ -78,7 +78,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {displayError && (
-            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium shadow-soft animate-slide-down">
+            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm font-medium shadow-soft animate-slide-down">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
@@ -102,7 +102,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                 placeholder="John Doe"
                 required
               />
@@ -123,7 +123,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                 placeholder="your.email@my.apiu.edu"
                 required
               />
@@ -145,7 +145,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -167,7 +167,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                  className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -179,7 +179,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-primary via-primary-light to-primary hover:shadow-glow text-white font-bold py-4 rounded-xl shadow-medium transition-all-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6 relative overflow-hidden group"
+            className="w-full bg-gradient-to-r from-primary via-primary-light to-primary hover:shadow-glow text-white font-bold py-4 rounded-md shadow-medium transition-all-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6 relative overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary-light to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <span className="relative flex items-center gap-2">
@@ -205,7 +205,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
           </div>
           <Link
             to="/login"
-            className="mt-4 w-full inline-block text-center py-3 px-4 border-2 border-primary/20 hover:border-primary/40 text-primary font-bold rounded-xl hover:bg-primary/5 transition-all-smooth shadow-soft"
+            className="mt-4 w-full inline-block text-center py-3 px-4 border-2 border-primary/20 hover:border-primary/40 text-primary font-bold rounded-md hover:bg-primary/5 transition-all-smooth shadow-soft"
           >
             Sign In
           </Link>

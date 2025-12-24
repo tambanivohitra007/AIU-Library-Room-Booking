@@ -85,7 +85,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigateWeek('prev')}
-              className="p-2.5 glass hover:bg-white/80 rounded-xl transition-all-smooth shadow-soft hover:shadow-medium group"
+              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium group"
               aria-label={`Previous ${viewLabel}`}
             >
               <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,13 +94,13 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             </button>
             <button
               onClick={goToToday}
-              className="px-4 py-2.5 bg-gradient-to-r from-primary to-primary-light text-white text-sm font-bold rounded-xl shadow-medium hover:shadow-glow transition-all-smooth"
+              className="px-4 py-2.5 bg-gradient-to-r from-primary to-primary-light text-white text-sm font-bold rounded-md shadow-medium hover:shadow-glow transition-all-smooth"
             >
               Today
             </button>
             <button
               onClick={() => navigateWeek('next')}
-              className="p-2.5 glass hover:bg-white/80 rounded-xl transition-all-smooth shadow-soft hover:shadow-medium group"
+              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium group"
               aria-label={`Next ${viewLabel}`}
             >
               <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +109,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             </button>
             <button
               onClick={() => setShowMiniCalendar(!showMiniCalendar)}
-              className="p-2.5 glass hover:bg-white/80 rounded-xl transition-all-smooth shadow-soft hover:shadow-medium ml-1 group"
+              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium ml-1 group"
               aria-label="Open calendar picker"
             >
               <svg className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             <button
               key={room.id}
               onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
-              className={`relative px-5 py-3 text-sm font-bold rounded-2xl transition-all-smooth whitespace-nowrap hover-lift ${
+              className={`relative px-5 py-3 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap hover-lift ${
                 selectedRoomId === room.id
                   ? 'bg-gradient-to-r from-primary to-primary-light text-white shadow-glow'
                   : 'glass border border-white/20 text-slate-700 hover:border-primary/30 hover:text-primary shadow-soft'
@@ -138,7 +138,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               {selectedRoomId === room.id && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-light/50 to-accent/30 rounded-2xl animate-pulse-slow"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-light/50 to-accent/30 rounded-lg animate-pulse-slow"></div>
               )}
               <span className="relative">{room.name}</span>
             </button>
@@ -147,7 +147,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
 
         {/* Room Details - Show when a room is selected */}
         {activeRoom && (
-          <div className="glass rounded-2xl p-5 border border-white/20 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up">
+          <div className="glass rounded-lg p-5 border border-white/20 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-3">
@@ -156,14 +156,14 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
                 </div>
                 <p className="text-sm text-slate-600 mb-4 font-medium">{activeRoom.description}</p>
                 <div className="flex flex-wrap gap-2 items-center">
-                  <span className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-xl text-xs font-bold text-primary shadow-soft">
+                  <span className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-md text-xs font-bold text-primary shadow-soft">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     {activeRoom.capacity} People
                   </span>
                   {activeRoom.features.map((feature, idx) => (
-                    <span key={idx} className="px-3 py-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/50 text-indigo-700 rounded-xl text-xs font-bold shadow-soft">
+                    <span key={idx} className="px-3 py-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/50 text-indigo-700 rounded-md text-xs font-bold shadow-soft">
                       {feature}
                     </span>
                   ))}
@@ -197,7 +197,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
 
       {/* Main Area: Split View */}
       {activeRoom && (
-        <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex relative">
+        <div className="flex-1 bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden flex relative">
           {/* Left: Calendar View */}
           <div className="flex-1 flex flex-col min-w-0">
             <div className="p-3 border-b bg-slate-50 flex justify-between items-center">

@@ -20,14 +20,14 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
           <p className="text-sm text-slate-500 font-medium mt-1">Manage your room reservations</p>
         </div>
         {myBookings.length > 0 && (
-          <div className="glass px-4 py-2 rounded-xl border border-white/20 shadow-soft">
+          <div className="glass px-4 py-2 rounded-md border border-white/20 shadow-soft">
             <span className="text-sm font-bold text-slate-700">{myBookings.length} {myBookings.length === 1 ? 'Booking' : 'Bookings'}</span>
           </div>
         )}
       </div>
 
       {myBookings.length === 0 ? (
-        <div className="glass rounded-3xl border border-white/20 shadow-medium p-12 text-center animate-slide-up">
+        <div className="glass rounded-lg border border-white/20 shadow-medium p-12 text-center animate-slide-up">
           <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center">
             <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -46,14 +46,14 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
             return (
               <div
                 key={b.id}
-                className="glass rounded-2xl border border-white/20 shadow-medium hover:shadow-strong transition-all-smooth overflow-hidden hover-lift animate-slide-up"
+                className="glass rounded-lg border border-white/20 shadow-medium hover:shadow-strong transition-all-smooth overflow-hidden hover-lift animate-slide-up"
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div className="p-5">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-xl flex items-center justify-center shadow-glow">
+                        <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-md flex items-center justify-center shadow-glow">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
@@ -108,7 +108,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                     {canCancel && (
                       <button
                         onClick={() => onCancelBooking(b.id)}
-                        className="group px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-xl transition-all-smooth shadow-soft hover:shadow-medium flex items-center gap-2"
+                        className="group px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center gap-2"
                         title="Cancel Booking"
                       >
                         <TrashIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />

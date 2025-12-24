@@ -163,17 +163,17 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
   return (
     <div className="flex flex-col h-full select-none">
       {/* Header Row: Days */}
-      <div className="flex border-b border-slate-200">
-        <div className="w-12 sm:w-14 shrink-0 bg-white border-r border-slate-100"></div> {/* Time Label Spacer */}
+      <div className="flex border-b border-slate-200 glass sticky top-0 z-30 shadow-soft">
+        <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10"></div> {/* Time Label Spacer */}
         <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
           {days.map((day, i) => {
              const today = isToday(day);
              return (
-              <div key={i} className={`text-center py-2 sm:py-3 ${today ? 'bg-indigo-50/50' : 'bg-white'}`}>
-                <div className={`text-[10px] sm:text-xs font-semibold uppercase mb-0.5 sm:mb-1 ${today ? 'text-primary' : 'text-slate-500'}`}>
+              <div key={i} className={`text-center py-3 sm:py-4 transition-colors ${today ? 'bg-gradient-to-b from-primary/10 to-accent/5' : 'glass'}`}>
+                <div className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today ? 'text-primary' : 'text-slate-600'}`}>
                   {day.toLocaleDateString('en-US', { weekday: 'short' })}
                 </div>
-                <div className={`text-base sm:text-xl font-light ${today ? 'text-primary font-normal bg-indigo-100 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto text-sm sm:text-xl' : 'text-slate-700'}`}>
+                <div className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-gradient-to-br from-primary to-primary-light w-7 h-7 sm:w-9 sm:h-9 rounded-md flex items-center justify-center mx-auto shadow-glow' : 'text-slate-800'}`}>
                   {day.getDate()}
                 </div>
               </div>
@@ -182,15 +182,17 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
         </div>
       </div>
 
-      {/* Scrollable Grid Body */}
-      <div className="flex-1 overflow-y-auto relative">
-        <div className="flex relative min-h-[600px] h-full">
-          
+      {/* Grid Body */}
+      <div className="flex-1 overflow-hidden relative">
+        <div className="flex relative h-full">
+
           {/* Time Sidebar */}
-          <div className="w-12 sm:w-14 shrink-0 bg-white border-r border-slate-100 text-[10px] sm:text-xs text-slate-400 font-mono flex flex-col relative z-20 pt-2">
+          <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-20 pt-2 sticky left-0">
              {hours.map((h, idx) => (
                <div key={h} className="flex-1 border-b border-transparent relative">
-                 <span className={`absolute right-1 sm:right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}>{h}:00</span>
+                 <span className={`absolute right-2 sm:right-3 ${idx === 0 ? 'top-0' : '-top-2.5'} bg-gradient-to-r from-primary/80 to-accent/80 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold`}>
+                   {h}:00
+                 </span>
                </div>
              ))}
           </div>
@@ -277,9 +279,13 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                             {[0, 15, 30, 45].map(m => (
                                 <div
                                     key={m}
-                                    className="flex-1 z-10 hover:bg-black/5 cursor-crosshair"
+                                    className="flex-1 z-10 hover:bg-primary/5 active:bg-primary/10 cursor-crosshair touch-none transition-colors"
                                     onMouseDown={(e) => handleMouseDown(dayIndex, (hIndex * 60) + m, e)}
                                     onMouseEnter={() => handleMouseEnter(dayIndex, (hIndex * 60) + m)}
+                                    onTouchStart={(e) => {
+                                      e.preventDefault();
+                                      handleMouseDown(dayIndex, (hIndex * 60) + m, { button: 0 } as any);
+                                    }}
                                 />
                             ))}
                         </div>
@@ -287,23 +293,40 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
 
                     {/* Drag Preview */}
                     {isDragColumn && (
-                        <div 
-                            className={`absolute left-0 right-0 z-30 rounded opacity-70 pointer-events-none transition-all ${isDragValid ? 'bg-primary/80 border-2 border-primary' : 'bg-red-500/50 border-2 border-red-600'}`}
-                            style={{ ...dragStyle, left: '4px', right: '4px' }}
+                        <div
+                            className={`absolute left-0 right-0 z-30 rounded-md shadow-strong pointer-events-none transition-all ${isDragValid ? 'bg-gradient-to-br from-primary to-primary-light border-2 border-accent' : 'bg-gradient-to-br from-red-500 to-red-600 border-2 border-red-700'}`}
+                            style={{ ...dragStyle, left: '6px', right: '6px' }}
                         >
-                            <div className="text-white text-xs font-bold p-1">
-                                {isDragValid ? 'New Booking' : 'Conflict'}
+                            <div className="text-white text-xs sm:text-sm font-bold p-2 flex items-center gap-2">
+                                {isDragValid ? (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    New Booking
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Conflict
+                                  </>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* Persisted Selection Block */}
                     {selectionStyle && (
-                        <div 
-                            className="absolute left-0 right-0 z-20 rounded bg-indigo-50 border-2 border-indigo-400 border-dashed pointer-events-none animate-pulse"
-                            style={{ ...selectionStyle, left: '4px', right: '4px' }}
+                        <div
+                            className="absolute left-0 right-0 z-20 rounded-md glass border-2 border-accent border-dashed pointer-events-none animate-pulse-slow shadow-glow-accent"
+                            style={{ ...selectionStyle, left: '6px', right: '6px' }}
                         >
-                             <div className="text-indigo-600 text-xs font-bold p-1">
+                             <div className="text-primary text-xs sm:text-sm font-bold p-2 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
                                 Selected
                             </div>
                         </div>
@@ -319,18 +342,24 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                         return (
                           <div
                             key={b.id}
-                            className={`absolute rounded px-1.5 py-0.5 text-[10px] leading-tight border-l-4 overflow-hidden shadow-sm z-20 transition-all hover:z-30 hover:shadow-md
-                              ${canView ? 'bg-indigo-100 border-primary text-primary cursor-pointer' : 'bg-slate-200 border-slate-400 text-slate-500 cursor-default'}
+                            className={`absolute rounded-md px-2 py-1.5 text-[10px] sm:text-xs leading-tight border-l-4 overflow-hidden shadow-medium z-20 transition-all hover:z-30 hover:shadow-strong active:scale-95
+                              ${canView ? 'bg-gradient-to-br from-indigo-50 to-blue-50 border-primary text-primary cursor-pointer' : 'glass border-slate-400 text-slate-600 cursor-default'}
                             `}
-                            style={{ ...style, left: '2px', right: '2px' }}
+                            style={{ ...style, left: '4px', right: '4px' }}
                             title={`${canView ? b.userDisplay : 'Reserved'}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (canView) onBookingClick(b);
                             }}
+                            onTouchEnd={(e) => {
+                                e.stopPropagation();
+                                if (canView) onBookingClick(b);
+                            }}
                           >
-                            <div className="font-bold truncate">{canView ? b.userDisplay : 'Reserved'}</div>
-                            <div className="truncate opacity-75">{new Date(b.startTime).getHours()}:{new Date(b.startTime).getMinutes().toString().padStart(2,'0')} - {new Date(b.endTime).getHours()}:{new Date(b.endTime).getMinutes().toString().padStart(2,'0')}</div>
+                            <div className="font-bold truncate text-[11px] sm:text-sm">{canView ? b.userDisplay : 'Reserved'}</div>
+                            <div className="truncate opacity-80 font-medium text-[10px] sm:text-xs">
+                              {new Date(b.startTime).getHours()}:{new Date(b.startTime).getMinutes().toString().padStart(2,'0')} - {new Date(b.endTime).getHours()}:{new Date(b.endTime).getMinutes().toString().padStart(2,'0')}
+                            </div>
                           </div>
                         )
                     })}
@@ -338,14 +367,14 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     {/* Library Closed Overlay */}
                     {closedStyle && (
                         <div
-                            className="absolute left-0 right-0 z-40 bg-slate-700/80 pointer-events-none flex items-center justify-center"
-                            style={{ ...closedStyle, left: '2px', right: '2px' }}
+                            className="absolute left-0 right-0 z-40 bg-gradient-to-br from-slate-700/90 to-slate-800/90 backdrop-blur-sm pointer-events-none flex items-center justify-center rounded-md border border-slate-600/50"
+                            style={{ ...closedStyle, left: '4px', right: '4px' }}
                         >
-                            <div className="text-white text-xs font-bold p-1 flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            <div className="text-white text-[11px] sm:text-sm font-bold p-2 flex items-center gap-2 flex-col sm:flex-row">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                                {closedLabel}
+                                <span>{closedLabel}</span>
                             </div>
                         </div>
                     )}

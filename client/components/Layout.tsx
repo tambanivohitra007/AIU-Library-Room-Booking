@@ -28,9 +28,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       {/* Header */}
       <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark shadow-strong backdrop-blur-xl border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
-           <div className="relative bg-white/10 backdrop-blur-sm rounded-xl p-2 shadow-glow hover-lift">
+           <div className="relative bg-white/10 backdrop-blur-sm rounded-md p-2 shadow-glow hover-lift">
              <img src={logo} alt="AIU Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90" />
-             <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-xl mix-blend-overlay"></div>
+             <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
            </div>
            <div>
              <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">AIU Library</h1>
@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
           </div>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="group relative bg-white/10 hover:bg-white/20 rounded-xl p-2 transition-all-smooth hover:shadow-glow-accent"
+            className="group relative bg-white/10 hover:bg-white/20 rounded-md p-2 transition-all-smooth hover:shadow-glow-accent"
           >
             <UserCircleIcon className="w-7 h-7 sm:w-8 sm:h-8 text-white group-hover:scale-110 transition-transform" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full border-2 border-primary-dark"></span>
@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
                 className="fixed inset-0 z-30"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 top-14 glass border border-white/20 rounded-2xl shadow-strong py-2 min-w-[220px] z-40 animate-slide-down">
+              <div className="absolute right-0 top-14 glass border border-white/20 rounded-lg shadow-strong py-2 min-w-[220px] z-40 animate-slide-down">
                 <div className="px-4 py-3 border-b border-slate-200/50">
                   <p className="text-sm font-bold text-slate-800">{user.name}</p>
                   <p className="text-xs text-slate-500 font-medium">{user.email || `${user.role.toLowerCase()}@apiu.edu`}</p>
@@ -110,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
             to={item.path}
             end={item.path === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1.5 px-4 py-2 rounded-xl transition-all-smooth ${
+              `flex flex-col items-center gap-1.5 px-4 py-2 rounded-md transition-all-smooth ${
                 isActive
                   ? 'text-primary bg-primary/10 shadow-soft'
                   : 'text-slate-500 hover:text-primary hover:bg-primary/5'
@@ -140,7 +140,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `relative p-3.5 rounded-2xl transition-all-smooth group ${
+                `relative p-3.5 rounded-lg transition-all-smooth group ${
                   isActive
                     ? 'bg-gradient-to-br from-primary to-primary-light text-white shadow-glow'
                     : 'text-slate-500 hover:bg-primary/5 hover:text-primary'

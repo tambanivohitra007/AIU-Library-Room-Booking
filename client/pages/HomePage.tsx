@@ -94,7 +94,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             </button>
             <button
               onClick={goToToday}
-              className="px-4 py-2.5 bg-gradient-to-r from-primary to-primary-light text-white text-sm font-bold rounded-md shadow-medium hover:shadow-glow transition-all-smooth"
+              className="px-3 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-md shadow-sm hover:shadow-md transition-all-smooth"
             >
               Today
             </button>
@@ -130,17 +130,14 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             <button
               key={room.id}
               onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
-              className={`relative px-5 py-3 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap hover-lift ${
+              className={`relative px-4 py-2 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap hover-lift ${
                 selectedRoomId === room.id
-                  ? 'bg-gradient-to-r from-primary to-primary-light text-white shadow-glow'
-                  : 'glass border border-white/20 text-slate-700 hover:border-primary/30 hover:text-primary shadow-soft'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'glass border border-slate-200 text-slate-700 hover:border-primary hover:text-primary shadow-sm'
               }`}
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
-              {selectedRoomId === room.id && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-light/50 to-accent/30 rounded-lg animate-pulse-slow"></div>
-              )}
-              <span className="relative">{room.name}</span>
+              <span>{room.name}</span>
             </button>
           ))}
         </div>

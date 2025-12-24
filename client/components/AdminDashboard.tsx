@@ -142,7 +142,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
               <p className="text-xs sm:text-sm font-semibold text-slate-500">Total Bookings</p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">{stats?.totalBookings || 0}</p>
             </div>
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-primary/20 to-primary-light/20 rounded-md flex items-center justify-center shadow-soft">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-primary/20 rounded-md flex items-center justify-center shadow-soft">
               <svg className="w-6 h-6 sm:w-7 sm:h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -161,7 +161,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 )}
               </p>
             </div>
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-green-100 to-emerald-100 rounded-md flex items-center justify-center shadow-soft">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-100 rounded-md flex items-center justify-center shadow-soft">
               <svg className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -175,7 +175,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
               <p className="text-xs sm:text-sm font-semibold text-slate-500">Total Users</p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">{stats?.totalUsers || 0}</p>
             </div>
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-md flex items-center justify-center shadow-soft">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-100 rounded-md flex items-center justify-center shadow-soft">
               <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
@@ -189,7 +189,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
               <p className="text-xs sm:text-sm font-semibold text-slate-500">Total Rooms</p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">{rooms.length}</p>
             </div>
-            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-purple-100 to-pink-100 rounded-md flex items-center justify-center shadow-soft">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-purple-100 rounded-md flex items-center justify-center shadow-soft">
               <svg className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -218,7 +218,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 </div>
                 <div className="w-full bg-slate-200/50 rounded-full h-2.5 overflow-hidden shadow-inner">
                   <div
-                    className="bg-gradient-to-r from-primary to-primary-light h-2.5 rounded-full transition-all-smooth shadow-soft"
+                    className="bg-primary h-2.5 rounded-full transition-all-smooth shadow-soft"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -258,7 +258,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 </p>
               </div>
               <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft self-start sm:self-auto ${
-                booking.status === 'CONFIRMED' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700' : 'bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-red-700'
+                booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
               }`}>
                 {booking.status}
               </span>
@@ -303,7 +303,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           </select>
           <button
             onClick={onExportCSV}
-            className="px-4 py-3 bg-gradient-to-r from-primary to-primary-light hover:shadow-glow text-white rounded-md font-bold transition-all-smooth shadow-medium flex items-center justify-center gap-2 group"
+            className="px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
           >
             <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -316,7 +316,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       {/* Bookings - Desktop Table & Mobile Cards */}
       {filteredBookings.length === 0 ? (
         <div className="glass rounded-lg border border-white/20 p-12 text-center shadow-medium">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
             <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -370,9 +370,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                       </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                          booking.status === 'CONFIRMED' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700' :
-                          booking.status === 'CANCELLED' ? 'bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-red-700' :
-                          'bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 text-slate-700'
+                          booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                          booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
+                          'bg-slate-50 border border-slate-200 text-slate-700'
                         }`}>
                           {booking.status}
                         </span>
@@ -381,7 +381,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                         {booking.status === 'CONFIRMED' && (
                           <button
                             onClick={() => onCancelBooking(booking.id)}
-                            className="px-3 py-1.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-soft hover:shadow-medium"
+                            className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
                           >
                             Cancel
                           </button>
@@ -401,7 +401,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-light rounded-md flex items-center justify-center shadow-glow flex-shrink-0">
+                      <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center shadow-md flex-shrink-0">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
@@ -413,9 +413,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     </div>
                   </div>
                   <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                    booking.status === 'CONFIRMED' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700' :
-                    booking.status === 'CANCELLED' ? 'bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-red-700' :
-                    'bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 text-slate-700'
+                    booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                    booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
+                    'bg-slate-50 border border-slate-200 text-slate-700'
                   }`}>
                     {booking.status}
                   </span>
@@ -442,7 +442,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
                   <button
                     onClick={() => setViewingAttendeesBooking(booking)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors group shadow-soft"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors group shadow-soft"
                   >
                     <svg className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -452,7 +452,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   {booking.status === 'CONFIRMED' && (
                     <button
                       onClick={() => onCancelBooking(booking.id)}
-                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium"
+                      className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm hover:shadow-md"
                     >
                       Cancel
                     </button>
@@ -487,7 +487,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowImportModal(true)}
-              className="flex-1 sm:flex-none px-4 py-2.5 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+              className="flex-1 sm:flex-none px-3 py-2 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
             >
               <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -496,7 +496,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             </button>
             <button
               onClick={() => setShowAddUserModal(true)}
-              className="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-primary to-primary-light hover:shadow-glow text-white rounded-md font-bold text-sm transition-all-smooth shadow-medium flex items-center justify-center gap-2 group"
+              className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
             >
               <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -525,7 +525,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                 <td className="p-4 text-slate-600 font-medium">{user.email}</td>
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                    user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
+                    user.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
                   }`}>
                     {user.role}
                   </span>
@@ -543,7 +543,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     </button>
                     <button
                       onClick={() => setDeletingUser(user)}
-                      className="px-3 py-1.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-soft hover:shadow-medium"
+                      className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
                     >
                       Delete
                     </button>
@@ -659,7 +659,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           </h3>
           <button
             onClick={() => setShowAddRoomModal(true)}
-            className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-primary to-primary-light hover:shadow-glow text-white rounded-md font-bold text-sm transition-all-smooth shadow-medium flex items-center justify-center gap-2 group"
+            className="w-full sm:w-auto px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
           >
             <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -769,9 +769,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
-              className={`px-4 sm:px-6 py-3 rounded-md font-bold text-xs sm:text-sm transition-all-smooth flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 sm:px-4 py-2 rounded-md font-bold text-xs sm:text-sm transition-all-smooth flex items-center gap-2 whitespace-nowrap ${
                 selectedTab === tab.id
-                  ? 'bg-gradient-to-r from-primary to-primary-light text-white shadow-glow'
+                  ? 'bg-primary text-white shadow-md'
                   : 'text-slate-600 hover:bg-primary/5 hover:text-primary'
               }`}
             >

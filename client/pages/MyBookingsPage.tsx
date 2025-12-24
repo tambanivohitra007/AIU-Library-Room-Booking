@@ -28,7 +28,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
 
       {myBookings.length === 0 ? (
         <div className="glass rounded-lg border border-white/20 shadow-medium p-12 text-center animate-slide-up">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
             <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -53,7 +53,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-md flex items-center justify-center shadow-glow">
+                        <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center shadow-md">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
@@ -62,9 +62,9 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                           <h3 className="text-lg font-bold text-slate-800">{room?.name || 'Unknown Room'}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                              b.status === 'CONFIRMED' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-700' :
-                              b.status === 'CANCELLED' ? 'bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 text-red-700' :
-                              'bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 text-slate-700'
+                              b.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                              b.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
+                              'bg-slate-50 border border-slate-200 text-slate-700'
                             }`}>
                               {b.status}
                             </span>
@@ -108,7 +108,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                     {canCancel && (
                       <button
                         onClick={() => onCancelBooking(b.id)}
-                        className="group px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center gap-2"
+                        className="group px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm hover:shadow-md flex items-center gap-2"
                         title="Cancel Booking"
                       >
                         <TrashIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />

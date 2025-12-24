@@ -122,9 +122,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-primary via-primary-light to-primary hover:shadow-glow text-white font-bold py-4 rounded-md shadow-medium transition-all-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6 relative overflow-hidden group"
+            className="w-full bg-primary hover:bg-primary-light text-white font-bold py-2.5 rounded-md shadow-sm hover:shadow-md transition-all-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-light to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <span className="relative flex items-center gap-2">
               {loading && <LoadingSpinner size="sm" color="white" />}
               {loading ? 'Signing in...' : 'Sign In'}

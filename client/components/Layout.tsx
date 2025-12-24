@@ -28,7 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       {/* Header */}
       <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark shadow-strong  border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
-           <div className="relative bg-white/20 rounded-md p-2 shadow-glow hover-lift">
+           <div className="relative hover-lift">
              <img src={logo} alt="AIU Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90" />
              <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
            </div>
@@ -142,7 +142,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
               className={({ isActive }) =>
                 `relative p-3.5 rounded-lg transition-all-smooth group ${
                   isActive
-                    ? 'bg-gradient-to-br from-primary to-primary-light text-white shadow-glow'
+                    ? 'bg-primary text-white shadow-md'
                     : 'text-slate-500 hover:bg-primary/5 hover:text-primary'
                 }`
               }

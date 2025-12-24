@@ -47,10 +47,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
         </div>
 
         <div className="relative text-center py-10 px-8 bg-gradient-to-br from-primary via-primary-light to-primary rounded-t-3xl">
-          <div className="flex items-center justify-center mb-6 animate-float">
-            <div className="relative bg-white/20 rounded-lg p-4 shadow-glow">
-              <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain mix-blend-luminosity opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-white/10 rounded-lg mix-blend-overlay"></div>
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain" />              
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Welcome Back</h1>

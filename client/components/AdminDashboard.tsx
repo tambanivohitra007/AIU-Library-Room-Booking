@@ -279,12 +279,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             placeholder="Search bookings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth font-medium shadow-soft"
+            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth font-medium shadow-soft"
+            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
           >
             <option value="all">All Status</option>
             <option value="CONFIRMED">Confirmed</option>
@@ -294,7 +294,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           <select
             value={filterRoom}
             onChange={(e) => setFilterRoom(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth font-medium shadow-soft"
+            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
           >
             <option value="all">All Rooms</option>
             {rooms.map(room => (

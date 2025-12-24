@@ -190,7 +190,7 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
           <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-20 pt-2 sticky left-0">
              {hours.map((h, idx) => (
                <div key={h} className="flex-1 border-b border-transparent relative">
-                 <span className={`absolute right-2 sm:right-3 ${idx === 0 ? 'top-0' : '-top-2.5'} bg-gradient-to-r from-primary/80 to-accent/80 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold`}>
+                 <span className={`absolute right-2 sm:right-3 ${idx === 0 ? 'top-0' : '-top-2.5'} text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs `}>
                    {h}:00
                  </span>
                </div>
@@ -367,7 +367,7 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     {/* Library Closed Overlay */}
                     {closedStyle && (
                         <div
-                            className="absolute left-0 right-0 z-40 bg-gradient-to-br from-slate-700/90 to-slate-800/90 backdrop-blur-sm pointer-events-none flex items-center justify-center rounded-md border border-slate-600/50"
+                            className="absolute left-0 right-0 z-40 bg-gradient-to-br from-slate-700 to-slate-800 pointer-events-none flex items-center justify-center rounded-md border border-slate-600/50"
                             style={{ ...closedStyle, left: '4px', right: '4px' }}
                         >
                             <div className="text-white text-[11px] sm:text-sm font-bold p-2 flex items-center gap-2 flex-col sm:flex-row">

@@ -26,9 +26,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
       {/* Header */}
-      <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark shadow-strong backdrop-blur-xl border-b border-white/10">
+      <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark shadow-strong  border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
-           <div className="relative bg-white/10 backdrop-blur-sm rounded-md p-2 shadow-glow hover-lift">
+           <div className="relative bg-white/20 rounded-md p-2 shadow-glow hover-lift">
              <img src={logo} alt="AIU Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90" />
              <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
            </div>
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       </main>
 
       {/* Bottom Navigation (Mobile) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/20 flex justify-around py-3 pb-safe z-30 shadow-strong backdrop-blur-xl">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/20 flex justify-around py-3 pb-safe z-30 shadow-strong ">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -132,7 +132,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       </nav>
 
       {/* Desktop Navigation (Sidebar) */}
-      <div className="hidden sm:flex fixed left-0 top-[72px] bottom-0 w-20 flex-col items-center py-6 glass border-r border-white/20 z-10 backdrop-blur-xl">
+      <div className="hidden sm:flex fixed left-0 top-[72px] bottom-0 w-20 flex-col items-center py-6 glass border-r border-white/20 z-10 ">
         <div className="flex flex-col gap-3 w-full px-3">
           {navItems.map((item) => (
             <NavLink

@@ -48,7 +48,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
 
         <div className="relative text-center py-10 px-8 bg-gradient-to-br from-primary via-primary-light to-primary rounded-t-3xl">
           <div className="flex items-center justify-center mb-6 animate-float">
-            <div className="relative bg-white/10 backdrop-blur-sm rounded-lg p-4 shadow-glow">
+            <div className="relative bg-white/20 rounded-lg p-4 shadow-glow">
               <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain mix-blend-luminosity opacity-90" />
               <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-white/10 rounded-lg mix-blend-overlay"></div>
             </div>
@@ -91,7 +91,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                 placeholder="your.email@my.apiu.edu"
                 required
               />
@@ -112,7 +112,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
+                className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
                 placeholder="••••••••"
                 required
               />

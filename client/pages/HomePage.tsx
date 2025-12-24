@@ -130,10 +130,10 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
             <button
               key={room.id}
               onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
-              className={`relative px-4 py-2 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap hover-lift ${
+              className={`relative px-4 py-2 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap  ${
                 selectedRoomId === room.id
-                  ? 'bg-primary text-white shadow-md'
-                  : 'glass border border-slate-200 text-slate-700 hover:border-primary hover:text-primary shadow-sm'
+                  ? 'bg-primary text-white'
+                  : 'glass border border-slate-200 text-slate-700  hover:text-primary shadow-sm'
               }`}
               style={{ animationDelay: `${idx * 0.05}s` }}
             >

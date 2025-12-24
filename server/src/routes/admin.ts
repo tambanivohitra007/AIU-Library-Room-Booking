@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
@@ -19,7 +19,7 @@ router.use(requireAdmin);
 router.patch('/users/:id/role', [
   body('role').isIn(['STUDENT', 'ADMIN']).withMessage('Invalid role'),
   handleValidationErrors,
-], async (req: AuthRequest, res) => {
+], async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -85,7 +85,7 @@ router.post('/users/admin', [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('name').trim().notEmpty().withMessage('Name is required'),
   handleValidationErrors,
-], async (req: AuthRequest, res) => {
+], async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, name } = req.body;
 
@@ -132,7 +132,7 @@ router.post('/rooms', [
   body('description').trim().notEmpty().withMessage('Description is required'),
   body('features').isArray().withMessage('Features must be an array'),
   handleValidationErrors,
-], async (req: AuthRequest, res) => {
+], async (req: AuthRequest, res: Response) => {
   try {
     const { name, capacity, description, features } = req.body;
 
@@ -164,7 +164,7 @@ router.put('/rooms/:id', [
   body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
   body('features').optional().isArray().withMessage('Features must be an array'),
   handleValidationErrors,
-], async (req: AuthRequest, res) => {
+], async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { name, capacity, description, features } = req.body;
@@ -285,7 +285,7 @@ router.get('/stats', async (req: AuthRequest, res) => {
       totalBookings,
       activeBookings,
       totalRooms,
-      recentBookings: recentBookings.map(b => ({
+      recentBookings: recentBookings.map((b: any) => ({
         id: b.id,
         userName: b.user.name,
         roomName: b.room.name,

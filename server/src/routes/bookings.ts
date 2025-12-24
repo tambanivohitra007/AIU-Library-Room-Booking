@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
@@ -25,7 +25,7 @@ router.get('/', async (req: AuthRequest, res) => {
     });
 
     // Format bookings to match client expectations
-    const formattedBookings = bookings.map(booking => ({
+    const formattedBookings = bookings.map((booking: any) => ({
       id: booking.id,
       roomId: booking.roomId,
       userId: booking.userId,
@@ -33,7 +33,7 @@ router.get('/', async (req: AuthRequest, res) => {
       startTime: booking.startTime.toISOString(),
       endTime: booking.endTime.toISOString(),
       purpose: booking.purpose,
-      attendees: booking.attendees.map(a => ({
+      attendees: booking.attendees.map((a: any) => ({
         name: a.name,
         studentId: a.studentId,
         isCompanion: a.isCompanion,
@@ -91,7 +91,7 @@ router.post('/check-conflicts', async (req: AuthRequest, res) => {
 
     res.json({
       hasConflict: conflicts.length > 0,
-      conflicts: conflicts.map(c => ({
+      conflicts: conflicts.map((c: any) => ({
         id: c.id,
         startTime: c.startTime.toISOString(),
         endTime: c.endTime.toISOString(),
@@ -138,7 +138,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 });
 
 // Create booking
-router.post('/', validateBooking, async (req: AuthRequest, res) => {
+router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
   try {
     const { roomId, startTime, endTime, purpose, attendees } = req.body;
     const userId = req.userId!; // From JWT token

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { generateToken, authenticateToken, AuthRequest } from '../middleware/auth.js';
@@ -14,7 +14,7 @@ const STUDENT_DOMAIN = '@my.apiu.edu';
 const STAFF_DOMAIN = '@apiu.edu';
 
 // Register new user (student only - admins created manually)
-router.post('/register', authLimiter, validateRegister, async (req, res) => {
+router.post('/register', authLimiter, validateRegister, async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
 
@@ -74,7 +74,7 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
 });
 
 // Login
-router.post('/login', authLimiter, validateLogin, async (req, res) => {
+router.post('/login', authLimiter, validateLogin, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 

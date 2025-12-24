@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
 
@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   try {
     const rooms = await prisma.room.findMany();
     // Parse features JSON string to array
-    const roomsWithParsedFeatures = rooms.map(room => ({
+    const roomsWithParsedFeatures = rooms.map((room: any) => ({
       ...room,
       features: JSON.parse(room.features),
     }));

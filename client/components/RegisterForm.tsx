@@ -60,9 +60,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
 
         <div className="relative text-center py-10 px-8 bg-gradient-to-br from-primary via-primary-light to-primary rounded-t-lg">
           <div className="flex items-center justify-center mb-6">
-             <div className="relative">
-                          <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain" />              
-                        </div>
+             <div className="relative"> 
+                <img src={logo} alt="AIU Logo" className="w-40 h-32 object-contain" />              
+             </div>
+                         
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Join AIU Library</h1>
           <p className="text-blue-100 text-sm font-medium">Create your account to get started</p>

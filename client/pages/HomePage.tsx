@@ -107,15 +107,38 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-            <button
-              onClick={() => setShowMiniCalendar(!showMiniCalendar)}
-              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium ml-1 group"
-              aria-label="Open calendar picker"
-            >
-              <svg className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowMiniCalendar(!showMiniCalendar)}
+                className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium ml-1 group"
+                aria-label="Open calendar picker"
+              >
+                <svg className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+              
+              {/* Mini Calendar Popup */}
+              {showMiniCalendar && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 bg-black bg-opacity-20 z-40"
+                    onClick={() => setShowMiniCalendar(false)}
+                  />
+                  {/* Calendar */}
+                  <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:absolute sm:top-full sm:left-auto sm:right-0 sm:translate-x-0 sm:translate-y-2 z-50">
+                    <MiniCalendar
+                      selectedDate={currentDate}
+                      onDateSelect={(date) => {
+                        setCurrentDate(date);
+                        setShowMiniCalendar(false);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* View Switcher - Mobile */}
@@ -170,27 +193,6 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           </div>
         )}
       </div>
-
-      {/* Mini Calendar Popup */}
-      {showMiniCalendar && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-20 z-40"
-            onClick={() => setShowMiniCalendar(false)}
-          />
-          {/* Calendar */}
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:top-24 sm:left-4 sm:translate-x-0 sm:translate-y-0 z-50">
-            <MiniCalendar
-              selectedDate={currentDate}
-              onDateSelect={(date) => {
-                setCurrentDate(date);
-                setShowMiniCalendar(false);
-              }}
-            />
-          </div>
-        </>
-      )}
 
       {/* Main Area: Split View */}
       {activeRoom && (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon, LockIcon } from './Icons';
 import { User, UserRole } from '../types';
 import logo from '../assets/logo_small.jpg';
@@ -6,22 +7,20 @@ import logo from '../assets/logo_small.jpg';
 interface LayoutProps {
   children: React.ReactNode;
   user: User;
-  onNavigate: (page: string) => void;
-  currentPage: string;
   onLogout: () => void;
   onChangePassword: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage, onLogout, onChangePassword }) => {
+const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassword }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navItems = [
-    { id: 'home', label: 'Rooms', icon: HomeIcon },
-    { id: 'my-bookings', label: 'My Bookings', icon: CalendarIcon },
+    { path: '/', label: 'Rooms', icon: HomeIcon },
+    { path: '/my-bookings', label: 'My Bookings', icon: CalendarIcon },
   ];
 
   if (user.role === UserRole.ADMIN) {
-    navItems.push({ id: 'admin', label: 'Admin', icon: SettingsIcon });
+    navItems.push({ path: '/admin', label: 'Admin', icon: SettingsIcon });
   }
 
   return (
@@ -62,6 +61,16 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
                   <LockIcon className="w-4 h-4" />
                   Change Password
                 </button>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onLogout();
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <LogOutIcon className="w-4 h-4" />
+                  Logout
+                </button>
               </div>
             </>
           )}
@@ -77,19 +86,23 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-3 pb-safe z-30 shadow-lg">
-        {navItems.map((item) => {
-          const isActive = currentPage === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}
-            >
-              <item.icon className={`w-6 h-6 ${isActive ? 'stroke-2' : ''}`} />
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
-          );
-        })}
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon className={`w-6 h-6 ${isActive ? 'stroke-2' : ''}`} />
+                <span className="text-xs font-medium">{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
         <button
           onClick={onLogout}
           className="flex flex-col items-center gap-1 text-slate-400 hover:text-red-500"
@@ -101,28 +114,19 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, currentPage
 
       {/* Desktop Navigation (Sidebar-ish but simpler for this demo) */}
       <div className="hidden sm:flex fixed left-0 top-16 bottom-0 w-16 flex-col items-center py-4 bg-white border-r border-slate-200 z-10">
-        {navItems.map((item) => {
-           const isActive = currentPage === item.id;
-           return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`p-3 mb-2 rounded-xl transition-colors ${isActive ? 'bg-indigo-50 text-primary' : 'text-slate-400 hover:bg-slate-50'}`}
-              title={item.label}
-            >
-              <item.icon className="w-6 h-6" />
-            </button>
-           )
-        })}
-        {/* Spacer to push logout button to bottom */}
-        <div className="flex-1"></div>
-        <button
-          onClick={onLogout}
-          className="p-3 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-          title="Logout"
-        >
-          <LogOutIcon className="w-6 h-6" />
-        </button>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) =>
+              `p-3 mb-2 rounded-xl transition-colors ${isActive ? 'bg-indigo-50 text-primary' : 'text-slate-400 hover:bg-slate-50'}`
+            }
+            title={item.label}
+          >
+            <item.icon className="w-6 h-6" />
+          </NavLink>
+        ))}
       </div>
     </div>
   );

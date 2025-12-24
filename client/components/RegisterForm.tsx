@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import logo from '../assets/logo.webp';
 
 interface RegisterFormProps {
   onRegister: (name: string, email: string, password: string) => Promise<void>;
-  onSwitchToLogin: () => void;
   error: string | null;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin, error }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -138,12 +138,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, onSwitchToLogin
         <div className="mt-6 text-center">
           <p className="text-slate-600 text-sm">
             Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
+            <Link
+              to="/login"
               className="text-primary font-semibold hover:underline"
             >
               Login
-            </button>
+            </Link>
           </p>
         </div>
         </div>

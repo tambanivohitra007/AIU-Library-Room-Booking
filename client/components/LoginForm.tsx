@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import logo from '../assets/logo.webp';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
-  onSwitchToRegister: () => void;
   error: string | null;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onSwitchToRegister, error }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,12 +92,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onSwitchToRegister, erro
         <div className="mt-6 text-center">
           <p className="text-slate-600 text-sm">
             Don't have an account?{' '}
-            <button
-              onClick={onSwitchToRegister}
+            <Link
+              to="/register"
               className="text-primary font-semibold hover:underline"
             >
               Register
-            </button>
+            </Link>
           </p>
         </div>
         </div>

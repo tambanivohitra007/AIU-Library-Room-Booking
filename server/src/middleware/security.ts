@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 // Rate limiter for authentication routes
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: process.env.NODE_ENV === 'production' ? 5 : 100, // 5 in production, 100 in development
   message: 'Too many login attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,

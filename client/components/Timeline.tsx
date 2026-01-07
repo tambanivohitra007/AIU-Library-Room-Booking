@@ -282,7 +282,6 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                                     onMouseDown={(e) => handleMouseDown(dayIndex, (hIndex * 60) + m, e)}
                                     onMouseEnter={() => handleMouseEnter(dayIndex, (hIndex * 60) + m)}
                                     onTouchStart={(e) => {
-                                      e.preventDefault();
                                       handleMouseDown(dayIndex, (hIndex * 60) + m, { button: 0 } as any);
                                     }}
                                 />

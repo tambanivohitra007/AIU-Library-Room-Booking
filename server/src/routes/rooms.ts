@@ -150,16 +150,25 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
       return res.status(404).json({ error: 'Room not found' });
     }
 
-    // Check if there are any bookings for this room
-    const bookingsCount = await prisma.booking.count({
-      where: { roomId: req.params.id },
+    // Check if there are any active bookings for this room
+    const activeBookingsCount = await prisma.booking.count({
+      where: { 
+        roomId: req.params.id,
+        status: 'CONFIRMED'
+      },
     });
 
-    if (bookingsCount > 0) {
+    if (activeBookingsCount > 0) {
       return res.status(400).json({
-        error: `Cannot delete room with existing bookings. This room has ${bookingsCount} booking(s).`
+        error: `Cannot delete room with active bookings. This room has ${activeBookingsCount} active booking(s). Please cancel them first.`
       });
     }
+
+    // Delete all bookings associated with this room first (including CANCELLED and COMPLETED)
+    // This is necessary because there is no CASCADE delete on the database schema
+    await prisma.booking.deleteMany({
+      where: { roomId: req.params.id }
+    });
 
     // Delete room
     await prisma.room.delete({

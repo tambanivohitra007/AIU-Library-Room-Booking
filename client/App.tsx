@@ -42,6 +42,7 @@ function App() {
 
   // Force refresh trigger
   const [tick, setTick] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const refresh = () => setTick(t => t + 1);
 
   useEffect(() => {
@@ -66,21 +67,41 @@ function App() {
     checkAuth();
   }, []);
 
+  // Poll for updates every 5 seconds when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const intervalId = setInterval(() => {
+      refresh();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
     // Load data only if authenticated
     const loadData = async () => {
-      setIsDataLoading(true);
+      // Don't show loading spinner for background refreshes unless it's the first load
+      if (rooms.length === 0) setIsDataLoading(true);
+      
       try {
-        const loadedRooms = await api.getRooms();
+        const [loadedRooms, loadedBookings] = await Promise.all([
+          api.getRooms(),
+          api.getBookings()
+        ]);
+        
+        // Only update state if data has actually changed to prevent unnecessary re-renders
+        // Simple comparison by length + last item ID or timestamp would be better, but deep check is expensive
+        // For now, we just set state which triggers re-render. React handles DOM diffing.
         setRooms(loadedRooms);
-
-        const loadedBookings = await api.getBookings();
         setBookings(loadedBookings);
+        setLastRefreshed(new Date());
       } catch (error) {
         console.error('Failed to load data:', error);
-        toast.error('Failed to load data');
+        // Only show toast error on initial load failure, not on polling failure to avoid spamming the user
+        if (rooms.length === 0) toast.error('Failed to load data');
       } finally {
         setIsDataLoading(false);
       }

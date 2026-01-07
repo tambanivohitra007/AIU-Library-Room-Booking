@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Room, Attendee } from '../types';
 import { api } from '../services/api';
-import { MAX_ATTENDEES, MIN_ATTENDEES } from '../constants';
-import { UsersIcon, ClockIcon, AlertTriangleIcon } from './Icons';
+import { UsersIcon, ClockIcon, AlertTriangleIcon, XIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -28,6 +28,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictDetails, setConflictDetails] = useState<string | null>(null);
   const [checkingConflict, setCheckingConflict] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Sync state if props change (e.g. user selects new slot on calendar while form is open)
   useEffect(() => {
@@ -124,12 +131,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
     const uniqueRaw = Array.from(new Set(rawLines));
 
-    if (uniqueRaw.length + 1 < MIN_ATTENDEES) {
-       setError(`Min ${MIN_ATTENDEES} people (You + ${MIN_ATTENDEES - 1} others).`);
+    const minAttendees = selectedRoom.minCapacity;
+    const maxAttendees = selectedRoom.maxCapacity;
+
+    if (uniqueRaw.length + 1 < minAttendees) {
+       setError(`Minimum ${minAttendees} people required (You + ${minAttendees - 1} others).`);
        return;
     }
-    if (uniqueRaw.length + 1 > MAX_ATTENDEES) {
-        setError(`Max ${MAX_ATTENDEES} people.`);
+    if (uniqueRaw.length + 1 > maxAttendees) {
+        setError(`Maximum capacity is ${maxAttendees} people.`);
         return;
     }
 
@@ -160,7 +170,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     }
   };
 
-  const isCountValid = (attendeeCount + 1) >= MIN_ATTENDEES && (attendeeCount + 1) <= MAX_ATTENDEES;
+  const isCountValid = (attendeeCount + 1) >= selectedRoom.minCapacity && (attendeeCount + 1) <= selectedRoom.maxCapacity;
   const durationMinutes = (bookingEnd.getTime() - bookingStart.getTime()) / 60000;
 
   // Format time for input type="time"
@@ -168,14 +178,21 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  return (
-    <div className="h-full flex flex-col bg-white border-l border-slate-200 shadow-xl">
-        <div className="bg-slate-800 text-white p-4">
-            <h3 className="font-bold text-lg">New Booking</h3>
-            <p className="text-slate-300 text-sm">{selectedRoom.name}</p>
+  const formContent = (
+    <div className={`flex flex-col bg-white shadow-xl ${isMobile ? 'fixed inset-0 z-[100] animate-slide-up' : 'h-full border-l border-slate-200'}`}>
+        <div className="bg-slate-800 text-white p-4 flex items-center justify-between shadow-md shrink-0">
+            <div>
+              <h3 className="font-bold text-lg">New Booking</h3>
+              <p className="text-slate-300 text-sm">{selectedRoom.name}</p>
+            </div>
+            {isMobile && (
+              <button onClick={onCancel} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
+                <XIcon className="w-5 h-5 text-white" />
+              </button>
+            )}
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar">
             {checkingConflict && (
                 <div className="bg-blue-50 p-3 text-sm text-blue-600 rounded border border-blue-200 flex items-center gap-2">
                     <LoadingSpinner size="sm" color="primary" />
@@ -254,7 +271,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
                     <span className={isCountValid ? 'text-green-600' : 'text-orange-500'}>
                         Count: {attendeeCount} (+ You)
                     </span>
-                    <span className="text-slate-400">Min {MIN_ATTENDEES}, Max {MAX_ATTENDEES}</span>
+                    <span className="text-slate-400">Min {selectedRoom.minCapacity}, Max {selectedRoom.maxCapacity}</span>
                 </div>
             </div>
 
@@ -270,7 +287,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
             </div>
         </form>
 
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3 shrink-0 pb-safe">
              <button 
                 type="button"
                 onClick={onCancel}
@@ -289,6 +306,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         </div>
     </div>
   );
+
+  if (isMobile) {
+    return createPortal(formContent, document.body);
+  }
+
+  return formContent;
 };
 
 export default BookingForm;

@@ -14,8 +14,12 @@ interface BookingFormProps {
   onCancel: () => void;
 }
 
-const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endTime, onSuccess, onCancel }) => {
+const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: initialStartTime, endTime: initialEndTime, onSuccess, onCancel }) => {
   const toast = useToast();
+  // Local state for time selection (allows editing in form)
+  const [bookingStart, setBookingStart] = useState(initialStartTime);
+  const [bookingEnd, setBookingEnd] = useState(initialEndTime);
+  
   const [purpose, setPurpose] = useState('');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendeeCount, setAttendeeCount] = useState(0);
@@ -25,11 +29,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
   const [conflictDetails, setConflictDetails] = useState<string | null>(null);
   const [checkingConflict, setCheckingConflict] = useState(false);
 
+  // Sync state if props change (e.g. user selects new slot on calendar while form is open)
+  useEffect(() => {
+    setBookingStart(initialStartTime);
+    setBookingEnd(initialEndTime);
+  }, [initialStartTime, initialEndTime]);
+
   useEffect(() => {
     // Reset form when times change
     setError(null);
     checkForConflicts();
-  }, [startTime, endTime]);
+  }, [bookingStart, bookingEnd]);
 
   const checkForConflicts = async () => {
     setCheckingConflict(true);
@@ -39,8 +49,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     try {
       const result = await api.checkConflicts({
         roomId: selectedRoom.id,
-        startTime,
-        endTime,
+        startTime: bookingStart,
+        endTime: bookingEnd,
       });
 
       if (result.hasConflict && result.conflicts.length > 0) {
@@ -59,6 +69,30 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     }
   };
 
+  // Helper to handle time changes
+  const handleTimeChange = (type: 'start' | 'end', timeString: string) => {
+    if (!timeString) return;
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const newDate = new Date(type === 'start' ? bookingStart : bookingEnd);
+    newDate.setHours(hours, minutes);
+
+    if (type === 'start') {
+      setBookingStart(newDate);
+      // Auto-adjust end time if start crosses end
+      if (newDate >= bookingEnd) {
+        const newEnd = new Date(newDate);
+        newEnd.setMinutes(newEnd.getMinutes() + 15); // Default 15 min duration
+        setBookingEnd(newEnd);
+      }
+    } else {
+      // Validate booking order
+      if (newDate > bookingStart) {
+        setBookingEnd(newDate);
+      }
+    }
+  };
+
   // Parse attendees
   useEffect(() => {
     const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
@@ -72,14 +106,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
 
     // Validate booking is not in the past
     const now = new Date();
-    if (startTime <= now) {
+    if (bookingStart <= now) {
       setError('Cannot book a time slot in the past. Please select a future time.');
       return;
     }
 
-    if (endTime <= now) {
+    if (bookingEnd <= now) {
       setError('Booking end time cannot be in the past.');
       return;
+    }
+
+    if (bookingStart >= bookingEnd) {
+       setError('End time must be after start time.');
+       return;
     }
 
     const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
@@ -104,8 +143,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
     try {
       await api.createBooking({
         roomId: selectedRoom.id,
-        startTime,
-        endTime,
+        startTime: bookingStart,
+        endTime: bookingEnd,
         purpose,
         attendees
       });
@@ -122,7 +161,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
   };
 
   const isCountValid = (attendeeCount + 1) >= MIN_ATTENDEES && (attendeeCount + 1) <= MAX_ATTENDEES;
-  const durationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
+  const durationMinutes = (bookingEnd.getTime() - bookingStart.getTime()) / 60000;
+
+  // Format time for input type="time"
+  const formatTimeInput = (date: Date) => {
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="h-full flex flex-col bg-white border-l border-slate-200 shadow-xl">
@@ -156,16 +200,38 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime, endT
                 </div>
             )}
 
-            <div className="bg-indigo-50 p-3 rounded-lg flex items-start gap-3 border border-indigo-100">
-                <ClockIcon className="w-5 h-5 text-primary mt-0.5" />
-                <div>
-                    <div className="text-sm font-semibold text-slate-800">
-                        {startTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}
+            <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-indigo-100 pb-2">
+                    <ClockIcon className="w-5 h-5 text-primary" />
+                    <span>
+                        {bookingStart.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}
+                    </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Start Time</label>
+                        <input 
+                            type="time" 
+                            className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
+                            value={formatTimeInput(bookingStart)}
+                            onChange={(e) => handleTimeChange('start', e.target.value)}
+                        />
                     </div>
-                    <div className="text-lg font-bold text-primary">
-                        {startTime.getHours()}:{startTime.getMinutes().toString().padStart(2,'0')} - {endTime.getHours()}:{endTime.getMinutes().toString().padStart(2,'0')}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">End Time</label>
+                         <input 
+                            type="time" 
+                            className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
+                            value={formatTimeInput(bookingEnd)}
+                            onChange={(e) => handleTimeChange('end', e.target.value)}
+                            min={formatTimeInput(bookingStart)}
+                        />
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">Duration: {durationMinutes / 60}h</div>
+                </div>
+                
+                <div className="text-xs text-slate-500 text-right font-medium">
+                    Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m
                 </div>
             </div>
 

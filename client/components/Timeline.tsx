@@ -161,50 +161,49 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
 
 
   return (
-    <div className="flex flex-col h-full select-none">
-      {/* Header Row: Days */}
-      <div className="flex border-b border-slate-200 glass sticky top-0 z-30 shadow-soft">
-        <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10"></div> {/* Time Label Spacer */}
-        <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
-          {days.map((day, i) => {
-             const today = isToday(day);
-             return (
-              <div key={i} className={`text-center py-3 sm:py-4 transition-colors ${today ? 'bg-gradient-to-b from-primary/10 to-accent/5' : 'glass'}`}>
-                <div className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today ? 'text-primary' : 'text-slate-600'}`}>
-                  {day.toLocaleDateString('en-US', { weekday: 'short' })}
+    <div className="flex-1 overflow-auto relative custom-scrollbar select-none">
+      <div className="min-w-[700px] min-h-[500px] h-full flex flex-col relative">
+        {/* Header Row: Days */}
+        <div className="flex border-b border-slate-200 glass sticky top-0 z-40 shadow-soft">
+          <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 sticky left-0 z-50"></div> {/* Time Label Spacer */}
+          <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
+            {days.map((day, i) => {
+              const today = isToday(day);
+              return (
+                <div key={i} className={`text-center py-3 sm:py-4 transition-colors ${today ? 'bg-gradient-to-b from-primary/10 to-accent/5' : 'glass'}`}>
+                  <div className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today ? 'text-primary' : 'text-slate-600'}`}>
+                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </div>
+                  <div className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-gradient-to-br from-primary to-primary-light w-7 h-7 sm:w-9 sm:h-9 rounded-md flex items-center justify-center mx-auto shadow-glow' : 'text-slate-800'}`}>
+                    {day.getDate()}
+                  </div>
                 </div>
-                <div className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-gradient-to-br from-primary to-primary-light w-7 h-7 sm:w-9 sm:h-9 rounded-md flex items-center justify-center mx-auto shadow-glow' : 'text-slate-800'}`}>
-                  {day.getDate()}
-                </div>
-              </div>
-             )
-          })}
-        </div>
-      </div>
-
-      {/* Grid Body */}
-      <div className="flex-1 overflow-hidden relative">
-        <div className="flex relative h-full">
-
-          {/* Time Sidebar */}
-          <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-20 pt-2 sticky left-0">
-             {hours.map((h, idx) => (
-               <div key={h} className="flex-1 border-b border-transparent relative">
-                 <span className={`absolute right-2 sm:right-3 ${idx === 0 ? 'top-0' : '-top-2.5'} text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs `}>
-                   {h}:00
-                 </span>
-               </div>
-             ))}
+              )
+            })}
           </div>
+        </div>
 
-          {/* Main Grid Columns */}
-          <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 relative">
-             {/* Horizontal Hour Lines (Background) */}
-             <div className="absolute inset-0 z-0 flex flex-col pointer-events-none">
-                {hours.map(h => (
-                  <div key={h} className="flex-1 border-b border-slate-100/60"></div>
-                ))}
-             </div>
+        {/* Grid Body */}
+        <div className="flex relative flex-1">
+            {/* Time Sidebar */}
+            <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-30 pt-2 sticky left-0">
+              {hours.map((h, idx) => (
+                <div key={h} className="flex-1 border-b border-transparent relative">
+                  <span className={`absolute right-2 sm:right-3 ${idx === 0 ? 'top-0' : '-top-2.5'} text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs `}>
+                    {h}:00
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Main Grid Columns */}
+            <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 relative">
+              {/* Horizontal Hour Lines (Background) */}
+              <div className="absolute inset-0 z-0 flex flex-col pointer-events-none">
+                  {hours.map(h => (
+                    <div key={h} className="flex-1 border-b border-slate-100/60"></div>
+                  ))}
+              </div>
 
              {/* Day Columns */}
              {days.map((day, dayIndex) => {
@@ -367,12 +366,12 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     {/* Library Closed Overlay */}
                     {closedStyle && (
                         <div
-                            className="absolute left-0 right-0 z-40 bg-gradient-to-br from-slate-700 to-slate-800 pointer-events-none flex items-center justify-center rounded-md border border-slate-600/50"
+                            className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center rounded"
                             style={{ ...closedStyle, left: '4px', right: '4px' }}
                         >
-                            <div className="text-white text-[11px] sm:text-sm font-bold p-2 flex items-center gap-2 flex-col sm:flex-row">
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            <div className="text-slate-400 text-[10px] sm:text-xs font-semibold p-2 flex items-center gap-1 flex-col sm:flex-row shadow-sm bg-white/50 rounded px-2 py-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
                                 <span>{closedLabel}</span>
                             </div>

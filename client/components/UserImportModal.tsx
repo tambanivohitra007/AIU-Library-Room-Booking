@@ -156,8 +156,8 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
               <h3 className="font-semibold text-slate-800 mb-3">
                 Preview ({parsedUsers.length} users)
               </h3>
-              <div className="border border-slate-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
-                <table className="w-full text-sm">
+              <div className="border border-slate-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto overflow-x-auto">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead className="bg-slate-50 sticky top-0">
                     <tr>
                       <th className="text-left p-3 font-semibold text-slate-700">Name</th>

@@ -19,7 +19,10 @@ interface HomePageProps {
 const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, onCancelBooking }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>(rooms.length > 0 ? rooms[0].id : '');
-  const [calendarView, setCalendarView] = useState<CalendarView>('week');
+  // Default to Day view on mobile (screens < 640px)
+  const [calendarView, setCalendarView] = useState<CalendarView>(() => {
+    return window.innerWidth < 640 ? 'day' : 'week';
+  });
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [selectedRange, setSelectedRange] = useState<{start: Date, end: Date} | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);

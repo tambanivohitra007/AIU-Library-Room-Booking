@@ -307,10 +307,10 @@ const DayView: React.FC<DayViewProps> = ({
             {/* Library Closed Overlay */}
             {closedStyle && (
               <div
-                className="absolute left-0 right-0 z-40 bg-slate-700/80 pointer-events-none flex items-center justify-center"
+                className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center"
                 style={{ ...closedStyle, left: '8px', right: '8px' }}
               >
-                <div className="text-white text-sm font-bold p-2 flex items-center gap-2">
+                <div className="text-slate-400 text-sm font-semibold p-2 flex items-center gap-2 bg-white/50 rounded px-3 py-1.5 shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>

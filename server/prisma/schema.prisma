@@ -35,7 +35,8 @@ model User {
 model Room {
   id          String    @id @default(uuid())
   name        String
-  capacity    Int
+  minCapacity Int
+  maxCapacity Int
   description String
   features    String    // JSON string array
   bookings    Booking[]

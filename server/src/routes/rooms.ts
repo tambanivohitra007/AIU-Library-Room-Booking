@@ -41,14 +41,25 @@ router.get('/:id', async (req, res) => {
 // Create new room (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { name, description, capacity, features } = req.body;
+    const { name, description, minCapacity, maxCapacity, features } = req.body;
 
-    if (!name || !description || !capacity) {
-      return res.status(400).json({ error: 'Name, description, and capacity are required' });
+    if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
+      return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
     }
 
-    if (capacity < 1) {
-      return res.status(400).json({ error: 'Capacity must be at least 1' });
+    const minCap = parseInt(minCapacity);
+    const maxCap = parseInt(maxCapacity);
+
+    if (minCap < 1) {
+      return res.status(400).json({ error: 'Minimum capacity must be at least 1' });
+    }
+
+    if (maxCap < 1) {
+      return res.status(400).json({ error: 'Maximum capacity must be at least 1' });
+    }
+
+    if (minCap > maxCap) {
+      return res.status(400).json({ error: 'Minimum capacity cannot be greater than maximum capacity' });
     }
 
     // Create room with features as JSON string
@@ -56,7 +67,8 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
       data: {
         name,
         description,
-        capacity: parseInt(capacity),
+        minCapacity: minCap,
+        maxCapacity: maxCap,
         features: JSON.stringify(features || []),
       },
     });
@@ -74,14 +86,25 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
 // Update room (admin only)
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { name, description, capacity, features } = req.body;
+    const { name, description, minCapacity, maxCapacity, features } = req.body;
 
-    if (!name || !description || !capacity) {
-      return res.status(400).json({ error: 'Name, description, and capacity are required' });
+    if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
+      return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
     }
 
-    if (capacity < 1) {
-      return res.status(400).json({ error: 'Capacity must be at least 1' });
+    const minCap = parseInt(minCapacity);
+    const maxCap = parseInt(maxCapacity);
+
+    if (minCap < 1) {
+      return res.status(400).json({ error: 'Minimum capacity must be at least 1' });
+    }
+
+    if (maxCap < 1) {
+      return res.status(400).json({ error: 'Maximum capacity must be at least 1' });
+    }
+
+    if (minCap > maxCap) {
+      return res.status(400).json({ error: 'Minimum capacity cannot be greater than maximum capacity' });
     }
 
     // Check if room exists
@@ -99,7 +122,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       data: {
         name,
         description,
-        capacity: parseInt(capacity),
+        minCapacity: minCap,
+        maxCapacity: maxCap,
         features: JSON.stringify(features || []),
       },
     });

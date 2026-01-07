@@ -134,14 +134,14 @@ export const api = {
     return fetchAPI<Room>(`/rooms/${id}`);
   },
 
-  createRoom: async (roomData: { name: string; description: string; capacity: number; features: string[] }): Promise<Room> => {
+  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[] }): Promise<Room> => {
     return fetchAPI<Room>('/rooms', {
       method: 'POST',
       body: JSON.stringify(roomData),
     });
   },
 
-  updateRoom: async (id: string, roomData: { name: string; description: string; capacity: number; features: string[] }): Promise<Room> => {
+  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[] }): Promise<Room> => {
     return fetchAPI<Room>(`/rooms/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roomData),

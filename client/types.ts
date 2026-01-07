@@ -14,7 +14,8 @@ export interface User {
 export interface Room {
   id: string;
   name: string;
-  capacity: number;
+  minCapacity: number;
+  maxCapacity: number;
   description: string;
   features: string[];
 }

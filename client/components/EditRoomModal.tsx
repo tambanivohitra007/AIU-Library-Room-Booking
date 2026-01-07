@@ -14,7 +14,8 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
   const toast = useToast();
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description);
-  const [capacity, setCapacity] = useState(room.capacity.toString());
+  const [minCapacity, setMinCapacity] = useState(room.minCapacity.toString());
+  const [maxCapacity, setMaxCapacity] = useState(room.maxCapacity.toString());
   const [features, setFeatures] = useState<string[]>(room.features);
   const [newFeature, setNewFeature] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,14 +36,26 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || !description.trim() || !capacity) {
-      setError('Name, description, and capacity are required');
+    if (!name.trim() || !description.trim() || !minCapacity || !maxCapacity) {
+      setError('Name, description, minimum capacity, and maximum capacity are required');
       return;
     }
 
-    const capacityNum = parseInt(capacity);
-    if (isNaN(capacityNum) || capacityNum < 1) {
-      setError('Capacity must be a number greater than 0');
+    const minCapacityNum = parseInt(minCapacity);
+    const maxCapacityNum = parseInt(maxCapacity);
+    
+    if (isNaN(minCapacityNum) || minCapacityNum < 1) {
+      setError('Minimum capacity must be a number greater than 0');
+      return;
+    }
+    
+    if (isNaN(maxCapacityNum) || maxCapacityNum < 1) {
+      setError('Maximum capacity must be a number greater than 0');
+      return;
+    }
+    
+    if (minCapacityNum > maxCapacityNum) {
+      setError('Minimum capacity cannot be greater than maximum capacity');
       return;
     }
 
@@ -51,7 +64,8 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
       await api.updateRoom(room.id, {
         name: name.trim(),
         description: description.trim(),
-        capacity: capacityNum,
+        minCapacity: minCapacityNum,
+        maxCapacity: maxCapacityNum,
         features,
       });
       toast.success('Room updated successfully');
@@ -118,19 +132,35 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Capacity <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Maximum number of people"
-                min="1"
-                disabled={isSubmitting}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Min Capacity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={minCapacity}
+                  onChange={(e) => setMinCapacity(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Minimum people"
+                  min="1"
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Max Capacity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Maximum people"
+                  min="1"
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
 
             <div>

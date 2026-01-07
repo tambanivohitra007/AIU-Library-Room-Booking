@@ -46,7 +46,8 @@ async function main() {
     data: {
       id: 'room-a',
       name: 'Room A (Quiet Study)',
-      capacity: 6,
+      minCapacity: 1,
+      maxCapacity: 6,
       description: 'Glass-walled room near reference section.',
       features: JSON.stringify(['Whiteboard', 'Power Outlets']),
     },
@@ -56,7 +57,8 @@ async function main() {
     data: {
       id: 'room-b',
       name: 'Room B (Group Project)',
-      capacity: 10,
+      minCapacity: 4,
+      maxCapacity: 10,
       description: 'Larger room with projector.',
       features: JSON.stringify(['Projector', 'Large Table', 'Whiteboard']),
     },

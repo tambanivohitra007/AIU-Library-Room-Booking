@@ -1,24 +1,68 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production builds
+dist/
+dist-ssr/
+build/
+client/dist/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+server/.env
+*.local
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+server/logs/
 
-node_modules
-dist
-dist-ssr
-*.local
+# Database
+*.db
+*.db-journal
+dev.db
+prisma/*.db
+prisma/*.db-journal
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS files
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Misc
+.cache/
+.parcel-cache/
+.next/
+.temp/
+.tmp/
+
+# PM2
+.pm2/

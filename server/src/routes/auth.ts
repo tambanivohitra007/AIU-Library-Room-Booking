@@ -68,7 +68,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
       },
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     res.status(500).json({ error: 'Failed to register user' });
   }
 });
@@ -112,7 +112,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
   }
 });
@@ -138,7 +138,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
 
     res.json(user);
   } catch (error) {
-    console.error('Get user error:', error);
+    logger.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
   }
 });
@@ -185,7 +185,7 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Change password error:', error);
+    logger.error('Change password error:', error);
     res.status(500).json({ error: 'Failed to change password' });
   }
 });

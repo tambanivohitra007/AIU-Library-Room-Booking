@@ -128,18 +128,20 @@ router.post('/users/admin', [
 // Create room
 router.post('/rooms', [
   body('name').trim().notEmpty().withMessage('Room name is required'),
-  body('capacity').isInt({ min: 1 }).withMessage('Capacity must be at least 1'),
+  body('minCapacity').isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
+  body('maxCapacity').isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
   body('description').trim().notEmpty().withMessage('Description is required'),
   body('features').isArray().withMessage('Features must be an array'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
-    const { name, capacity, description, features } = req.body;
+    const { name, minCapacity, maxCapacity, description, features } = req.body;
 
     const room = await prisma.room.create({
       data: {
         name,
-        capacity,
+        minCapacity,
+        maxCapacity,
         description,
         features: JSON.stringify(features),
       },
@@ -160,18 +162,20 @@ router.post('/rooms', [
 // Update room
 router.put('/rooms/:id', [
   body('name').optional().trim().notEmpty().withMessage('Room name cannot be empty'),
-  body('capacity').optional().isInt({ min: 1 }).withMessage('Capacity must be at least 1'),
+  body('minCapacity').optional().isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
+  body('maxCapacity').optional().isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
   body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
   body('features').optional().isArray().withMessage('Features must be an array'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, capacity, description, features } = req.body;
+    const { name, minCapacity, maxCapacity, description, features } = req.body;
 
     const updateData: any = {};
     if (name) updateData.name = name;
-    if (capacity) updateData.capacity = capacity;
+    if (minCapacity) updateData.minCapacity = minCapacity;
+    if (maxCapacity) updateData.maxCapacity = maxCapacity;
     if (description) updateData.description = description;
     if (features) updateData.features = JSON.stringify(features);
 

@@ -150,51 +150,35 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           </div>
         </div>
 
-        {/* Bottom Row: Room Tabs */}
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-          {rooms.map((room, idx) => (
-            <button
-              key={room.id}
-              onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
-              className={`relative px-4 py-2 text-sm font-bold rounded-lg transition-all-smooth whitespace-nowrap  ${
-                selectedRoomId === room.id
-                  ? 'bg-primary text-white'
-                  : 'glass border border-slate-200 text-slate-700  hover:text-primary shadow-sm'
-              }`}
-              style={{ animationDelay: `${idx * 0.05}s` }}
-            >
-              <span>{room.name}</span>
-            </button>
-          ))}
+        {/* Bottom Row: Compact Room List */}
+        <div className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide snap-x sticky top-0 z-10 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/50">
+          {rooms.map((room, idx) => {
+             const isSelected = selectedRoomId === room.id;
+             return (
+              <button
+                key={room.id}
+                onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 border whitespace-nowrap snap-start
+                  ${
+                    isSelected
+                      ? 'bg-primary text-white border-primary shadow-md scale-100 ring-2 ring-primary/20'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/50 hover:text-primary hover:shadow-sm'
+                  }`}
+                style={{ animationDelay: `${idx * 0.05}s` }}
+              >
+                <span>{room.name}</span>
+                {isSelected && (
+                   <span className="flex items-center gap-1 text-[10px] font-medium bg-white/20 px-1.5 py-0.5 rounded text-white/90 ml-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      {room.maxCapacity}
+                   </span>
+                )}
+              </button>
+             );
+          })}
         </div>
-
-        {/* Room Details - Show when a room is selected */}
-        {activeRoom && (
-          <div className="glass rounded-lg p-5 border border-white/20 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-accent to-primary animate-pulse"></div>
-                  <h3 className="text-lg font-bold text-slate-800">{activeRoom.name}</h3>
-                </div>
-                <p className="text-sm text-slate-600 mb-4 font-medium">{activeRoom.description}</p>
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-md text-xs font-bold text-primary shadow-soft">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    {activeRoom.minCapacity}-{activeRoom.maxCapacity} People
-                  </span>
-                  {activeRoom.features.map((feature, idx) => (
-                    <span key={idx} className="px-3 py-2 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/50 text-indigo-700 rounded-md text-xs font-bold shadow-soft">
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Area: Split View */}

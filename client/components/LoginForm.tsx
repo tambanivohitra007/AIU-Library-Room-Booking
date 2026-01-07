@@ -53,7 +53,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Welcome Back</h1>
-          <p className="text-blue-100 text-sm font-medium">Sign in to AIU Library Room Booking</p>
+          <p className="text-blue-100 text-sm font-medium">AIU Library Booking System</p>
 
           {/* Decorative bottom curve */}
           <div className="absolute bottom-0 left-0 right-0 h-8">

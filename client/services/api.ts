@@ -1,6 +1,7 @@
 import { User, Room, Booking } from '../types';
 
-const API_BASE_URL = '/api';
+// Use environment variable or fallback to relative path (for dev proxy)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Get JWT token from localStorage
 const getToken = (): string | null => {

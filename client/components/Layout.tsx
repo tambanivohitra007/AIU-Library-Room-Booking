@@ -65,18 +65,20 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
                   <p className="text-sm font-bold text-slate-800">{user.name}</p>
                   <p className="text-xs text-slate-500 font-medium">{user.email || `${user.role.toLowerCase()}@apiu.edu`}</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    onChangePassword();
-                  }}
-                  className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-primary/5 flex items-center gap-3 transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <LockIcon className="w-4 h-4 text-primary" />
-                  </div>
-                  <span>Change Password</span>
-                </button>
+                {(!user.provider || user.provider === 'LOCAL') && (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onChangePassword();
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-primary/5 flex items-center gap-3 transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <LockIcon className="w-4 h-4 text-primary" />
+                    </div>
+                    <span>Change Password</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setShowUserMenu(false);

@@ -136,6 +136,33 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
         </form>
 
         <div className="mt-8 text-center">
+            <button
+                type="button"
+                onClick={async () => {
+                   setLoading(true);
+                   try {
+                     // Dynamically import API to avoid circular deps if any (though unlikely here)
+                     const { api } = await import('../services/api');
+                     const url = await api.getMicrosoftLoginUrl();
+                     window.location.href = url;
+                   } catch (err: any) {
+                     console.error(err);
+                     alert("Failed to initialize Microsoft Login: " + (err.message || 'Unknown error'));
+                     setLoading(false);
+                   }
+                }}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold py-2.5 rounded-md hover:bg-slate-50 transition-all shadow-sm mb-6"
+            >
+                <svg className="w-5 h-5" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                </svg>
+                Sign in with School Account
+            </button>
+
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>

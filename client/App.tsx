@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 import ConfirmModal from './components/ConfirmModal';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -258,6 +259,8 @@ function App() {
             )
           }
         />
+
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* Protected Routes */}
         <Route

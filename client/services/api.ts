@@ -59,6 +59,21 @@ export const api = {
     return result;
   },
 
+  // Microsoft SSO
+  getMicrosoftLoginUrl: async (): Promise<string> => {
+    const { url } = await fetchAPI<{ url: string }>('/auth/microsoft/url');
+    return url;
+  },
+
+  loginWithMicrosoft: async (code: string): Promise<{ token: string; user: User }> => {
+    const result = await fetchAPI<{ token: string; user: User }>('/auth/microsoft/login', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+    setToken(result.token);
+    return result;
+  },
+
   logout: () => {
     removeToken();
   },

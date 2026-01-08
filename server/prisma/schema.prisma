@@ -54,7 +54,7 @@ model Booking {
   createdAt DateTime       @default(now())
 
   room      Room           @relation(fields: [roomId], references: [id])
-  user      User           @relation(fields: [userId], references: [id])
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   attendees Attendee[]
 }
 

@@ -5,6 +5,7 @@ import { generateToken, authenticateToken, AuthRequest } from '../middleware/aut
 import { authLimiter } from '../middleware/security.js';
 import { validateRegister, validateLogin } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { ADMIN_EMAILS } from '../config/admins.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -121,21 +122,17 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
 
     if (!user) {
       // Create new user (No password)
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      
       user = await prisma.user.create({
         data: {
           email,
           name: name || 'Microsoft User',
           provider: 'MICROSOFT',
-          role: isStaffEmail ? 'ADMIN' : 'STUDENT', // Auto-role assignment? Maybe safer to default all to STUDENT initially unless logic dictates otherwise. 
-          // For now, let's keep it safe: DEFAULT to STUDENT. Admins can promote later manually. 
-          // OR: If you strictly trust staff emails, we can do: isStaffEmail ? 'ADMIN' : 'STUDENT'. 
-          // Let's stick to STUDENT default for safety, or check if user wants this. 
-          // The prompt mentioned 'related to the school', likely distinct roles. 
-          // I will use STUDENT for all for now to be safe, unless email matches specific admin patterns. 
-          // Actually, let's allow existing logic: schema defines default as STUDENT.
+          role: isAdmin ? 'ADMIN' : 'STUDENT',
         },
       });
-      logger.info(`New SSO user created: ${email}`);
+      logger.info(`New SSO user created: ${email} (Role: ${isAdmin ? 'ADMIN' : 'STUDENT'})`);
     } else {
       // Update provider if switching from LOCAL (optional, or just allow login)
       if (user.provider === 'LOCAL') {

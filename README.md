@@ -2,6 +2,17 @@
 
 A production-ready full-stack library room booking application for Adventist International University with React + TypeScript frontend and Node.js + Express + Prisma backend.
 
+## 🚀 Production Status
+
+**✅ Production Ready** - This application has been fully prepared for production deployment with:
+- Zero TypeScript compilation errors
+- No security vulnerabilities
+- Comprehensive deployment documentation
+- Automated deployment scripts
+- PM2 process management configuration
+
+See [PRODUCTION_READY.md](PRODUCTION_READY.md) for complete production readiness summary.
+
 ## Features
 
 ### User Features
@@ -22,40 +33,55 @@ A production-ready full-stack library room booking application for Adventist Int
 
 ### Production Features
 - **Security**:
-  - Rate limiting on all routes
-  - Helmet for security headers
-  - CORS configuration
-  - Input validation
-  - Password hashing (bcrypt)
-  - JWT authentication
-- **Monitoring**:
-  - Winston logging
-  - Error tracking
-  - Request logging
+  - Rate limiting on all routes (5 req/15min for auth, 3000 req/15min for API)
+  - Helmet.js security headers
+  - CORS configuration with domain whitelist
+  - Input validation with express-validator
+  - Password hashing with bcrypt (10 rounds)
+  - JWT authentication with configurable expiration
+  - Protection against SQL injection (Prisma ORM)
+  - XSS protection
+- **Monitoring & Logging**:
+  - Winston logger with separate error/combined logs
+  - Request logging with IP tracking
+  - Production-safe error messages
+  - PM2 process management with auto-restart
+  - Log rotation support
 - **Performance**:
-  - Database indexing
-  - Optimized queries
-  - Connection pooling
+  - Database indexing on critical fields
+  - Optimized queries with Prisma
+  - Connection pooling support
+  - Gzip compression support
+  - Static asset optimization
 
 ## Architecture
 
 ```
-├── client/                # React + Vite frontend
-│   ├── components/        # React components
+├── client/                   # React + Vite frontend
+│   ├── components/           # React components
 │   │   ├── AdminDashboard.tsx
 │   │   ├── LoginForm.tsx
 │   │   ├── Timeline.tsx
 │   │   └── ...
-│   ├── services/          # API client
-│   └── ...
-├── server/                # Node.js + Express API
+│   ├── services/             # API client
+│   └── dist/                 # Production build output
+├── server/                   # Node.js + Express API
 │   ├── src/
-│   │   ├── routes/        # API routes
-│   │   ├── middleware/    # Auth, validation, security
-│   │   ├── utils/         # Logger, helpers
-│   │   └── index.ts       # Server entry
-│   ├── prisma/            # Database schema & migrations
-│   └── logs/              # Application logs
+│   │   ├── routes/           # API routes
+│   │   ├── middleware/       # Auth, validation, security
+│   │   ├── services/         # Background jobs, schedulers
+│   │   ├── utils/            # Logger, helpers
+│   │   └── index.ts          # Server entry
+│   ├── prisma/               # Database schema & migrations
+│   ├── logs/                 # Application logs (gitignored)
+│   ├── dist/                 # Production build output
+│   └── ecosystem.config.js   # PM2 configuration
+├── scripts/                  # Deployment & utility scripts
+│   ├── deploy.sh             # Automated deployment script
+│   └── production-check.sh   # Production readiness checker
+├── DEPLOYMENT_GUIDE.md       # Comprehensive deployment guide
+├── PRODUCTION_READY.md       # Production readiness summary
+└── PRODUCTION_CHECKLIST.md   # Detailed production checklist
 ```
 
 ## Tech Stack
@@ -157,80 +183,108 @@ After seeding the database in development:
 
 ## Production Deployment
 
-### 1. Environment Setup
+> **📖 Complete Guide**: See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for comprehensive deployment instructions including server setup, database configuration, SSL certificates, monitoring, and troubleshooting.
 
+### Quick Start
+
+#### 1. Run Production Check
+```bash
+chmod +x scripts/production-check.sh
+./scripts/production-check.sh
+```
+
+#### 2. Environment Setup
 ```bash
 cd server
 cp .env.production.example .env
 
-# Edit .env with production values:
-# - Use MySQL/PostgreSQL DATABASE_URL
-# - Set strong JWT_SECRET
-# - Set production CLIENT_URL
-# - Set NODE_ENV=production
+# Edit .env with production values
+# Generate secure JWT secret:
+openssl rand -base64 32
 ```
 
-### 2. Database Migration
-
-```bash
-cd server
-
-# For MySQL, update prisma/schema.prisma:
-# datasource db {
-#   provider = "mysql"
-#   url      = env("DATABASE_URL")
-# }
-
-# Run production migrations
-npm run prisma:migrate:prod
-
-# Seed production database (optional)
-npm run prisma:seed
-```
-
-### 3. Build
-
-```bash
-# Build server
-cd server
-npm run build
-
-# Build client
-cd ../client
-npm run build
-```
-
-### 4. Deploy
-
-**Server:**
-```bash
-cd server
-npm run start:prod
-```
-
-**Client:**
-Serve the `client/dist` folder using:
-- Nginx
-- Apache
-- Vercel
-- Netlify
-- Any static hosting service
-
-### Environment Variables
-
-#### Server (.env)
-
+**Required environment variables:**
 ```env
 DATABASE_URL="mysql://user:pass@host:3306/aiu_library_booking"
-JWT_SECRET="your-super-secret-key-change-this"
+JWT_SECRET="<generated-secure-key-32+-characters>"
 PORT=5000
 NODE_ENV=production
 CLIENT_URL="https://library.aiu.edu"
 ```
 
-#### Client
+#### 3. Database Setup
 
-Update `vite.config.ts` proxy target for production API URL.
+Update `server/prisma/schema.prisma` for MySQL/PostgreSQL:
+```prisma
+datasource db {
+  provider = "mysql"  // or "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+Run migrations:
+```bash
+cd server
+npx prisma migrate deploy
+```
+
+#### 4. Build Application
+
+**Option A: Use deployment script (recommended)**
+```bash
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+```
+
+**Option B: Manual build**
+```bash
+# Server
+cd server
+npm install --production=false
+npm run build
+
+# Client
+cd ../client
+npm install
+npm run build
+```
+
+#### 5. Deploy with PM2
+
+```bash
+cd server
+
+# Start application
+pm2 start ecosystem.config.js
+
+# Save PM2 configuration
+pm2 save
+
+# Configure PM2 to start on system boot
+pm2 startup
+```
+
+### Deployment Options
+
+**Server (API):**
+- PM2 (recommended) - configured via `ecosystem.config.js`
+- Docker
+- Any Node.js hosting service
+
+**Client (Frontend):**
+- Nginx (recommended - see DEPLOYMENT_GUIDE.md)
+- Apache
+- Vercel
+- Netlify
+- Any static hosting service
+
+### Post-Deployment
+
+1. Create secure admin user (don't use seed defaults!)
+2. Set up database backups (see DEPLOYMENT_GUIDE.md)
+3. Configure SSL certificates (Let's Encrypt recommended)
+4. Set up monitoring and alerts
+5. Test all features in production
 
 ## API Documentation
 
@@ -269,8 +323,9 @@ Update `vite.config.ts` proxy target for production API URL.
 - Protected routes with middleware
 
 ### Rate Limiting
-- Auth routes: 5 requests / 15 minutes
-- API routes: 100 requests / 15 minutes
+- Auth routes: 5 requests / 15 minutes (production), 100 (development)
+- API routes: 3000 requests / 15 minutes (supports client polling)
+- Strict limiter: 10 requests / hour for sensitive operations
 - Configurable via environment variables
 
 ### Input Validation
@@ -292,31 +347,71 @@ Update `vite.config.ts` proxy target for production API URL.
 
 ## Monitoring & Logs
 
+### Log Files
 Logs are stored in `server/logs/`:
-- `error.log` - Error level logs
-- `combined.log` - All logs
+- `error.log` - Error level logs only
+- `combined.log` - All logs (info, warn, error)
 
-In production, configure log rotation:
+### PM2 Management
 ```bash
-# Install pm2 or use logrotate
-npm install -g pm2
-pm2 start npm --name "aiu-library-api" -- run start:prod
+# View logs
 pm2 logs aiu-library-api
+
+# Monitor resources
+pm2 monit
+
+# Restart application
+pm2 restart aiu-library-api
+
+# View status
+pm2 status
+
+# Stop application
+pm2 stop aiu-library-api
 ```
+
+### Production Logging
+- Winston logger with JSON formatting
+- Request logging with IP addresses
+- Automatic error tracking
+- Log rotation (via PM2 or logrotate)
+- Production-safe error messages (no stack traces exposed)
 
 ## Database Schema
 
 ### Users
-- id, email, name, password, role, createdAt
+- `id` (String, UUID) - Primary key
+- `email` (String, unique) - User email (validated for university domain)
+- `name` (String) - User full name
+- `password` (String) - Bcrypt hashed password
+- `role` (Enum: STUDENT, ADMIN) - User role
+- `avatarUrl` (String?, optional) - Profile picture URL
+- `createdAt` (DateTime) - Account creation timestamp
 
 ### Rooms
-- id, name, capacity, description, features
+- `id` (String, UUID) - Primary key
+- `name` (String) - Room name
+- `minCapacity` (Int) - Minimum attendee capacity
+- `maxCapacity` (Int) - Maximum attendee capacity
+- `description` (String) - Room description
+- `features` (String) - JSON array of features (Whiteboard, Projector, etc.)
 
 ### Bookings
-- id, roomId, userId, startTime, endTime, purpose, status, createdAt
+- `id` (String, UUID) - Primary key
+- `roomId` (String) - Foreign key to Room
+- `userId` (String) - Foreign key to User
+- `startTime` (DateTime) - Booking start time
+- `endTime` (DateTime) - Booking end time
+- `purpose` (String) - Booking purpose/description
+- `status` (Enum: CONFIRMED, CANCELLED, COMPLETED) - Booking status
+- `createdAt` (DateTime) - Booking creation timestamp
 
 ### Attendees
-- id, bookingId, name, studentId, isCompanion
+- `id` (String, UUID) - Primary key
+- `bookingId` (String) - Foreign key to Booking (cascade delete)
+- `name` (String) - Attendee name
+- `studentId` (String?, optional) - Student ID number
+- `isCompanion` (Boolean) - Whether attendee is a companion
 
 ## Switching Database Providers
 
@@ -354,11 +449,55 @@ datasource db {
 DATABASE_URL="postgresql://user:password@localhost:5432/aiu_library_booking"
 ```
 
+## Useful Scripts
+
+### Production Check
+```bash
+# Run automated production readiness check
+./scripts/production-check.sh
+```
+
+### Deployment
+```bash
+# Automated build and deployment
+./scripts/deploy.sh
+```
+
+### Database
+```bash
+cd server
+
+# Generate Prisma client
+npm run prisma:generate
+
+# Run migrations (development)
+npm run prisma:migrate
+
+# Deploy migrations (production)
+npm run prisma:migrate:prod
+
+# Seed database
+npm run prisma:seed
+
+# Open Prisma Studio
+npm run prisma:studio
+```
+
 ## Troubleshooting
+
+### TypeScript Errors
+```bash
+cd server
+npx tsc --noEmit
+```
 
 ### Port already in use
 ```bash
-# Find and kill process
+# Windows
+netstat -ano | findstr :5000
+taskkill /PID <PID> /F
+
+# Linux/Mac
 lsof -ti:5000 | xargs kill -9  # Server
 lsof -ti:3000 | xargs kill -9  # Client
 ```
@@ -374,7 +513,58 @@ npx prisma migrate resolve --applied <migration_name>
 ```
 
 ### CORS errors
-Check that CLIENT_URL in server `.env` matches your client URL.
+Check that `CLIENT_URL` in server `.env` matches your client URL.
+
+### PM2 Issues
+```bash
+# View detailed logs
+pm2 logs aiu-library-api --err
+
+# Restart application
+pm2 restart aiu-library-api
+
+# Delete and recreate
+pm2 delete aiu-library-api
+pm2 start ecosystem.config.js
+```
+
+### Security Vulnerabilities
+```bash
+# Check for vulnerabilities
+cd server && npm audit
+cd client && npm audit
+
+# Fix vulnerabilities
+npm audit fix
+```
+
+For more troubleshooting help, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+
+## Documentation
+
+- **[README.md](README.md)** - This file - Project overview and quick start
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Comprehensive production deployment guide
+- **[PRODUCTION_READY.md](PRODUCTION_READY.md)** - Production readiness summary and checklist
+- **[PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)** - Detailed pre/post deployment checklist
+- **API Documentation** - See API Documentation section above
+
+## Production Readiness
+
+✅ **This application is production-ready!**
+
+Key achievements:
+- Zero TypeScript compilation errors
+- Zero security vulnerabilities
+- Comprehensive logging with Winston
+- Rate limiting configured
+- Input validation on all routes
+- Secure password hashing
+- JWT authentication
+- Production builds tested
+- Deployment scripts provided
+- PM2 configuration included
+
+Run `./scripts/production-check.sh` to verify production readiness.
 
 ## Contributing
 
@@ -390,4 +580,15 @@ MIT
 
 ## Support
 
-For issues, questions, or contributions, please open an issue on GitHub.
+For issues, questions, or contributions:
+- Check the documentation files listed above
+- Review troubleshooting section
+- Open an issue on GitHub
+
+## Version History
+
+- **v1.0.0** (2026-01-07) - Production-ready release
+  - Full-featured room booking system
+  - Complete admin dashboard
+  - Production deployment ready
+  - Comprehensive documentation

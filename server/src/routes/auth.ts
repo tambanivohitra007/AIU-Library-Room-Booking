@@ -155,6 +155,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        provider: user.provider,
       },
     });
 
@@ -216,6 +217,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
         email: user.email,
         name: user.name,
         role: user.role,
+        provider: user.provider,
       },
     });
   } catch (error) {
@@ -264,6 +266,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
         name: user.name,
         role: user.role,
         avatarUrl: user.avatarUrl,
+        provider: user.provider,
       },
     });
   } catch (error) {
@@ -284,6 +287,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
         role: true,
         avatarUrl: true,
         createdAt: true,
+        provider: true,
       },
     });
 

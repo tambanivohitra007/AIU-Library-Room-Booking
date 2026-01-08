@@ -203,21 +203,20 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
         email,
         password: hashedPassword,
         name,
-        role: 'STUDENT', // All self-registered users are students
+        role: 'STUDENT',
+        status: 'PENDING', // Require admin approval
       },
     });
 
-    // Generate token
-    const token = generateToken(user.id, user.role);
-
+    // Does NOT return token. User must wait.
     res.status(201).json({
-      token,
+      message: 'Registration successful. Your account is pending admin approval.',
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
-        provider: user.provider,
+        status: 'PENDING'
       },
     });
   } catch (error) {
@@ -242,6 +241,14 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    if (user.status === 'PENDING') {
+      return res.status(403).json({ error: 'Your account is pending approval. Please contact the administrator.' });
+    }
+
+    if (user.status === 'SUSPENDED') {
+      return res.status(403).json({ error: 'Your account has been suspended.' });
     }
 
     // Verify password

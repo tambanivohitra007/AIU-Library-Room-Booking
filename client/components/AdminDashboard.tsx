@@ -70,6 +70,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
     }
   };
 
+  const handleApproveUser = async (user: User) => {
+    try {
+      await api.updateUser(user.id, { status: 'ACTIVE' });
+      toast.success(`User ${user.name} approved successfully`);
+      loadUsers();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to approve user';
+      toast.error(errorMessage);
+    }
+  };
+
   const handleDeleteRoom = async () => {
     if (!deletingRoom) return;
 
@@ -112,7 +123,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const loadUsers = async () => {
     try {
       const allUsers = await api.getUsers();
-      setUsers(allUsers);
+      // Sort users: PENDING first, then by createdAt desc
+      const sortedUsers = [...allUsers].sort((a, b) => {
+        if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+        if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+      setUsers(sortedUsers);
       setStats(prev => prev ? { ...prev, totalUsers: allUsers.length } : null);
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -515,6 +532,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
               <th className="text-left p-4 font-bold text-white">Name</th>
               <th className="text-left p-4 font-bold text-white">Email</th>
               <th className="text-left p-4 font-bold text-white">Role</th>
+              <th className="text-left p-4 font-bold text-white">Status</th>
               <th className="text-left p-4 font-bold text-white">Joined</th>
               <th className="text-left p-4 font-bold text-white">Actions</th>
             </tr>
@@ -531,11 +549,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     {user.role}
                   </span>
                 </td>
+                <td className="p-4">
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
+                    user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' : 
+                    user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+                    'bg-slate-50 border border-slate-200 text-slate-700'
+                  }`}>
+                    {user.status || 'ACTIVE'}
+                  </span>
+                </td>
                 <td className="p-4 text-slate-600 font-medium">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="p-4">
                   <div className="flex gap-2">
+                    {user.status === 'PENDING' && (
+                      <button
+                        onClick={() => handleApproveUser(user)}
+                        className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+                      >
+                       Approve
+                      </button>
+                    )}
                     <button
                       onClick={() => setEditingUser(user)}
                       className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-lg font-bold text-sm transition-all-smooth shadow-soft"
@@ -572,11 +607,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   <p className="text-xs text-slate-500 font-medium truncate">{user.email}</p>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
-              }`}>
-                {user.role}
-              </span>
+              <div className="flex flex-col gap-1 items-end">
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
+                  user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
+                }`}>
+                  {user.role}
+                </span>
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
+                  user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' : 
+                  user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+                  'bg-slate-50 border border-slate-200 text-slate-700'
+                }`}>
+                  {user.status || 'ACTIVE'}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm mb-3">
@@ -587,6 +631,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             </div>
 
             <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+              {user.status === 'PENDING' && (
+                <button
+                  onClick={() => handleApproveUser(user)}
+                  className="flex-1 px-4 py-2.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                >
+                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Approve
+                </button>
+              )}
               <button
                 onClick={() => setEditingUser(user)}
                 className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"

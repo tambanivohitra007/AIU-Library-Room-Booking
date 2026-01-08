@@ -148,7 +148,7 @@ router.post('/import', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role, password } = req.body;
+    const { name, email, role, password, status } = req.body;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -175,6 +175,7 @@ router.put('/:id', async (req, res) => {
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (role) updateData.role = role;
+    if (status) updateData.status = status;
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }

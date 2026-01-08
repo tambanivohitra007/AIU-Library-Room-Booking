@@ -8,6 +8,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
   provider?: 'LOCAL' | 'MICROSOFT';
   avatarUrl?: string;
 }

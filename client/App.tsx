@@ -183,11 +183,13 @@ function App() {
   const handleRegister = async (name: string, email: string, password: string) => {
     try {
       setAuthError(null);
-      const { user: registeredUser } = await api.register(name, email, password);
-      setUser(registeredUser);
-      setIsAuthenticated(true);
-      toast.success(`Welcome to AIU Library, ${registeredUser.name}!`);
-      refresh();
+      const { message } = await api.register(name, email, password);
+      // Do not log in immediately. Show success message and redirect to login.
+      toast.success(message || 'Registration successful. Waiting for approval.');
+      // Returning true/false or similar might be needed if RegisterForm expects it, 
+      // but usually throwing error handles failure.
+      
+      // We need to tell the RegisterForm to switch to Login view
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       setAuthError(errorMessage);

@@ -50,13 +50,11 @@ export const api = {
     return result;
   },
 
-  register: async (name: string, email: string, password: string): Promise<{ token: string; user: User }> => {
-    const result = await fetchAPI<{ token: string; user: User }>('/auth/register', {
+  register: async (name: string, email: string, password: string): Promise<{ message: string; user: User }> => {
+    return fetchAPI<{ message: string; user: User }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
     });
-    setToken(result.token);
-    return result;
   },
 
   // Microsoft SSO
@@ -113,7 +111,7 @@ export const api = {
     });
   },
 
-  updateUser: async (id: string, userData: { name?: string; email?: string; role?: string; password?: string }): Promise<User> => {
+  updateUser: async (id: string, userData: { name?: string; email?: string; role?: string; password?: string, status?: string }): Promise<User> => {
     return fetchAPI<User>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(userData),

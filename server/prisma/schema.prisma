@@ -21,6 +21,12 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
 model User {
   id        String    @id @default(uuid())
   email     String    @unique
@@ -28,6 +34,7 @@ model User {
   password  String?
   provider  String    @default("LOCAL")
   role      UserRole  @default(STUDENT)
+  status    UserStatus @default(ACTIVE)
   avatarUrl String?
   createdAt DateTime  @default(now())
   bookings  Booking[]

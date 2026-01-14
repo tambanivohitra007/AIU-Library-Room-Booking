@@ -331,6 +331,11 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Check if user has a password set
+    if (!user.password) {
+      return res.status(400).json({ error: 'Account uses external authentication. Password cannot be changed here.' });
+    }
+
     // Verify current password
     const isValidPassword = await bcrypt.compare(currentPassword, user.password);
 

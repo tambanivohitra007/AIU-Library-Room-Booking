@@ -3,8 +3,8 @@ import { OPENING_HOUR, CLOSING_HOUR, MAX_DURATION_MINUTES } from '../constants';
 
 // --- SEED DATA ---
 const SEED_ROOMS: Room[] = [
-  { id: 'room-a', name: 'Room A (Quiet Study)', capacity: 6, description: 'Glass-walled room near reference section.', features: ['Whiteboard', 'Power Outlets'] },
-  { id: 'room-b', name: 'Room B (Group Project)', capacity: 10, description: 'Larger room with projector.', features: ['Projector', 'Large Table', 'Whiteboard'] },
+  { id: 'room-a', name: 'Room A (Quiet Study)', minCapacity: 1, maxCapacity: 6, description: 'Glass-walled room near reference section.', features: ['Whiteboard', 'Power Outlets'] },
+  { id: 'room-b', name: 'Room B (Group Project)', minCapacity: 1, maxCapacity: 10, description: 'Larger room with projector.', features: ['Projector', 'Large Table', 'Whiteboard'] },
 ];
 
 const SEED_USERS: User[] = [

@@ -11,6 +11,7 @@ export interface User {
   status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
   provider?: 'LOCAL' | 'MICROSOFT';
   avatarUrl?: string;
+  createdAt?: string;
 }
 
 export interface Room {

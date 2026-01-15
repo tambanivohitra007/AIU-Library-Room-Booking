@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, Room, Booking, UserRole } from '../types';
 import { api } from '../services/api';
 import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon } from './Icons';
@@ -9,7 +9,9 @@ import ConfirmDeleteModal from './ConfirmDeleteModal';
 import AddRoomModal from './AddRoomModal';
 import EditRoomModal from './EditRoomModal';
 import AttendeesModal from './AttendeesModal';
+import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface AdminDashboardProps {
   bookings: Booking[];
@@ -33,7 +35,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms'>('overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -52,6 +53,169 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
     loadStats();
     loadUsers();
   }, [bookings]);
+
+  // Column definitions for bookings table
+  const bookingColumns = useMemo<ColumnDef<Booking>[]>(() => [
+    {
+      accessorKey: 'roomId',
+      header: 'Room',
+      cell: ({ row }) => (
+        <span className="font-semibold text-slate-800">
+          {rooms.find(r => r.id === row.original.roomId)?.name}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'userDisplay',
+      header: 'User',
+      cell: ({ row }) => (
+        <div>
+          <div className="font-semibold text-slate-800">{row.original.userDisplay}</div>
+          <div className="text-xs text-slate-500 font-medium">{row.original.userId}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'startTime',
+      header: 'Date & Time',
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium text-slate-800">
+            {new Date(row.original.startTime).toLocaleDateString()}
+          </div>
+          <div className="text-xs text-slate-500 font-medium">
+            {new Date(row.original.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+            {new Date(row.original.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'attendees',
+      header: 'Attendees',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <button
+          onClick={() => setViewingAttendeesBooking(row.original)}
+          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors cursor-pointer group shadow-soft"
+          title="Click to view attendees"
+        >
+          <svg className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span className="text-sm font-bold text-primary">{row.original.attendees.length}</span>
+        </button>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
+          row.original.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+          row.original.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
+          'bg-slate-50 border border-slate-200 text-slate-700'
+        }`}>
+          {row.original.status}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableSorting: false,
+      cell: ({ row }) => (
+        row.original.status === 'CONFIRMED' ? (
+          <button
+            onClick={() => onCancelBooking(row.original.id)}
+            className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+          >
+            Cancel
+          </button>
+        ) : null
+      ),
+    },
+  ], [rooms, onCancelBooking]);
+
+  // Column definitions for users table
+  const userColumns = useMemo<ColumnDef<User>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <span className="font-semibold text-slate-800">{row.original.name}</span>
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => (
+        <span className="text-slate-600 font-medium">{row.original.email}</span>
+      ),
+    },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      cell: ({ row }) => (
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
+          row.original.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
+        }`}>
+          {row.original.role}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
+          row.original.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
+          row.original.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+          'bg-slate-50 border border-slate-200 text-slate-700'
+        }`}>
+          {row.original.status || 'ACTIVE'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Joined',
+      cell: ({ row }) => (
+        <span className="text-slate-600 font-medium">
+          {new Date(row.original.createdAt).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          {row.original.status === 'PENDING' && (
+            <button
+              onClick={() => handleApproveUser(row.original)}
+              className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+            >
+              Approve
+            </button>
+          )}
+          <button
+            onClick={() => setEditingUser(row.original)}
+            className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-lg font-bold text-sm transition-all-smooth shadow-soft"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => setDeletingUser(row.original)}
+            className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+          >
+            Delete
+          </button>
+        </div>
+      ),
+    },
+  ], []);
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return;
@@ -139,14 +303,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const filteredBookings = bookings.filter(b => {
     if (filterStatus !== 'all' && b.status !== filterStatus) return false;
     if (filterRoom !== 'all' && b.roomId !== filterRoom) return false;
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        b.userDisplay?.toLowerCase().includes(query) ||
-        b.purpose.toLowerCase().includes(query) ||
-        rooms.find(r => r.id === b.roomId)?.name.toLowerCase().includes(query)
-      );
-    }
     return true;
   });
 
@@ -289,39 +445,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
 
   const renderBookings = () => (
     <div className="space-y-3 sm:space-y-4 animate-fade-in">
-      {/* Filters */}
+      {/* Additional Filters */}
       <div className="glass rounded-lg border border-white/20 p-4 shadow-medium">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <input
-            type="text"
-            placeholder="Search bookings..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
-          />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
-          >
-            <option value="all">All Status</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="COMPLETED">Completed</option>
-          </select>
-          <select
-            value={filterRoom}
-            onChange={(e) => setFilterRoom(e.target.value)}
-            className="px-4 py-3 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
-          >
-            <option value="all">All Rooms</option>
-            {rooms.map(room => (
-              <option key={room.id} value={room.id}>{room.name}</option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
+            >
+              <option value="all">All Status</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+            <select
+              value={filterRoom}
+              onChange={(e) => setFilterRoom(e.target.value)}
+              className="px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium shadow-soft"
+            >
+              <option value="all">All Rooms</option>
+              {rooms.map(room => (
+                <option key={room.id} value={room.id}>{room.name}</option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={onExportCSV}
-            className="px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+            className="px-4 py-2.5 bg-primary hover:bg-primary-light text-white rounded-md font-bold transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
           >
             <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -331,156 +482,99 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         </div>
       </div>
 
-      {/* Bookings - Desktop Table & Mobile Cards */}
-      {filteredBookings.length === 0 ? (
-        <div className="glass rounded-lg border border-white/20 p-12 text-center shadow-medium">
-          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+      {/* Desktop Table with DataTable */}
+      <div className="hidden lg:block">
+        <DataTable
+          data={filteredBookings}
+          columns={bookingColumns}
+          searchPlaceholder="Search bookings..."
+          emptyMessage="No bookings found matching your filters"
+          emptyIcon={
             <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-          </div>
-          <p className="text-slate-500 font-semibold">No bookings found matching your filters</p>
-        </div>
-      ) : (
-        <>
-          {/* Desktop Table */}
-          <div className="hidden lg:block glass rounded-lg border border-white/20 shadow-medium overflow-hidden">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-sm">
-                <thead className="glass-dark border-b border-white/20">
-                  <tr>
-                    <th className="text-left p-4 font-bold text-white">Room</th>
-                    <th className="text-left p-4 font-bold text-white">User</th>
-                    <th className="text-left p-4 font-bold text-white">Date & Time</th>
-                    <th className="text-left p-4 font-bold text-white">Attendees</th>
-                    <th className="text-left p-4 font-bold text-white">Status</th>
-                    <th className="text-left p-4 font-bold text-white">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/50 bg-white/50">
-                  {filteredBookings.map(booking => (
-                    <tr key={booking.id} className="hover:bg-primary/5 transition-colors">
-                      <td className="p-4 font-semibold text-slate-800">
-                        {rooms.find(r => r.id === booking.roomId)?.name}
-                      </td>
-                      <td className="p-4">
-                        <div className="font-semibold text-slate-800">{booking.userDisplay}</div>
-                        <div className="text-xs text-slate-500 font-medium">{booking.userId}</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-medium text-slate-800">{new Date(booking.startTime).toLocaleDateString()}</div>
-                        <div className="text-xs text-slate-500 font-medium">
-                          {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                          {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => setViewingAttendeesBooking(booking)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors cursor-pointer group shadow-soft"
-                          title="Click to view attendees"
-                        >
-                          <svg className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                          <span className="text-sm font-bold text-primary">{booking.attendees.length}</span>
-                        </button>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                          booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
-                          booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
-                          'bg-slate-50 border border-slate-200 text-slate-700'
-                        }`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {booking.status === 'CONFIRMED' && (
-                          <button
-                            onClick={() => onCancelBooking(booking.id)}
-                            className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          }
+        />
+      </div>
 
-          {/* Mobile Cards */}
-          <div className="lg:hidden space-y-3">
-            {filteredBookings.map((booking, idx) => (
-              <div key={booking.id} className="glass rounded-lg border border-white/20 p-4 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center shadow-md flex-shrink-0">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-slate-800 truncate">{rooms.find(r => r.id === booking.roomId)?.name}</h4>
-                        <p className="text-xs text-slate-500 font-medium truncate">{booking.userDisplay}</p>
-                      </div>
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        {filteredBookings.length === 0 ? (
+          <div className="glass rounded-lg border border-white/20 p-12 text-center shadow-medium">
+            <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-slate-500 font-semibold">No bookings found matching your filters</p>
+          </div>
+        ) : (
+          filteredBookings.map((booking, idx) => (
+            <div key={booking.id} className="glass rounded-lg border border-white/20 p-4 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center shadow-md flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-slate-800 truncate">{rooms.find(r => r.id === booking.roomId)?.name}</h4>
+                      <p className="text-xs text-slate-500 font-medium truncate">{booking.userDisplay}</p>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                    booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
-                    booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
-                    'bg-slate-50 border border-slate-200 text-slate-700'
-                  }`}>
-                    {booking.status}
+                </div>
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
+                  booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                  booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
+                  'bg-slate-50 border border-slate-200 text-slate-700'
+                }`}>
+                  {booking.status}
+                </span>
+              </div>
+
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="font-semibold text-slate-700">{new Date(booking.startTime).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-slate-600 font-medium">
+                    {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                    {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="font-semibold text-slate-700">{new Date(booking.startTime).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-slate-600 font-medium">
-                      {new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                      {new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
-                  <button
-                    onClick={() => setViewingAttendeesBooking(booking)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors group shadow-soft"
-                  >
-                    <svg className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span className="text-sm font-bold text-primary">{booking.attendees.length} Attendees</span>
-                  </button>
-                  {booking.status === 'CONFIRMED' && (
-                    <button
-                      onClick={() => onCancelBooking(booking.id)}
-                      className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm hover:shadow-md"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
               </div>
-            ))}
-          </div>
-        </>
-      )}
+
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
+                <button
+                  onClick={() => setViewingAttendeesBooking(booking)}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors group shadow-soft"
+                >
+                  <svg className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span className="text-sm font-bold text-primary">{booking.attendees.length} Attendees</span>
+                </button>
+                {booking.status === 'CONFIRMED' && (
+                  <button
+                    onClick={() => onCancelBooking(booking.id)}
+                    className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm hover:shadow-md"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Attendees Modal */}
       {viewingAttendeesBooking && (
@@ -494,216 +588,180 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
 
   const renderUsers = () => (
     <>
-      <div className="glass rounded-lg border border-white/20 shadow-medium overflow-hidden animate-fade-in">
-        <div className="p-4 sm:p-5 border-b border-slate-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h3 className="text-base sm:text-lg font-bold gradient-text flex items-center gap-2">
-            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            User Management
-          </h3>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="flex-1 sm:flex-none px-3 py-2 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
-            >
-              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+      <div className="space-y-4 animate-fade-in">
+        {/* Header with Action Buttons */}
+        <div className="glass rounded-lg border border-white/20 p-4 shadow-medium">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h3 className="text-base sm:text-lg font-bold gradient-text flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <span className="hidden sm:inline">Import</span>
-            </button>
-            <button
-              onClick={() => setShowAddUserModal(true)}
-              className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-            >
-              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add User
-            </button>
+              User Management
+            </h3>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex-1 sm:flex-none px-3 py-2 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+              >
+                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span className="hidden sm:inline">Import</span>
+              </button>
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+              >
+                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add User
+              </button>
+            </div>
           </div>
         </div>
 
-      {/* Desktop Table */}
-      <div className="hidden lg:block overflow-x-auto custom-scrollbar">
-        <table className="w-full text-sm">
-          <thead className="glass-dark border-b border-white/20">
-            <tr>
-              <th className="text-left p-4 font-bold text-white">Name</th>
-              <th className="text-left p-4 font-bold text-white">Email</th>
-              <th className="text-left p-4 font-bold text-white">Role</th>
-              <th className="text-left p-4 font-bold text-white">Status</th>
-              <th className="text-left p-4 font-bold text-white">Joined</th>
-              <th className="text-left p-4 font-bold text-white">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200/50 bg-white/50">
-            {users.map(user => (
-              <tr key={user.id} className="hover:bg-primary/5 transition-colors">
-                <td className="p-4 font-semibold text-slate-800">{user.name}</td>
-                <td className="p-4 text-slate-600 font-medium">{user.email}</td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                    user.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
-                  }`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-                    user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' : 
-                    user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-                    'bg-slate-50 border border-slate-200 text-slate-700'
-                  }`}>
-                    {user.status || 'ACTIVE'}
-                  </span>
-                </td>
-                <td className="p-4 text-slate-600 font-medium">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    {user.status === 'PENDING' && (
-                      <button
-                        onClick={() => handleApproveUser(user)}
-                        className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-                      >
-                       Approve
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setEditingUser(user)}
-                      className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-lg font-bold text-sm transition-all-smooth shadow-soft"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeletingUser(user)}
-                      className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Cards */}
-      <div className="lg:hidden p-4 space-y-3">
-        {users.map((user, idx) => (
-          <div key={user.id} className="glass rounded-lg border border-white/20 p-4 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-md flex items-center justify-center shadow-glow flex-shrink-0">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-slate-800 truncate">{user.name}</h4>
-                  <p className="text-xs text-slate-500 font-medium truncate">{user.email}</p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1 items-end">
-                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                  user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
-                }`}>
-                  {user.role}
-                </span>
-                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                  user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' : 
-                  user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-                  'bg-slate-50 border border-slate-200 text-slate-700'
-                }`}>
-                  {user.status || 'ACTIVE'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm mb-3">
-              <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        {/* Desktop Table with DataTable */}
+        <div className="hidden lg:block">
+          <DataTable
+            data={users}
+            columns={userColumns}
+            searchPlaceholder="Search users..."
+            emptyMessage="No users found"
+            emptyIcon={
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <span className="text-slate-600 font-semibold">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
-            </div>
+            }
+          />
+        </div>
 
-            <div className="flex gap-2 pt-3 border-t border-slate-200/50">
-              {user.status === 'PENDING' && (
-                <button
-                  onClick={() => handleApproveUser(user)}
-                  className="flex-1 px-4 py-2.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
-                >
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Approve
-                </button>
-              )}
-              <button
-                onClick={() => setEditingUser(user)}
-                className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
-              >
-                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-3">
+          {users.length === 0 ? (
+            <div className="glass rounded-lg border border-white/20 p-12 text-center shadow-medium">
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                Edit
-              </button>
-              <button
-                onClick={() => setDeletingUser(user)}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
-              >
-                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete
-              </button>
+              </div>
+              <p className="text-slate-500 font-semibold">No users found</p>
             </div>
-          </div>
-        ))}
+          ) : (
+            users.map((user, idx) => (
+              <div key={user.id} className="glass rounded-lg border border-white/20 p-4 shadow-medium hover:shadow-strong transition-all-smooth animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-light rounded-md flex items-center justify-center shadow-glow flex-shrink-0">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-slate-800 truncate">{user.name}</h4>
+                      <p className="text-xs text-slate-500 font-medium truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
+                      user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
+                      user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
+                      user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+                      'bg-slate-50 border border-slate-200 text-slate-700'
+                    }`}>
+                      {user.status || 'ACTIVE'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm mb-3">
+                  <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-slate-600 font-semibold">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                </div>
+
+                <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+                  {user.status === 'PENDING' && (
+                    <button
+                      onClick={() => handleApproveUser(user)}
+                      className="flex-1 px-4 py-2.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                    >
+                      <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Approve
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditingUser(user)}
+                    className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                  >
+                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeletingUser(user)}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+                  >
+                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
-    {showImportModal && (
-      <UserImportModal
-        onClose={() => setShowImportModal(false)}
-        onImportSuccess={() => {
-          loadUsers();
-          onRefresh();
-        }}
-      />
-    )}
-    {showAddUserModal && (
-      <AddUserModal
-        onClose={() => setShowAddUserModal(false)}
-        onSuccess={() => {
-          loadUsers();
-          onRefresh();
-        }}
-      />
-    )}
-    {editingUser && (
-      <EditUserModal
-        user={editingUser}
-        onClose={() => setEditingUser(null)}
-        onSuccess={() => {
-          loadUsers();
-          onRefresh();
-        }}
-      />
-    )}
-    {deletingUser && (
-      <ConfirmDeleteModal
-        title="Delete User"
-        message={`Are you sure you want to delete ${deletingUser.name}? This action cannot be undone and will also delete all their bookings.`}
-        confirmText="Delete"
-        onConfirm={handleDeleteUser}
-        onCancel={() => setDeletingUser(null)}
-        isLoading={isDeleting}
-      />
-    )}
-  </>
+
+      {/* Modals */}
+      {showImportModal && (
+        <UserImportModal
+          onClose={() => setShowImportModal(false)}
+          onImportSuccess={() => {
+            loadUsers();
+            onRefresh();
+          }}
+        />
+      )}
+      {showAddUserModal && (
+        <AddUserModal
+          onClose={() => setShowAddUserModal(false)}
+          onSuccess={() => {
+            loadUsers();
+            onRefresh();
+          }}
+        />
+      )}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSuccess={() => {
+            loadUsers();
+            onRefresh();
+          }}
+        />
+      )}
+      {deletingUser && (
+        <ConfirmDeleteModal
+          title="Delete User"
+          message={`Are you sure you want to delete ${deletingUser.name}? This action cannot be undone and will also delete all their bookings.`}
+          confirmText="Delete"
+          onConfirm={handleDeleteUser}
+          onCancel={() => setDeletingUser(null)}
+          isLoading={isDeleting}
+        />
+      )}
+    </>
   );
 
   const renderRooms = () => (

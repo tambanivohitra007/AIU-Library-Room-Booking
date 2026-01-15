@@ -132,7 +132,7 @@ const getEmailTemplate = (title: string, content: string) => {
   // Use a publicly accessible URL for the logo if possible, or embed it if small enough.
   // Since we can't easily embed local files in email clients, we'll use a placeholder or public URL
   // For production, this should be hosted (e.g., https://your-domain.com/assets/logo.png)
-  const logoUrl = 'https://booking.apiu.edu/assets/logo.png'; // Official AIU Logo or similar
+  const logoUrl = `${process.env.CLIENT_URL || 'https://booking.apiu.edu'}/assets/logo_small.jpg`;
 
   return `
     <!DOCTYPE html>

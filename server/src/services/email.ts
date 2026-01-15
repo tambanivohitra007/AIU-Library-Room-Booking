@@ -176,7 +176,7 @@ const getEmailTemplate = (title: string, content: string) => {
         </div>
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} Asia-Pacific International University Library.</p>
-          <p>For assistance, please contact <a href="mailto:library@apiu.edu">library@apiu.edu</a></p>
+          <p>For assistance, please contact <a href="mailto:libadmin@apiu.edu">libadmin@apiu.edu</a></p>
         </div>
       </div>
     </body>

@@ -127,6 +127,13 @@ npm run build
 # IMPORTANT: Only run this once and change default passwords immediately
 npm run prisma:seed
 ```
+### Generate a brand-new migration for MySQL and apply it: 
+
+cd server
+npx prisma format
+npx prisma generate
+npx prisma migrate dev --name init
+
 
 ### Configure Client
 ```bash

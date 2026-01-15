@@ -102,7 +102,19 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                             <span className="text-slate-600 font-medium italic">"{b.purpose}"</span>
                           </div>
                         )}
-                      </div>
+                        {b.status === 'CANCELLED' && b.cancellationReason && (
+                          <div className="flex items-start gap-2 text-sm mt-3 p-3 bg-red-50 border border-red-200 rounded-lg animate-fade-in text-left">
+                            <div className="min-w-4 pt-0.5">
+                              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <span className="font-bold text-red-700 block mb-1">Reason for Cancellation:</span>
+                              <span className="text-slate-700">{b.cancellationReason}</span>
+                            </div>
+                          </div>
+                        )}                      </div>
                     </div>
 
                     {canCancel && (

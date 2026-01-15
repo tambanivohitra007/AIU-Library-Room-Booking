@@ -39,6 +39,7 @@ router.get('/', async (req: AuthRequest, res) => {
         isCompanion: a.isCompanion,
       })),
       status: booking.status,
+      cancellationReason: booking.cancellationReason,
       createdAt: booking.createdAt.toISOString(),
     }));
 
@@ -130,6 +131,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
       purpose: booking.purpose,
       attendees: booking.attendees,
       status: booking.status,
+      cancellationReason: booking.cancellationReason,
       createdAt: booking.createdAt.toISOString(),
     });
   } catch (error) {
@@ -242,6 +244,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
 // Cancel booking
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
+    const { reason } = req.body; // Optional cancellation reason
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
     });
@@ -272,14 +275,17 @@ router.delete('/:id', async (req: AuthRequest, res) => {
 
     const updated = await prisma.booking.update({
       where: { id: req.params.id },
-      data: { status: BookingStatus.CANCELLED },
+      data: { 
+        status: BookingStatus.CANCELLED,
+        cancellationReason: reason || null,
+      },
       include: {
         user: true,
         attendees: true,
       },
     });
 
-    logger.info(`Booking ${updated.id} cancelled by user ${req.userId}`);
+    logger.info(`Booking ${updated.id} cancelled by user ${req.userId}. Reason: ${reason || 'None'}`);
 
     res.json({
       id: updated.id,
@@ -291,6 +297,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       purpose: updated.purpose,
       attendees: updated.attendees,
       status: updated.status,
+      cancellationReason: updated.cancellationReason,
       createdAt: updated.createdAt.toISOString(),
     });
   } catch (error) {

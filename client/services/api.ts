@@ -212,10 +212,11 @@ export const api = {
     });
   },
 
-  cancelBooking: async (id: string): Promise<boolean> => {
+  cancelBooking: async (id: string, reason?: string): Promise<boolean> => {
     try {
       await fetchAPI(`/bookings/${id}`, {
         method: 'DELETE',
+        body: JSON.stringify({ reason }),
       });
       return true;
     } catch {

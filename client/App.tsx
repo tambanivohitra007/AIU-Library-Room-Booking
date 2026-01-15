@@ -5,6 +5,7 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ConfirmModal from './components/ConfirmModal';
+import CancelBookingModal from './components/CancelBookingModal';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -24,6 +25,15 @@ function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+
+  // Cancel Booking Modal State
+  const [cancelBookingModal, setCancelBookingModal] = useState<{
+    isOpen: boolean;
+    bookingId: string | null;
+  }>({
+    isOpen: false,
+    bookingId: null,
+  });
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -111,27 +121,31 @@ function App() {
     loadData();
   }, [tick, isAuthenticated]);
 
-  const handleCancelBooking = async (id: string) => {
-      setConfirmModal({
-        isOpen: true,
-        title: 'Cancel Booking',
-        message: 'Are you sure you want to cancel this booking? This action cannot be undone.',
-        onConfirm: async () => {
-          setConfirmModal({ ...confirmModal, isOpen: false });
-          try {
-            const success = await api.cancelBooking(id);
-            if (success) {
-              toast.success('Booking cancelled successfully');
-              refresh();
-            } else {
-              toast.error('Could not cancel booking');
-            }
-          } catch (error) {
-            toast.error('Failed to cancel booking');
-          }
-        },
-      });
-  }
+  const handleCancelBooking = (id: string) => {
+    setCancelBookingModal({
+      isOpen: true,
+      bookingId: id,
+    });
+  };
+
+  const onConfirmCancelBooking = async (reason: string) => {
+    if (!cancelBookingModal.bookingId) return;
+    
+    const id = cancelBookingModal.bookingId;
+    setCancelBookingModal({ isOpen: false, bookingId: null });
+
+    try {
+      const success = await api.cancelBooking(id, reason);
+      if (success) {
+        toast.success('Booking cancelled successfully');
+        refresh();
+      } else {
+        toast.error('Could not cancel booking');
+      }
+    } catch (error) {
+      toast.error('Failed to cancel booking');
+    }
+  };
 
   const handleExportCSV = async () => {
     try {
@@ -328,6 +342,12 @@ function App() {
       </Routes>
 
       {/* Global Modals */}
+      <CancelBookingModal
+        isOpen={cancelBookingModal.isOpen}
+        onConfirm={onConfirmCancelBooking}
+        onCancel={() => setCancelBookingModal({ isOpen: false, bookingId: null })}
+      />
+
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}

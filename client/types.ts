@@ -44,6 +44,7 @@ export interface Booking {
   purpose: string;
   attendees: Attendee[];
   status: BookingStatus;
+  cancellationReason?: string;
   createdAt: string;
 }
 

@@ -3,6 +3,7 @@ import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { sendCancellationEmail } from '../services/email.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -282,8 +283,18 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       include: {
         user: true,
         attendees: true,
+        room: true,
       },
     });
+
+    // Send cancellation email (only if cancelled by someone valid)
+    if (updated.user.email) {
+      await sendCancellationEmail(updated.user.email, updated.user.name, {
+        roomName: updated.room.name,
+        startTime: updated.startTime,
+        reason: reason,
+      });
+    }
 
     logger.info(`Booking ${updated.id} cancelled by user ${req.userId}. Reason: ${reason || 'None'}`);
 

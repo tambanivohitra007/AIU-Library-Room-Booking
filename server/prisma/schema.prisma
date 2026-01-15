@@ -59,6 +59,7 @@ model Booking {
   purpose   String
   status    BookingStatus  @default(CONFIRMED)
   cancellationReason String?
+  reminderSent Boolean     @default(false)
   createdAt DateTime       @default(now())
 
   room      Room           @relation(fields: [roomId], references: [id])

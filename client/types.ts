@@ -40,6 +40,7 @@ export interface Booking {
   roomId: string;
   userId: string;
   userDisplay?: string; // Joined for display
+  userEmail?: string; // Joined for display
   startTime: string; // ISO String
   endTime: string; // ISO String
   purpose: string;

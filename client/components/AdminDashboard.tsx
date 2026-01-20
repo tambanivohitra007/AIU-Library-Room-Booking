@@ -65,6 +65,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   }, [bookings]);
 
   // Column definitions for bookings table
+  /**
+   * A memoized configuration array for the data table columns used to display booking information.
+   *
+   * This configuration defines the structure, headers, and rendering logic for each column:
+   * - **Room**: Displays the name of the room associated with the booking ID.
+   * - **User**: Shows the user's display name and their ID/Email.
+   * - **Date & Time**: Formats the start/end times and dates into a readable string.
+   * - **Attendees**: Renders an interactive badge showing the count of attendees; clicking opens a details view.
+   * - **Status**: Renders a color-coded badge based on the booking status (CONFIRMED, CANCELLED, etc.).
+   * - **Actions**: Provides action buttons (Remind, Cancel) for bookings with a 'CONFIRMED' status.
+   *
+   * @returns {ColumnDef<Booking>[]} An array of column definitions for the tanstack/react-table.
+   *
+   * @dependencies
+   * - `rooms`: Used to look up room names by ID.
+   * - `onCancelBooking`: Callback function triggered when the cancel button is clicked.
+   * - `handleRemind`: Callback function triggered when the remind button is clicked.
+   */
   const bookingColumns = useMemo<ColumnDef<Booking>[]>(() => [
     {
       accessorKey: 'roomId',
@@ -81,7 +99,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       cell: ({ row }) => (
         <div>
           <div className="font-semibold text-slate-800">{row.original.userDisplay}</div>
-          <div className="text-xs text-slate-500 font-medium">{row.original.userId}</div>
+          <div className="text-xs text-slate-500 font-medium">{row.original.userEmail || row.original.userId}</div>
         </div>
       ),
     },

@@ -98,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       </header>
 
       {/* Main Content - Scrollable */}
-      <main className="flex-1 overflow-y-auto pb-20 sm:pb-8 custom-scrollbar">
+      <main className="flex-1 overflow-y-auto pb-20 sm:pb-8 sm:ml-20 custom-scrollbar">
         <div className="max-w-6xl mx-auto p-4 sm:p-6">
           {children}
         </div>

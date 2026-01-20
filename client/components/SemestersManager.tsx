@@ -208,6 +208,37 @@ const SemestersManager: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const start = new Date(formData.startDate);
+    const end = new Date(formData.endDate);
+    
+    // Set times to start/end of day for accurate comparison
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    if (end < start) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
+    const hasOverlap = semesters.some(sem => {
+      if (isEditing && sem.id === editingId) return false;
+      
+      const semStart = new Date(sem.startDate);
+      const semEnd = new Date(sem.endDate);
+      
+      // Normalize existing dates too
+      semStart.setHours(0, 0, 0, 0);
+      semEnd.setHours(23, 59, 59, 999);
+
+      return start <= semEnd && end >= semStart;
+    });
+
+    if (hasOverlap) {
+      toast.error('Date range overlaps with an existing semester');
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (isEditing && editingId) {

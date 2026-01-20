@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from './LoadingSpinner';
 import { PlusIcon, XIcon } from './Icons';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 interface SemesterModalProps {
   isOpen: boolean;
@@ -148,6 +149,9 @@ const SemestersManager: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [semesterToDelete, setSemesterToDelete] = useState<Semester | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -194,15 +198,19 @@ const SemestersManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this semester?')) return;
+  const confirmDelete = async () => {
+    if (!semesterToDelete) return;
     
+    setIsDeleting(true);
     try {
-      await api.deleteSemester(id);
+      await api.deleteSemester(semesterToDelete.id);
       toast.success('Semester deleted successfully');
       loadSemesters();
+      setSemesterToDelete(null);
     } catch (error) {
        toast.error('Failed to delete semester');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -316,7 +324,7 @@ const SemestersManager: React.FC = () => {
                                 Edit
                             </button>
                             <button
-                                onClick={() => handleDelete(semester.id)}
+                                onClick={() => setSemesterToDelete(semester)}
                                 className="text-red-500 hover:text-red-700 font-medium text-sm"
                             >
                                 Delete
@@ -345,6 +353,16 @@ const SemestersManager: React.FC = () => {
         isEditing={isEditing}
         isLoading={submitting}
       />
+
+      {semesterToDelete && (
+        <ConfirmDeleteModal
+          title="Delete Semester"
+          message={`Are you sure you want to delete "${semesterToDelete.name}"? This action cannot be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setSemesterToDelete(null)}
+          isLoading={isDeleting}
+        />
+      )}
     </div>
   );
 };

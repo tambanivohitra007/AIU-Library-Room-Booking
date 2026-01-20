@@ -1,4 +1,4 @@
-import { User, Room, Booking } from '../types';
+import { User, Room, Booking, Semester } from '../types';
 
 // Use environment variable or fallback to relative path (for dev proxy)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -227,6 +227,39 @@ export const api = {
   remindBooking: async (id: string): Promise<void> => {
     return fetchAPI('/bookings/' + id + '/remind', {
        method: 'POST'
+    });
+  },
+
+  // Semesters
+  getSemesters: async (): Promise<Semester[]> => {
+    return fetchAPI<Semester[]>('/semesters');
+  },
+
+  getActiveSemester: async (): Promise<Semester | null> => {
+    try {
+      return await fetchAPI<Semester>('/semesters/active');
+    } catch {
+      return null;
+    }
+  },
+
+  createSemester: async (data: { name: string; startDate: string; endDate: string; isActive?: boolean }): Promise<Semester> => {
+    return fetchAPI<Semester>('/semesters', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateSemester: async (id: string, data: { name?: string; startDate?: string; endDate?: string; isActive?: boolean }): Promise<Semester> => {
+    return fetchAPI<Semester>(`/semesters/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteSemester: async (id: string): Promise<void> => {
+    return fetchAPI(`/semesters/${id}`, {
+      method: 'DELETE',
     });
   },
 };

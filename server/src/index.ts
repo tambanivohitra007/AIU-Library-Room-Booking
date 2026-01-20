@@ -7,6 +7,7 @@ import { userRouter } from './routes/users.js';
 import { roomRouter } from './routes/rooms.js';
 import { bookingRouter } from './routes/bookings.js';
 import { adminRouter } from './routes/admin.js';
+import { semesterRouter } from './routes/semesters.js';
 import { apiLimiter } from './middleware/security.js';
 import { startBookingScheduler } from './services/bookingScheduler.js';
 import logger from './utils/logger.js';
@@ -45,6 +46,7 @@ app.use('/api/users', userRouter);
 app.use('/api/rooms', roomRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/semesters', semesterRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

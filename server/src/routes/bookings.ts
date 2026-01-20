@@ -165,6 +165,19 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Check Semester Validity
+    const activeSemester = await prisma.semester.findFirst({
+       where: { isActive: true },
+    });
+
+    if (activeSemester) {
+       if (bookingStart < activeSemester.startDate || bookingEnd > activeSemester.endDate) {
+           return res.status(400).json({
+               error: `Bookings are only allowed within the current semester: ${activeSemester.name} (${activeSemester.startDate.toLocaleDateString()} - ${activeSemester.endDate.toLocaleDateString()})`
+           });
+       }
+    }
+
     // Check for overlapping bookings
     const overlapping = await prisma.booking.findFirst({
       where: {

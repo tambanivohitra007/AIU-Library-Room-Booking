@@ -76,3 +76,12 @@ model Attendee {
 
   booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
+
+model Semester {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

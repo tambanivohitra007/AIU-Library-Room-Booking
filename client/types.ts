@@ -35,6 +35,14 @@ export interface Attendee {
   isCompanion: boolean; // true if not the booker
 }
 
+export interface Semester {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
 export interface Booking {
   id: string;
   roomId: string;

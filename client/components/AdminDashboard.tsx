@@ -8,6 +8,7 @@ import EditUserModal from './EditUserModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import AddRoomModal from './AddRoomModal';
 import EditRoomModal from './EditRoomModal';
+import SemestersManager from './SemestersManager';
 import AttendeesModal from './AttendeesModal';
 import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
@@ -32,7 +33,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const toast = useToast();
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'semesters'>('overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -919,6 +920,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
             { id: 'users', label: 'Users', Icon: UsersIcon },
             { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
+            { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
           ].map(tab => (
             <button
               key={tab.id}
@@ -943,6 +945,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         {selectedTab === 'bookings' && renderBookings()}
         {selectedTab === 'users' && renderUsers()}
         {selectedTab === 'rooms' && renderRooms()}
+        {selectedTab === 'semesters' && <SemestersManager />}
       </div>
     </div>
   );

@@ -913,8 +913,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       </div>
 
       {/* Tabs */}
-      <div className="glass rounded-lg border border-white/20 shadow-medium p-2 overflow-x-auto">
-        <nav className="flex space-x-1 sm:space-x-2 min-w-max">
+      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-[72px] z-10 backdrop-blur-md">
+        <nav className="flex items-stretch sm:justify-start sm:space-x-2" aria-label="Tabs">
           {[
             { id: 'overview', label: 'Overview', Icon: BarChartIcon },
             { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
@@ -925,15 +925,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
-              className={`px-3 sm:px-4 py-2 rounded-md font-bold text-xs sm:text-sm transition-all-smooth flex items-center gap-2 whitespace-nowrap ${
-                selectedTab === tab.id
-                  ? 'bg-primary text-white shadow-md'
+              className={`
+                flex-1 px-1 sm:px-4 py-2 rounded-md font-bold text-[10px] sm:text-sm transition-all-smooth flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2
+                min-w-0
+                ${selectedTab === tab.id
+                  ? 'bg-primary text-white shadow-md transform scale-[1.02]'
                   : 'text-slate-600 hover:bg-primary/5 hover:text-primary'
-              }`}
+                }
+              `}
             >
-              <tab.Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform`} />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.slice(0, 4)}</span>
+              <tab.Icon className={`w-5 h-5 sm:w-5 sm:h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform flex-shrink-0`} />
+              <span className="leading-tight truncate w-full text-center sm:w-auto">{tab.label}</span>
             </button>
           ))}
         </nav>

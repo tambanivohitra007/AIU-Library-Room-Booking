@@ -49,6 +49,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   // Attendees modal state
   const [viewingAttendeesBooking, setViewingAttendeesBooking] = useState<Booking | null>(null);
 
+  const handleRemind = async (bookingId: string) => {
+    try {
+      await api.remindBooking(bookingId);
+      toast.success('Reminder sent successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reminder';
+      toast.error(errorMessage);
+    }
+  };
+
   useEffect(() => {
     loadStats();
     loadUsers();
@@ -126,16 +136,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       enableSorting: false,
       cell: ({ row }) => (
         row.original.status === 'CONFIRMED' ? (
-          <button
-            onClick={() => onCancelBooking(row.original.id)}
-            className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleRemind(row.original.id)}
+              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-500 border border-blue-200 hover:border-blue-500 text-blue-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+              title="Send Reminder Email"
+            >
+              Remind
+            </button>
+            <button
+              onClick={() => onCancelBooking(row.original.id)}
+              className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+            >
+              Cancel
+            </button>
+          </div>
         ) : null
       ),
     },
-  ], [rooms, onCancelBooking]);
+  ], [rooms, onCancelBooking, handleRemind]);
 
   // Column definitions for users table
   const userColumns = useMemo<ColumnDef<User>[]>(() => [

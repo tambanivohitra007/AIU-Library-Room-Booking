@@ -262,7 +262,7 @@ export const sendReminderEmail = async (
 
   const message = `
     <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>This is a friendly reminder that your upcoming room reservation at the AIU Library is scheduled to begin in approximately 15 minutes.</p>
+    <p>This is a friendly reminder that your upcoming room reservation at the AIU Library is scheduled to begin soon.</p>
     
     <div class="info-box">
       <div class="info-row">

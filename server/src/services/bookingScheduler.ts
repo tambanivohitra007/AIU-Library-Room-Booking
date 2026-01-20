@@ -31,8 +31,8 @@ export const startBookingScheduler = () => {
         logger.info(`Marked ${completedBookings.count} booking(s) as COMPLETED`);
       }
 
-      // 2. Send Reminders (15 to 30 minutes before start)
-      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
+      // 2. Send Reminders (Start checking 30 minutes before)
+      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
       const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000);
 
       const remindersToSend = await prisma.booking.findMany({
@@ -40,7 +40,7 @@ export const startBookingScheduler = () => {
           status: 'CONFIRMED',
           reminderSent: false,
           startTime: {
-            gte: fifteenMinutesFromNow,
+            gte: fiveMinutesFromNow,
             lte: thirtyMinutesFromNow,
           },
         },

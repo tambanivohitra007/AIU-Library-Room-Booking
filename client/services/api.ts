@@ -223,4 +223,10 @@ export const api = {
       return false;
     }
   },
+
+  remindBooking: async (id: string): Promise<void> => {
+    return fetchAPI('/bookings/' + id + '/remind', {
+       method: 'POST'
+    });
+  },
 };

@@ -3,7 +3,7 @@ import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
-import { sendCancellationEmail } from '../services/email.js';
+import { sendCancellationEmail, sendReminderEmail } from '../services/email.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -239,6 +239,57 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error creating booking:', error);
     res.status(500).json({ error: 'Failed to create booking' });
+  }
+});
+
+// Send manual reminder
+router.post('/:id/remind', async (req: AuthRequest, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: { user: true, room: true },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Check permissions (Admin or Owner)
+    if (booking.userId !== req.userId && req.userRole !== 'ADMIN') {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      return res.status(400).json({ error: 'Can only remind for confirmed bookings' });
+    }
+    
+    // Check if in past (allow if starts within 5 mins ago? No, strictly future or ongoing)
+    // Actually, "Upcoming" implies future.
+    if (booking.endTime < new Date()) {
+       return res.status(400).json({ error: 'Cannot remind for completed bookings' });
+    }
+
+    if (booking.user.email) {
+      await sendReminderEmail(booking.user.email, booking.user.name, {
+        roomName: booking.room.name,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+      });
+
+      // Update flag
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { reminderSent: true },
+      });
+      
+      return res.json({ message: 'Reminder sent successfully' });
+    } else {
+      return res.status(400).json({ error: 'User has no email address' });
+    }
+
+  } catch (error) {
+    logger.error('Error sending manual reminder:', error);
+    res.status(500).json({ error: 'Failed to send reminder' });
   }
 });
 

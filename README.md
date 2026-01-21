@@ -468,6 +468,46 @@ datasource db {
 DATABASE_URL="postgresql://user:password@localhost:5432/aiu_library_booking"
 ```
 
+## 🔄 Handling Updates & Migrations
+
+When fetching updates from the repository that include database schema changes (new tables, columns, etc.), follow this procedure:
+
+### 1. Pull Latest Changes
+```bash
+git pull origin main
+```
+
+### 2. Update Dependencies
+If `package.json` was modified, install new packages:
+```bash
+cd server && npm install
+cd ../client && npm install
+```
+
+### 3. Update Database (Schema Changes)
+If `prisma/schema.prisma` has changed, you must apply the migrations.
+
+**For Development:**
+```bash
+cd server
+npm run prisma:migrate  # Applies migrations & regenerates client
+```
+
+**For Production:**
+```bash
+cd server
+npm run prisma:migrate:prod
+# Restart backend to pick up schema changes
+pm2 restart aiu-library-api
+```
+
+### 4. Rebuild Frontend (If needed)
+If there are frontend changes:
+```bash
+cd client
+npm run build
+```
+
 ## Useful Scripts
 
 ### Production Check

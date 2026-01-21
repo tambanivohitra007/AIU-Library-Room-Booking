@@ -140,11 +140,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-          row.original.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${row.original.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
           row.original.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
-          'bg-slate-50 border border-slate-200 text-slate-700'
-        }`}>
+            'bg-slate-50 border border-slate-200 text-slate-700'
+          }`}>
           {row.original.status}
         </span>
       ),
@@ -195,9 +194,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       accessorKey: 'role',
       header: 'Role',
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-          row.original.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
-        }`}>
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${row.original.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
+          }`}>
           {row.original.role}
         </span>
       ),
@@ -206,11 +204,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
-          row.original.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${row.original.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
           row.original.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-          'bg-slate-50 border border-slate-200 text-slate-700'
-        }`}>
+            'bg-slate-50 border border-slate-200 text-slate-700'
+          }`}>
           {row.original.status || 'ACTIVE'}
         </span>
       ),
@@ -469,9 +466,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   </span>
                 </p>
               </div>
-              <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft self-start sm:self-auto ${
-                booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
-              }`}>
+              <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft self-start sm:self-auto ${booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
+                }`}>
                 {booking.status}
               </span>
             </div>
@@ -563,11 +559,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     </div>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                  booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${booking.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
                   booking.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
-                  'bg-slate-50 border border-slate-200 text-slate-700'
-                }`}>
+                    'bg-slate-50 border border-slate-200 text-slate-700'
+                  }`}>
                   {booking.status}
                 </span>
               </div>
@@ -701,16 +696,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 items-end">
-                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                      user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${user.role === 'ADMIN' ? 'bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-purple-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-700'
+                      }`}>
                       {user.role}
                     </span>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${
-                      user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft flex-shrink-0 ${user.status === 'ACTIVE' ? 'bg-green-50 border border-green-200 text-green-700' :
                       user.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-                      'bg-slate-50 border border-slate-200 text-slate-700'
-                    }`}>
+                        'bg-slate-50 border border-slate-200 text-slate-700'
+                      }`}>
                       {user.status || 'ACTIVE'}
                     </span>
                   </div>
@@ -913,7 +906,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       </div>
 
       {/* Tabs */}
-      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-[72px] z-10 backdrop-blur-md">
+      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-0 z-10 backdrop-blur-md">
         <nav className="flex items-stretch sm:justify-start sm:space-x-2" aria-label="Tabs">
           {[
             { id: 'overview', label: 'Overview', Icon: BarChartIcon },

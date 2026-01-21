@@ -99,8 +99,25 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
 
       {/* Main Content - Scrollable */}
       <main className="flex-1 overflow-y-auto pb-20 sm:pb-8 sm:ml-20 custom-scrollbar">
-        <div className="max-w-6xl mx-auto p-4 sm:p-6">
-          {children}
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 min-h-full flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+
+          {/* Developer Signature */}
+          <div className="mt-12 flex justify-center items-center border-t border-slate-200/30">
+            <a 
+              href="https://rindra.org" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="group flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-primary transition-colors"
+            >
+              <svg className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              <span>Developed by <span className="font-bold group-hover:underline decoration-2 underline-offset-2">Rindra Razafinjatovo</span>. AIU 2026</span>
+            </a>
+          </div>
         </div>
       </main>
 

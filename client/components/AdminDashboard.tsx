@@ -14,6 +14,8 @@ import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
 import { ColumnDef } from '@tanstack/react-table';
 
+import ExportReportModal from './ExportReportModal';
+
 interface AdminDashboardProps {
   bookings: Booking[];
   rooms: Room[];
@@ -37,6 +39,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -893,6 +896,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           isLoading={isDeleting}
         />
       )}
+
+
     </>
   );
 
@@ -903,10 +908,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
           <h2 className="text-2xl sm:text-3xl font-bold gradient-text">Admin Dashboard</h2>
           <p className="text-sm text-slate-500 font-medium mt-1">Manage bookings, users, and rooms</p>
         </div>
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-bold shadow-sm hover:shadow-md transition-all-smooth flex items-center gap-2 group"
+        >
+          <svg className="w-5 h-5 text-slate-500 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Export Report
+        </button>
       </div>
 
       {/* Tabs */}
-      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-0 z-10 backdrop-blur-md">
+      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-16 z-10 backdrop-blur-md">
         <nav className="flex items-stretch sm:justify-start sm:space-x-2" aria-label="Tabs">
           {[
             { id: 'overview', label: 'Overview', Icon: BarChartIcon },
@@ -942,6 +956,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         {selectedTab === 'rooms' && renderRooms()}
         {selectedTab === 'semesters' && <SemestersManager />}
       </div>
+
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        bookings={bookings}
+        users={users}
+        rooms={rooms}
+      />
     </div>
   );
 };

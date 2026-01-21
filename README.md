@@ -29,6 +29,8 @@ See [PRODUCTION_READY.md](PRODUCTION_READY.md) for complete production readiness
 - **User Management**: Create, edit, delete users; promote to admin
 - **Room Management**: Add, edit, delete rooms
 - **Booking Management**: Advanced filters, search, and CSV export
+- **Export Reports**: Generate and print PDF reports for bookings, users, and rooms
+- **Dynamic Branding**: Configure service name, logo, and description via the Admin Dashboard settings
 - **Audit Logging**: Track all administrative actions
 
 ### Production Features
@@ -417,23 +419,40 @@ pm2 stop aiu-library-api
 
 ### From SQLite to MySQL
 
-1. Update `server/prisma/schema.prisma`:
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-```
+1. **Update schema**: 
+   Open `server/prisma/schema.prisma` and change the provider:
+   ```prisma
+   datasource db {
+     provider = "mysql"
+     url      = env("DATABASE_URL")
+   }
+   ```
 
-2. Update DATABASE_URL in `.env`:
-```env
-DATABASE_URL="mysql://user:password@localhost:3306/aiu_library_booking"
-```
+2. **Update Environment**:
+   In your `.env` file, update `DATABASE_URL` with your MySQL connection string:
+   ```env
+   # Format: mysql://USER:PASSWORD@HOST:PORT/DATABASE
+   DATABASE_URL="mysql://root:password@localhost:3306/aiu_library_booking"
+   ```
 
-3. Run migration:
-```bash
-npm run prisma:migrate:prod
-```
+3. **Reset & Migrate**:
+   Since you are switching providers, you need to create the initial tables.
+   *Warning: This will clear existing SQLite data.*
+   
+   ```bash
+   cd server
+   
+   # Remove the old migrations folder specific to SQLite
+   rm -rf prisma/migrations
+   
+   # Run migration to create MySQL tables
+   npm run prisma:migrate
+   ```
+
+4. **Seed Data** (Optional):
+   ```bash
+   npm run prisma:seed
+   ```
 
 ### From SQLite to PostgreSQL
 

@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon, LockIcon } from './Icons';
 import { User, UserRole } from '../types';
 import logo from '../assets/logo_small.jpg';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassword }) => {
+  const { settings } = useSettings();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navItems = [
@@ -28,14 +30,14 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
       {/* Header */}
       <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark shadow-strong  border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
-           <div className="relative hover-lift">
-             <img src={logo} alt="AIU Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90" />
-             <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
-           </div>
-           <div>
-             <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">AIU Library</h1>
-             <p className="text-xs text-blue-200 hidden sm:block font-medium">Room Booking System</p>
-           </div>
+          <div className="relative hover-lift">
+            <img src={settings?.logoUrl || logo} alt={settings?.serviceName || "Service Logo"} className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90" />
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
+          </div>
+          <div>
+            <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">{settings?.serviceName || 'AIU Library'}</h1>
+            <p className="text-xs text-blue-200 hidden sm:block font-medium">{settings?.description || 'Room Booking System'}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 relative">
           <div className="text-right hidden sm:block">
@@ -106,10 +108,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
 
           {/* Developer Signature */}
           <div className="mt-12 flex justify-center items-center border-t border-slate-200/30">
-            <a 
-              href="https://rindra.org" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://rindra.org"
+              target="_blank"
+              rel="noopener noreferrer"
               className="group flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-primary transition-colors"
             >
               <svg className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,10 +131,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
             to={item.path}
             end={item.path === '/'}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1.5 px-4 py-2 rounded-md transition-all-smooth ${
-                isActive
-                  ? 'text-primary bg-primary/10 shadow-soft'
-                  : 'text-slate-500 hover:text-primary hover:bg-primary/5'
+              `flex flex-col items-center gap-1.5 px-4 py-2 rounded-md transition-all-smooth ${isActive
+                ? 'text-primary bg-primary/10 shadow-soft'
+                : 'text-slate-500 hover:text-primary hover:bg-primary/5'
               }`
             }
           >
@@ -159,10 +160,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `relative p-3.5 rounded-lg transition-all-smooth group ${
-                  isActive
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-slate-500 hover:bg-primary/5 hover:text-primary'
+                `relative p-3.5 rounded-lg transition-all-smooth group ${isActive
+                  ? 'bg-primary text-white shadow-md'
+                  : 'text-slate-500 hover:bg-primary/5 hover:text-primary'
                 }`
               }
               title={item.label}

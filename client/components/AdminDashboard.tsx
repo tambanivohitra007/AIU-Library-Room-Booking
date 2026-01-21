@@ -115,13 +115,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       cell: ({ row }) => (
         <div>
           <div className="font-medium text-slate-800">
-            {new Date(row.original.startTime).toLocaleDateString()}
+            {new Date(row.original.startTime).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
           </div>
           <div className="text-xs text-slate-500 font-medium">
             {new Date(row.original.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
             {new Date(row.original.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
-        </div>
+        </div >
       ),
     },
     {
@@ -222,7 +222,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       header: 'Joined',
       cell: ({ row }) => (
         <span className="text-slate-600 font-medium">
-          {new Date(row.original.createdAt).toLocaleDateString()}
+          {new Date(row.original.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
         </span>
       ),
     },

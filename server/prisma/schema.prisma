@@ -85,3 +85,15 @@ model Semester {
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model ServiceSettings {
+  id           String   @id @default(uuid())
+  serviceName  String   @default("AIU Library Room Booking")
+  logoUrl      String?
+  contactEmail String?
+  websiteUrl   String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

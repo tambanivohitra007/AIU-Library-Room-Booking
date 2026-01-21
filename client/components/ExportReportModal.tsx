@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Booking, User, Room } from '../types';
 import { useReactToPrint } from 'react-to-print';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface ExportReportModalProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
     users,
     rooms,
 }) => {
+    const { settings } = useSettings();
     const [reportType, setReportType] = useState<ReportType>('bookings');
     const [startDate, setStartDate] = useState<string>(
         new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
@@ -199,8 +201,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                             {/* Report Header */}
                             <div className="border-b-2 border-primary/20 pb-6 mb-8 flex justify-between items-end">
                                 <div>
-                                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">AIU Library</h1>
-                                    <p className="text-primary font-bold text-lg mt-1">Room Booking System</p>
+                                    <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">{settings?.serviceName || 'Room Booking System'}</h1>
+                                    <p className="text-primary font-bold text-lg mt-1">{settings?.description || 'Export Report'}</p>
                                 </div>
                                 <div className="text-right">
                                     <div className="px-3 py-1 bg-slate-100 rounded-md inline-block mb-2 print:bg-transparent print:p-0">
@@ -338,7 +340,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
 
                             {/* Footer */}
                             <div className="mt-8 pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400 font-medium print:hidden">
-                                <p>AIU Library Room Booking System</p>
+                                <p>{settings?.serviceName || 'Room Booking System'}</p>
                                 <p>Internal Use Only</p>
                             </div>
 

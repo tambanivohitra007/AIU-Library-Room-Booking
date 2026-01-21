@@ -15,6 +15,7 @@ import AdminPage from './pages/AdminPage';
 import { api } from './services/api';
 import { User, Room, Booking } from './types';
 import { useToast } from './contexts/ToastContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 
 function App() {
   const toast = useToast();
@@ -45,7 +46,7 @@ function App() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // Change Password Modal State
@@ -96,13 +97,13 @@ function App() {
     const loadData = async () => {
       // Don't show loading spinner for background refreshes unless it's the first load
       if (rooms.length === 0) setIsDataLoading(true);
-      
+
       try {
         const [loadedRooms, loadedBookings] = await Promise.all([
           api.getRooms(),
           api.getBookings()
         ]);
-        
+
         // Only update state if data has actually changed to prevent unnecessary re-renders
         // Simple comparison by length + last item ID or timestamp would be better, but deep check is expensive
         // For now, we just set state which triggers re-render. React handles DOM diffing.
@@ -130,7 +131,7 @@ function App() {
 
   const onConfirmCancelBooking = async (reason: string) => {
     if (!cancelBookingModal.bookingId) return;
-    
+
     const id = cancelBookingModal.bookingId;
     setCancelBookingModal({ isOpen: false, bookingId: null });
 
@@ -152,23 +153,23 @@ function App() {
       const allBookings = await api.getAllBookingsForAdmin();
       const headers = ["Booking ID", "Room", "User Name", "User ID", "Start Time", "End Time", "Status", "Attendees Count", "Attendees List", "Purpose"];
       const rows = allBookings.map(b => [
-          b.id,
-          rooms.find(r => r.id === b.roomId)?.name || b.roomId,
-          `"${b.userDisplay}"`,
-          b.userId,
-          new Date(b.startTime).toISOString(),
-          new Date(b.endTime).toISOString(),
-          b.status,
-          b.attendees.length,
-          `"${b.attendees.map(a => a.name).join(', ')}"`,
-          `"${b.purpose || ''}"`
+        b.id,
+        rooms.find(r => r.id === b.roomId)?.name || b.roomId,
+        `"${b.userDisplay}"`,
+        b.userId,
+        new Date(b.startTime).toISOString(),
+        new Date(b.endTime).toISOString(),
+        b.status,
+        b.attendees.length,
+        `"${b.attendees.map(a => a.name).join(', ')}"`,
+        `"${b.purpose || ''}"`
       ]);
       const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0, 10)}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -202,7 +203,7 @@ function App() {
       toast.success(message || 'Registration successful. Waiting for approval.');
       // Returning true/false or similar might be needed if RegisterForm expects it, 
       // but usually throwing error handles failure.
-      
+
       // We need to tell the RegisterForm to switch to Login view
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
@@ -246,124 +247,126 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Auth Routes */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated && user ? (
-              <Navigate to="/" replace />
-            ) : (
-              <LoginForm
-                onLogin={handleLogin}
-                error={authError}
-              />
-            )
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            isAuthenticated && user ? (
-              <Navigate to="/" replace />
-            ) : (
-              <RegisterForm
-                onRegister={handleRegister}
-                error={authError}
-              />
-            )
-          }
-        />
-
-        <Route path="/auth/callback" element={<AuthCallbackPage />} />
-
-        {/* Protected Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
-              <Layout
-                user={user!}
-                onLogout={handleLogout}
-                onChangePassword={() => setShowChangePasswordModal(true)}
-              >
-                <HomePage
-                  user={user!}
-                  rooms={rooms}
-                  bookings={bookings}
-                  onRefresh={refresh}
-                  onCancelBooking={handleCancelBooking}
+    <SettingsProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Auth Routes */}
+          <Route
+            path="/login"
+            element={
+              isAuthenticated && user ? (
+                <Navigate to="/" replace />
+              ) : (
+                <LoginForm
+                  onLogin={handleLogin}
+                  error={authError}
                 />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-bookings"
-          element={
-            <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
-              <Layout
-                user={user!}
-                onLogout={handleLogout}
-                onChangePassword={() => setShowChangePasswordModal(true)}
-              >
-                <MyBookingsPage
-                  user={user!}
-                  rooms={rooms}
-                  bookings={bookings}
-                  onCancelBooking={handleCancelBooking}
+              )
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              isAuthenticated && user ? (
+                <Navigate to="/" replace />
+              ) : (
+                <RegisterForm
+                  onRegister={handleRegister}
+                  error={authError}
                 />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute user={user} isAuthenticated={isAuthenticated} requireAdmin={true}>
-              <Layout
-                user={user!}
-                onLogout={handleLogout}
-                onChangePassword={() => setShowChangePasswordModal(true)}
-              >
-                <AdminPage
+              )
+            }
+          />
+
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
+                <Layout
                   user={user!}
-                  rooms={rooms}
-                  bookings={bookings}
-                  onExportCSV={handleExportCSV}
-                  onCancelBooking={handleCancelBooking}
-                  onRefresh={refresh}
-                />
-              </Layout>
-            </ProtectedRoute>
-          }
+                  onLogout={handleLogout}
+                  onChangePassword={() => setShowChangePasswordModal(true)}
+                >
+                  <HomePage
+                    user={user!}
+                    rooms={rooms}
+                    bookings={bookings}
+                    onRefresh={refresh}
+                    onCancelBooking={handleCancelBooking}
+                  />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-bookings"
+            element={
+              <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
+                <Layout
+                  user={user!}
+                  onLogout={handleLogout}
+                  onChangePassword={() => setShowChangePasswordModal(true)}
+                >
+                  <MyBookingsPage
+                    user={user!}
+                    rooms={rooms}
+                    bookings={bookings}
+                    onCancelBooking={handleCancelBooking}
+                  />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute user={user} isAuthenticated={isAuthenticated} requireAdmin={true}>
+                <Layout
+                  user={user!}
+                  onLogout={handleLogout}
+                  onChangePassword={() => setShowChangePasswordModal(true)}
+                >
+                  <AdminPage
+                    user={user!}
+                    rooms={rooms}
+                    bookings={bookings}
+                    onExportCSV={handleExportCSV}
+                    onCancelBooking={handleCancelBooking}
+                    onRefresh={refresh}
+                  />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+
+        {/* Global Modals */}
+        <CancelBookingModal
+          isOpen={cancelBookingModal.isOpen}
+          onConfirm={onConfirmCancelBooking}
+          onCancel={() => setCancelBookingModal({ isOpen: false, bookingId: null })}
         />
-      </Routes>
 
-      {/* Global Modals */}
-      <CancelBookingModal
-        isOpen={cancelBookingModal.isOpen}
-        onConfirm={onConfirmCancelBooking}
-        onCancel={() => setCancelBookingModal({ isOpen: false, bookingId: null })}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        confirmText="Confirm"
-        cancelText="Cancel"
-        confirmVariant="danger"
-        onConfirm={confirmModal.onConfirm}
-        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
-      />
-      <ChangePasswordModal
-        isOpen={showChangePasswordModal}
-        onClose={() => setShowChangePasswordModal(false)}
-        onSubmit={handleChangePassword}
-      />
-    </BrowserRouter>
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText="Confirm"
+          cancelText="Cancel"
+          confirmVariant="danger"
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        />
+        <ChangePasswordModal
+          isOpen={showChangePasswordModal}
+          onClose={() => setShowChangePasswordModal(false)}
+          onSubmit={handleChangePassword}
+        />
+      </BrowserRouter>
+    </SettingsProvider>
   );
 }
 

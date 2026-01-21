@@ -58,6 +58,16 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface ServiceSettings {
+  id: string;
+  serviceName: string;
+  logoUrl?: string; // Optional URL
+  contactEmail?: string;
+  websiteUrl?: string;
+  description?: string;
+  updatedAt?: string;
+}
+
 /*
   --- DATABASE SCHEMA DDL (Hypothetical for PostgreSQL) ---
   

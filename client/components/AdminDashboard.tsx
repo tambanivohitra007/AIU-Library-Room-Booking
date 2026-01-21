@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, Room, Booking, UserRole } from '../types';
 import { api } from '../services/api';
-import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon } from './Icons';
+import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon, SettingsIcon } from './Icons';
 import UserImportModal from './UserImportModal';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
@@ -12,9 +12,11 @@ import SemestersManager from './SemestersManager';
 import AttendeesModal from './AttendeesModal';
 import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { ColumnDef } from '@tanstack/react-table';
 
 import ExportReportModal from './ExportReportModal';
+import SettingsTab from './SettingsTab';
 
 interface AdminDashboardProps {
   bookings: Booking[];
@@ -35,7 +37,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
   const toast = useToast();
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'semesters'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'semesters' | 'settings'>('overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -928,6 +930,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             { id: 'users', label: 'Users', Icon: UsersIcon },
             { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
             { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
+            { id: 'settings', label: 'Settings', Icon: SettingsIcon }, // Added Settings tab
           ].map(tab => (
             <button
               key={tab.id}
@@ -955,6 +958,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
         {selectedTab === 'users' && renderUsers()}
         {selectedTab === 'rooms' && renderRooms()}
         {selectedTab === 'semesters' && <SemestersManager />}
+        {selectedTab === 'settings' && <SettingsTab />}
       </div>
 
       <ExportReportModal

@@ -198,8 +198,22 @@ const SemestersManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const requestDelete = (semester: Semester) => {
+    if (semester.isActive) {
+      toast.error('Cannot delete the active semester. Please set another semester as active first.');
+      return;
+    }
+    setSemesterToDelete(semester);
+  };
+
   const confirmDelete = async () => {
     if (!semesterToDelete) return;
+
+    if (semesterToDelete.isActive) {
+      toast.error('Cannot delete the active semester.');
+      setSemesterToDelete(null);
+      return;
+    }
     
     setIsDeleting(true);
     try {
@@ -325,8 +339,14 @@ const SemestersManager: React.FC = () => {
                                 Edit
                             </button>
                             <button
-                                onClick={() => setSemesterToDelete(semester)}
-                                className="text-red-500 hover:text-red-700 font-medium text-sm"
+                                onClick={() => requestDelete(semester)}
+                                disabled={semester.isActive}
+                                className={`font-medium text-sm transition-colors ${
+                                    semester.isActive 
+                                    ? "text-slate-300 cursor-not-allowed" 
+                                    : "text-red-500 hover:text-red-700"
+                                }`}
+                                title={semester.isActive ? "Cannot delete active semester" : "Delete semester"}
                             >
                                 Delete
                             </button>
@@ -380,8 +400,13 @@ const SemestersManager: React.FC = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => setSemesterToDelete(semester)}
-                    className="flex-1 px-4 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-md font-bold text-sm transition-all"
+                    onClick={() => requestDelete(semester)}
+                    disabled={semester.isActive}
+                    className={`flex-1 px-4 py-2.5 border rounded-md font-bold text-sm transition-all ${
+                        semester.isActive
+                        ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                        : "bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
+                    }`}
                   >
                     Delete
                   </button>

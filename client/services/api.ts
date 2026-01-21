@@ -227,7 +227,7 @@ export const api = {
 
   remindBooking: async (id: string): Promise<void> => {
     return fetchAPI('/bookings/' + id + '/remind', {
-       method: 'POST'
+      method: 'POST'
     });
   },
 
@@ -261,6 +261,18 @@ export const api = {
   deleteSemester: async (id: string): Promise<void> => {
     return fetchAPI(`/semesters/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  // Settings
+  getSettings: async (): Promise<any> => {
+    return fetchAPI('/settings');
+  },
+
+  updateSettings: async (settings: any): Promise<any> => {
+    return fetchAPI('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
     });
   },
 };

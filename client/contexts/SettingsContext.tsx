@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { ServiceSettings } from '../types';
+import { api } from '../services/api';
 
 interface SettingsContextType {
     settings: ServiceSettings | null;
@@ -38,11 +39,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:5000/api/settings'); // Adjust URL if needed
-            if (!response.ok) {
-                throw new Error('Failed to fetch settings');
-            }
-            const data = await response.json();
+            const data = await api.getSettings();
             setSettings(data);
             setError(null);
         } catch (err) {
@@ -57,19 +54,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
     const updateSettings = async (newSettings: Partial<ServiceSettings>) => {
         try {
-            const response = await fetch('http://localhost:5000/api/settings', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newSettings),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update settings');
-            }
-
-            const updated = await response.json();
+            const updated = await api.updateSettings(newSettings);
             setSettings(updated);
         } catch (err) {
             console.error('Error updating settings:', err);

@@ -334,8 +334,8 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     {dayEvents.map(b => {
                         const style = getPositionStyle(new Date(b.startTime), new Date(b.endTime));
                         const isOwner = b.userId === currentUser.id;
-                        const isAdmin = currentUser.role === UserRole.ADMIN;
-                        const canView = isOwner || isAdmin;
+                        const canViewAll = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.STUDENT_WORKER;
+                        const canView = isOwner || canViewAll;
 
                         return (
                           <div

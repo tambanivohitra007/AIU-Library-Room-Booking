@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
+import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
@@ -9,15 +9,14 @@ import logger from '../utils/logger.js';
 const router = Router();
 const prisma = new PrismaClient();
 
-// Apply authentication and admin check to all routes
+// Apply authentication to all routes; individual routes enforce role requirements
 router.use(authenticateToken);
-router.use(requireAdmin);
 
 // ===== USER MANAGEMENT =====
 
 // Update user role
-router.patch('/users/:id/role', [
-  body('role').isIn(['STUDENT', 'ADMIN']).withMessage('Invalid role'),
+router.patch('/users/:id/role', requireAdmin, [
+  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN']).withMessage('Invalid role'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -45,7 +44,7 @@ router.patch('/users/:id/role', [
 });
 
 // Delete user
-router.delete('/users/:id', async (req: AuthRequest, res) => {
+router.delete('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -80,7 +79,7 @@ router.delete('/users/:id', async (req: AuthRequest, res) => {
 });
 
 // Create admin user
-router.post('/users/admin', [
+router.post('/users/admin', requireAdmin, [
   body('email').isEmail().withMessage('Invalid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('name').trim().notEmpty().withMessage('Name is required'),
@@ -126,7 +125,7 @@ router.post('/users/admin', [
 // ===== ROOM MANAGEMENT =====
 
 // Create room
-router.post('/rooms', [
+router.post('/rooms', requireAdmin, [
   body('name').trim().notEmpty().withMessage('Room name is required'),
   body('minCapacity').isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
   body('maxCapacity').isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
@@ -160,7 +159,7 @@ router.post('/rooms', [
 });
 
 // Update room
-router.put('/rooms/:id', [
+router.put('/rooms/:id', requireAdmin, [
   body('name').optional().trim().notEmpty().withMessage('Room name cannot be empty'),
   body('minCapacity').optional().isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
   body('maxCapacity').optional().isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
@@ -197,7 +196,7 @@ router.put('/rooms/:id', [
 });
 
 // Delete room
-router.delete('/rooms/:id', async (req: AuthRequest, res) => {
+router.delete('/rooms/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -246,7 +245,7 @@ router.delete('/rooms/:id', async (req: AuthRequest, res) => {
 // ===== STATISTICS =====
 
 // Get admin statistics
-router.get('/stats', async (req: AuthRequest, res) => {
+router.get('/stats', requireAdminOrWorker, async (req: AuthRequest, res) => {
   try {
     const [
       totalUsers,

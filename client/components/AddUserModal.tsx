@@ -156,6 +156,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="STUDENT">Student</option>
+              <option value="STUDENT_WORKER">Student Worker</option>
               <option value="ADMIN">Admin</option>
             </select>
           </div>

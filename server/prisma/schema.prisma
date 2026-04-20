@@ -12,6 +12,7 @@ datasource db {
 
 enum UserRole {
   STUDENT
+  STUDENT_WORKER
   ADMIN
 }
 

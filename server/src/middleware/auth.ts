@@ -33,6 +33,13 @@ export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction
   next();
 };
 
+export const requireAdminOrWorker = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
+    return res.status(403).json({ error: 'Access required' });
+  }
+  next();
+};
+
 export const generateToken = (userId: string, role: string): string => {
   return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
 };

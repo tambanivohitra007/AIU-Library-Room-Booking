@@ -25,25 +25,32 @@ router.get('/', async (req: AuthRequest, res) => {
       },
     });
 
+    const isStudent = req.userRole === 'STUDENT';
+
     // Format bookings to match client expectations
-    const formattedBookings = bookings.map((booking: any) => ({
-      id: booking.id,
-      roomId: booking.roomId,
-      userId: booking.userId,
-      userDisplay: booking.user.name,
-      userEmail: booking.user.email,
-      startTime: booking.startTime.toISOString(),
-      endTime: booking.endTime.toISOString(),
-      purpose: booking.purpose,
-      attendees: booking.attendees.map((a: any) => ({
-        name: a.name,
-        studentId: a.studentId,
-        isCompanion: a.isCompanion,
-      })),
-      status: booking.status,
-      cancellationReason: booking.cancellationReason,
-      createdAt: booking.createdAt.toISOString(),
-    }));
+    const formattedBookings = bookings.map((booking: any) => {
+      const isOwner = booking.userId === req.userId;
+      const canViewDetails = !isStudent || isOwner;
+
+      return {
+        id: booking.id,
+        roomId: booking.roomId,
+        userId: booking.userId,
+        userDisplay: canViewDetails ? booking.user.name : null,
+        userEmail: canViewDetails ? booking.user.email : null,
+        startTime: booking.startTime.toISOString(),
+        endTime: booking.endTime.toISOString(),
+        purpose: canViewDetails ? booking.purpose : null,
+        attendees: canViewDetails ? booking.attendees.map((a: any) => ({
+          name: a.name,
+          studentId: a.studentId,
+          isCompanion: a.isCompanion,
+        })) : [],
+        status: booking.status,
+        cancellationReason: canViewDetails ? booking.cancellationReason : null,
+        createdAt: booking.createdAt.toISOString(),
+      };
+    });
 
     res.json(formattedBookings);
   } catch (error) {

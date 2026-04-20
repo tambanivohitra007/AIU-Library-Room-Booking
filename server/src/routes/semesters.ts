@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
+import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
@@ -25,7 +25,7 @@ router.get('/active', async (req, res) => {
 router.use(authenticateToken);
 
 // Get all semesters
-router.get('/', requireAdmin, async (req: AuthRequest, res) => {
+router.get('/', requireAdminOrWorker, async (req: AuthRequest, res) => {
   try {
     const semesters = await prisma.semester.findMany({
       orderBy: { startDate: 'desc' },

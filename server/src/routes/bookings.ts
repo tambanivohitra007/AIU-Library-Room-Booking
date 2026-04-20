@@ -277,8 +277,8 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Check permissions (Admin or Owner)
-    if (booking.userId !== req.userId && req.userRole !== 'ADMIN') {
+    // Check permissions (Admin, Student Worker, or Owner)
+    if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
       return res.status(403).json({ error: 'Permission denied' });
     }
 
@@ -328,8 +328,8 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Check if user owns the booking or is admin
-    if (booking.userId !== req.userId && req.userRole !== 'ADMIN') {
+    // Check if user owns the booking, is admin, or is a student worker
+    if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
       return res.status(403).json({ error: 'You can only cancel your own bookings' });
     }
 

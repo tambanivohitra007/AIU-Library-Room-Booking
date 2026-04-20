@@ -19,6 +19,7 @@ import ExportReportModal from './ExportReportModal';
 import SettingsTab from './SettingsTab';
 
 interface AdminDashboardProps {
+  currentUser: User;
   bookings: Booking[];
   rooms: Room[];
   onExportCSV: () => void;
@@ -33,8 +34,9 @@ interface Stats {
   roomUtilization: { [key: string]: number };
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExportCSV, onCancelBooking, onRefresh }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, rooms, onExportCSV, onCancelBooking, onRefresh }) => {
   const toast = useToast();
+  const isAdmin = currentUser.role === UserRole.ADMIN;
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'semesters' | 'settings'>('overview');
@@ -230,7 +232,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
-      cell: ({ row }) => (
+      cell: ({ row }) => isAdmin ? (
         <div className="flex gap-2">
           {row.original.status === 'PENDING' && (
             <button
@@ -253,9 +255,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             Delete
           </button>
         </div>
-      ),
+      ) : null,
     },
-  ], []);
+  ], [isAdmin]);
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return;
@@ -636,26 +638,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
               </svg>
               User Management
             </h3>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => setShowImportModal(true)}
-                className="flex-1 sm:flex-none px-3 py-2 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
-              >
-                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span className="hidden sm:inline">Import</span>
-              </button>
-              <button
-                onClick={() => setShowAddUserModal(true)}
-                className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-              >
-                <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add User
-              </button>
-            </div>
+            {isAdmin && (
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex-1 sm:flex-none px-3 py-2 glass hover:bg-white/80 border border-slate-200 text-slate-700 rounded-md font-bold text-sm transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+                >
+                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="hidden sm:inline">Import</span>
+                </button>
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+                >
+                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add User
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -721,37 +725,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   <span className="text-slate-600 font-semibold">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                 </div>
 
-                <div className="flex gap-2 pt-3 border-t border-slate-200/50">
-                  {user.status === 'PENDING' && (
+                {isAdmin && (
+                  <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+                    {user.status === 'PENDING' && (
+                      <button
+                        onClick={() => handleApproveUser(user)}
+                        className="flex-1 px-4 py-2.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                      >
+                        <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Approve
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleApproveUser(user)}
-                      className="flex-1 px-4 py-2.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                      onClick={() => setEditingUser(user)}
+                      className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
                     >
                       <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      Approve
+                      Edit
                     </button>
-                  )}
-                  <button
-                    onClick={() => setEditingUser(user)}
-                    className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
-                  >
-                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeletingUser(user)}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
-                  >
-                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
+                    <button
+                      onClick={() => setDeletingUser(user)}
+                      className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+                    >
+                      <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -810,15 +816,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             </svg>
             Room Management
           </h3>
-          <button
-            onClick={() => setShowAddRoomModal(true)}
-            className="w-full sm:w-auto px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-          >
-            <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Room
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddRoomModal(true)}
+              className="w-full sm:w-auto px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
+            >
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Room
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5">
           {rooms.map((room, idx) => (
@@ -849,26 +857,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2 pt-3 border-t border-slate-200/50">
-                <button
-                  onClick={() => setEditingRoom(room)}
-                  className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
-                >
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeletingRoom(room)}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
-                >
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+                  <button
+                    onClick={() => setEditingRoom(room)}
+                    className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth shadow-soft flex items-center justify-center gap-2 group"
+                  >
+                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeletingRoom(room)}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-500 hover:to-rose-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-soft hover:shadow-medium flex items-center justify-center gap-2 group"
+                  >
+                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -931,7 +941,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ bookings, rooms, onExpo
             { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
             { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
             { id: 'settings', label: 'Settings', Icon: SettingsIcon }, // Added Settings tab
-          ].map(tab => (
+          ].filter(tab => isAdmin || !['semesters', 'settings'].includes(tab.id)).map(tab => (
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}

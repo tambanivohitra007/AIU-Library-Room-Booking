@@ -45,17 +45,17 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
-      <header className="px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 glass-dark border-b border-white/10">
+      <header className="px-3 sm:px-4 py-2 flex items-center justify-between sticky top-0 z-20 glass-dark border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative hover-lift">
             <img
               src={settings?.logoUrl || logo}
               alt={settings?.serviceName || 'Service Logo'}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-contain mix-blend-luminosity opacity-90"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain mix-blend-luminosity opacity-90"
             />
           </div>
           <div>
-            <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">
+            <h1 className="font-bold text-base sm:text-lg text-white tracking-tight">
               {settings?.serviceName || 'Room Booking'}
             </h1>
             <p className="text-xs text-blue-200 hidden sm:block font-medium">
@@ -201,7 +201,7 @@ const Layout: React.FC<LayoutProps> = ({
       </nav>
 
       {/* Desktop Navigation (Sidebar) */}
-      <div className="hidden sm:flex fixed left-0 top-[72px] bottom-0 w-20 flex-col items-center py-6 glass border-r border-white/20 z-10 ">
+      <div className="hidden sm:flex fixed left-0 top-[56px] bottom-0 w-20 flex-col items-center py-6 glass border-r border-slate-200 z-10 ">
         <div className="flex flex-col gap-3 w-full px-3">
           {navItems.map((item) => (
             <NavLink

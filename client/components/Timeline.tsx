@@ -201,7 +201,7 @@ const Timeline: React.FC<TimelineProps> = ({
                     {day.toLocaleDateString('en-US', { weekday: 'short' })}
                   </div>
                   <div
-                    className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-primary w-7 h-7 sm:w-9 sm:h-9 rounded-md flex items-center justify-center mx-auto' : 'text-slate-800'}`}
+                    className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-primary w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto' : 'text-slate-800'}`}
                   >
                     {day.getDate()}
                   </div>

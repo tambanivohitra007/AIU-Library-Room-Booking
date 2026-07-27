@@ -18,15 +18,15 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   ];
 
   return (
-    <div className="inline-flex bg-slate-200 p-0.5 sm:p-1 rounded-lg">
+    <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 p-1 rounded-lg">
       {views.map((view) => (
         <button
           key={view.id}
           onClick={() => onViewChange(view.id)}
-          className={`px-2 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all ${
+          className={`px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm rounded transition-all ${
             currentView === view.id
-              ? 'bg-white text-primary shadow-sm'
-              : 'text-slate-600 hover:text-slate-800'
+              ? 'bg-white border border-slate-200 text-primary font-bold'
+              : 'text-slate-600 font-medium hover:bg-slate-200/60'
           }`}
         >
           {view.label}

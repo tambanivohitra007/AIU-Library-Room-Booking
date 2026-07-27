@@ -77,9 +77,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [allBookings, rooms, isDeptAdminOnly]);
 
   // Rooms grouped by department for the Rooms tab; unassigned rooms last
+  // Rooms tab search: matches name, description, features, department
+  const [roomsFilter, setRoomsFilter] = useState('');
+  const filteredAdminRooms = useMemo(() => {
+    const q = roomsFilter.trim().toLowerCase();
+    if (!q) return rooms;
+    return rooms.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        r.features.some((f) => f.toLowerCase().includes(q)) ||
+        (r.department?.name.toLowerCase().includes(q) ?? false),
+    );
+  }, [rooms, roomsFilter]);
+
   const roomGroups = useMemo(() => {
     const groups = new Map<string, { name: string; rooms: Room[] }>();
-    for (const room of rooms) {
+    for (const room of filteredAdminRooms) {
       const key = room.departmentId || 'none';
       const name = room.department?.name || 'No Department';
       if (!groups.has(key)) groups.set(key, { name, rooms: [] });
@@ -90,7 +104,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       .sort((a, b) =>
         a.key === 'none' ? 1 : b.key === 'none' ? -1 : a.name.localeCompare(b.name)
       );
-  }, [rooms]);
+  }, [filteredAdminRooms]);
   const hasDepartmentGroups = roomGroups.some((g) => g.key !== 'none');
 
   const [stats, setStats] = useState<Stats | null>(null);
@@ -1467,6 +1481,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </svg>
             Room Management
           </h3>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
+          <input
+            type="text"
+            value={roomsFilter}
+            onChange={(e) => setRoomsFilter(e.target.value)}
+            placeholder="Search rooms..."
+            className="w-full sm:w-56 px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+          />
           {(isAdmin || isDeptAdminOnly) && (
             <button
               onClick={() => setShowAddRoomModal(true)}
@@ -1488,6 +1510,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Add Room
             </button>
           )}
+          </div>
         </div>
         {hasDepartmentGroups ? (
           <div className="p-4 sm:p-5 space-y-6">
@@ -1508,9 +1531,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             ))}
           </div>
+        ) : filteredAdminRooms.length === 0 ? (
+          <p className="p-8 text-center text-sm text-slate-400">
+            No rooms match your search.
+          </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5">
-            {rooms.map((room, idx) => renderRoomCard(room, idx))}
+            {filteredAdminRooms.map((room, idx) => renderRoomCard(room, idx))}
           </div>
         )}
       </div>

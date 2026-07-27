@@ -181,10 +181,19 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
       : 'Default schedule';
   };
 
+  const [deptSearch, setDeptSearch] = useState('');
+
   // Department admins only see and edit their own departments
-  const visibleDepartments = isAdmin
-    ? departments
-    : departments.filter((d) => managedIds.includes(d.id));
+  const visibleDepartments = (
+    isAdmin ? departments : departments.filter((d) => managedIds.includes(d.id))
+  ).filter((d) => {
+    const q = deptSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      d.name.toLowerCase().includes(q) ||
+      (d.contactEmail?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
   return (
     <div className="max-w-3xl mx-auto animate-slide-up space-y-4">
@@ -208,14 +217,25 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
         )}
       </div>
 
+      {departments.length > 3 && (
+        <input
+          type="text"
+          value={deptSearch}
+          onChange={(e) => setDeptSearch(e.target.value)}
+          placeholder="Search departments..."
+          className="w-full sm:w-72 px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+        />
+      )}
+
       {loading ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
           Loading…
         </div>
       ) : visibleDepartments.length === 0 ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          No departments yet. Rooms without a department follow the global
-          operating hours.
+          {deptSearch.trim()
+            ? 'No departments match your search.'
+            : 'No departments yet. Rooms without a department follow the global operating hours.'}
         </div>
       ) : (
         <div className="glass rounded-xl border border-slate-200 divide-y divide-slate-100 ">

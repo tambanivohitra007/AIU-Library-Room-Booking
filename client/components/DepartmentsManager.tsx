@@ -209,16 +209,16 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
       </div>
 
       {loading ? (
-        <div className="glass rounded-xl border border-white/20 p-8 text-center text-slate-500">
+        <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
           Loading…
         </div>
       ) : visibleDepartments.length === 0 ? (
-        <div className="glass rounded-xl border border-white/20 p-8 text-center text-slate-500">
+        <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
           No departments yet. Rooms without a department follow the global
           operating hours.
         </div>
       ) : (
-        <div className="glass rounded-xl border border-white/20 divide-y divide-slate-100 ">
+        <div className="glass rounded-xl border border-slate-200 divide-y divide-slate-100 ">
           {visibleDepartments.map((dept) => (
             <div
               key={dept.id}

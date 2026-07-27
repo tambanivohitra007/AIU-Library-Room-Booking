@@ -66,7 +66,7 @@ const SettingsTab: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto glass rounded-xl border border-white/20 p-8 animate-slide-up">
+    <div className="max-w-2xl mx-auto glass rounded-xl border border-slate-200 p-8 animate-slide-up">
       <h3 className="text-xl font-bold gradient-text mb-6 flex items-center gap-2">
         <svg
           className="w-6 h-6 text-primary"

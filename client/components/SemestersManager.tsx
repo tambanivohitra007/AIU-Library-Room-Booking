@@ -367,7 +367,7 @@ const SemestersManager: React.FC = () => {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block glass rounded-lg border border-white/20 overflow-hidden">
+      <div className="hidden lg:block glass rounded-lg border border-slate-200 overflow-hidden">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -453,7 +453,7 @@ const SemestersManager: React.FC = () => {
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-3">
         {semesters.length === 0 ? (
-          <div className="glass rounded-lg border border-white/20 p-12 text-center ">
+          <div className="glass rounded-lg border border-slate-200 p-12 text-center ">
             <p className="text-slate-500 font-semibold">
               No semesters configured yet.
             </p>
@@ -462,7 +462,7 @@ const SemestersManager: React.FC = () => {
           semesters.map((semester) => (
             <div
               key={semester.id}
-              className="glass rounded-lg border border-white/20 p-4 "
+              className="glass rounded-lg border border-slate-200 p-4 "
             >
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -485,7 +485,7 @@ const SemestersManager: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200/50">
+              <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
                 <button
                   onClick={() => handleEdit(semester)}
                   className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all"

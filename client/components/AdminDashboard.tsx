@@ -537,7 +537,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="glass rounded-lg border border-white/20 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up">
+        <div className="glass rounded-lg border border-slate-200 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
@@ -564,7 +564,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div
-          className="glass rounded-lg border border-white/20 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
+          className="glass rounded-lg border border-slate-200 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
           style={{ animationDelay: '0.05s' }}
         >
           <div className="flex items-center justify-between">
@@ -596,7 +596,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div
-          className="glass rounded-lg border border-white/20 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
+          className="glass rounded-lg border border-slate-200 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
           style={{ animationDelay: '0.1s' }}
         >
           <div className="flex items-center justify-between">
@@ -625,7 +625,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div
-          className="glass rounded-lg border border-white/20 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
+          className="glass rounded-lg border border-slate-200 p-5 sm:p-6 transition-all-smooth hover-lift animate-slide-up"
           style={{ animationDelay: '0.15s' }}
         >
           <div className="flex items-center justify-between">
@@ -655,7 +655,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Room Utilization */}
-      <div className="glass rounded-lg border border-white/20 p-5 sm:p-6 animate-slide-up">
+      <div className="glass rounded-lg border border-slate-200 p-5 sm:p-6 animate-slide-up">
         <h3 className="text-base sm:text-lg font-bold gradient-text mb-4 flex items-center gap-2">
           <svg
             className="w-5 h-5 text-primary"
@@ -699,7 +699,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Recent Activity */}
-      <div className="glass rounded-lg border border-white/20 p-5 sm:p-6 animate-slide-up">
+      <div className="glass rounded-lg border border-slate-200 p-5 sm:p-6 animate-slide-up">
         <h3 className="text-base sm:text-lg font-bold gradient-text mb-4 flex items-center gap-2">
           <svg
             className="w-5 h-5 text-primary"
@@ -720,7 +720,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {bookings.slice(0, 5).map((booking, idx) => (
             <div
               key={booking.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 py-3 border-b border-slate-200/50 last:border-0 hover:bg-primary/5 rounded-lg px-2 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 py-3 border-b border-slate-200 last:border-0 hover:bg-primary/5 rounded-lg px-2 transition-colors"
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex-1 min-w-0">
@@ -785,7 +785,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderBookings = () => (
     <div className="space-y-3 sm:space-y-4 animate-fade-in">
       {/* Additional Filters */}
-      <div className="glass rounded-lg border border-white/20 p-4 ">
+      <div className="glass rounded-lg border border-slate-200 p-4 ">
         <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
           <div className="flex flex-wrap gap-3">
             <select
@@ -861,7 +861,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Mobile Cards */}
       <div className="lg:hidden space-y-3">
         {filteredBookings.length === 0 ? (
-          <div className="glass rounded-lg border border-white/20 p-12 text-center ">
+          <div className="glass rounded-lg border border-slate-200 p-12 text-center ">
             <svg
               className="w-14 h-14 mx-auto mb-4 text-slate-300"
               fill="none"
@@ -883,7 +883,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           filteredBookings.map((booking, idx) => (
             <div
               key={booking.id}
-              className="glass rounded-lg border border-white/20 p-4 transition-all-smooth animate-slide-up"
+              className="glass rounded-lg border border-slate-200 p-4 transition-all-smooth animate-slide-up"
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -972,7 +972,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-200">
                 <button
                   onClick={() => setViewingAttendeesBooking(booking)}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors group "
@@ -1022,7 +1022,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <>
       <div className="space-y-4 animate-fade-in">
         {/* Header with Action Buttons */}
-        <div className="glass rounded-lg border border-white/20 p-4 ">
+        <div className="glass rounded-lg border border-slate-200 p-4 ">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="text-base sm:text-lg font-bold gradient-text flex items-center gap-2">
               <svg
@@ -1113,7 +1113,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Mobile Cards */}
         <div className="lg:hidden space-y-3">
           {users.length === 0 ? (
-            <div className="glass rounded-lg border border-white/20 p-12 text-center ">
+            <div className="glass rounded-lg border border-slate-200 p-12 text-center ">
               <svg
                 className="w-14 h-14 mx-auto mb-4 text-slate-300"
                 fill="none"
@@ -1133,7 +1133,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             users.map((user, idx) => (
               <div
                 key={user.id}
-                className="glass rounded-lg border border-white/20 p-4 transition-all-smooth animate-slide-up"
+                className="glass rounded-lg border border-slate-200 p-4 transition-all-smooth animate-slide-up"
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -1204,7 +1204,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {isAdmin && (
-                  <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+                  <div className="flex gap-2 pt-3 border-t border-slate-200">
                     {user.status === 'PENDING' && (
                       <button
                         onClick={() => handleApproveUser(user)}
@@ -1317,7 +1317,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const renderRoomCard = (room: Room, idx: number) => (
     <div
       key={room.id}
-      className="glass rounded-lg border border-white/20 p-4 sm:p-5 transition-all-smooth hover-lift animate-slide-up"
+      className="glass rounded-lg border border-slate-200 p-4 sm:p-5 transition-all-smooth hover-lift animate-slide-up"
       style={{ animationDelay: `${idx * 0.05}s` }}
     >
       <div className="flex justify-between items-start mb-3 gap-3">
@@ -1371,7 +1371,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </span>
         ))}
       </div>
-      <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+      <div className="flex gap-2 pt-3 border-t border-slate-200">
         <button
           onClick={() => setViewingRoom(room)}
           className="flex-1 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-md font-bold text-sm transition-all-smooth flex items-center justify-center gap-2"
@@ -1445,8 +1445,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const renderRooms = () => (
     <>
-      <div className="glass rounded-lg border border-white/20 overflow-hidden animate-fade-in">
-        <div className="p-4 sm:p-5 border-b border-slate-200/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="glass rounded-lg border border-slate-200 overflow-hidden animate-fade-in">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h3 className="text-base sm:text-lg font-bold gradient-text flex items-center gap-2">
             <svg
               className="w-5 h-5 text-primary"
@@ -1598,7 +1598,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Menu + Content: vertical sidebar on desktop, bottom nav on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-        <div className="hidden sm:block glass rounded-lg border border-white/20 p-2 sticky top-16 z-10 backdrop-blur-md w-52 shrink-0">
+        <div className="hidden sm:block glass rounded-lg border border-slate-200 p-2 sticky top-16 z-10 backdrop-blur-md w-52 shrink-0">
           <nav
             className="flex flex-col items-stretch gap-1.5"
             aria-label="Tabs"

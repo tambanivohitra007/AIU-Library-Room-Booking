@@ -94,7 +94,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           </p>
         </div>
         {myBookings.length > 0 && (
-          <div className="glass px-4 py-2 rounded-md border border-white/20 ">
+          <div className="glass px-4 py-2 rounded-md border border-slate-200 ">
             <span className="text-sm font-bold text-slate-700">
               {myBookings.length}{' '}
               {myBookings.length === 1 ? 'Booking' : 'Bookings'}
@@ -113,7 +113,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all-smooth flex items-center gap-2 ${
                 activeTab === tab.key
                   ? 'bg-primary text-white '
-                  : 'glass border border-white/20 text-slate-600 hover:bg-white/50'
+                  : 'glass border border-slate-200 text-slate-600 hover:bg-white/50'
               }`}
             >
               {tab.label}
@@ -132,7 +132,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
       )}
 
       {myBookings.length === 0 ? (
-        <div className="glass rounded-lg border border-white/20 p-12 text-center animate-slide-up">
+        <div className="glass rounded-lg border border-slate-200 p-12 text-center animate-slide-up">
           <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
             <svg
               className="w-10 h-10 text-primary"
@@ -156,7 +156,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           </p>
         </div>
       ) : filteredBookings.length === 0 ? (
-        <div className="glass rounded-lg border border-white/20 p-8 text-center animate-slide-up">
+        <div className="glass rounded-lg border border-slate-200 p-8 text-center animate-slide-up">
           <div className="w-16 h-16 mx-auto mb-3 bg-slate-100 rounded-full flex items-center justify-center">
             <svg
               className="w-8 h-8 text-slate-400"
@@ -195,7 +195,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
               return (
                 <div
                   key={b.id}
-                  className="glass rounded-lg border border-white/20 transition-all-smooth overflow-hidden hover-lift animate-slide-up"
+                  className="glass rounded-lg border border-slate-200 transition-all-smooth overflow-hidden hover-lift animate-slide-up"
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <div className="p-5">
@@ -354,7 +354,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between glass rounded-lg border border-white/20 px-4 py-3">
+            <div className="flex items-center justify-between glass rounded-lg border border-slate-200 px-4 py-3">
               <p className="text-sm text-slate-600 font-medium">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
                 {Math.min(

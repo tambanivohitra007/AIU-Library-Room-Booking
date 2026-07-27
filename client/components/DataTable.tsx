@@ -102,11 +102,11 @@ function DataTable<TData>({
 
       {/* Table */}
       {table.getRowModel().rows.length === 0 ? (
-        <div className="glass rounded-lg border border-white/20 p-12 text-center ">
-          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+        <div className="glass rounded-lg border border-slate-200 p-12 text-center ">
+          <div className="mx-auto mb-4 flex items-center justify-center text-slate-300">
             {emptyIcon || (
               <svg
-                className="w-8 h-8 text-primary"
+                className="w-14 h-14"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -114,7 +114,7 @@ function DataTable<TData>({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
               </svg>
@@ -123,10 +123,10 @@ function DataTable<TData>({
           <p className="text-slate-500 font-semibold">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="glass rounded-lg border border-white/20 overflow-hidden">
+        <div className="glass rounded-lg border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm">
-              <thead className="glass-dark border-b border-white/20">
+              <thead className="glass-dark border-b border-slate-200">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -204,7 +204,7 @@ function DataTable<TData>({
                   </tr>
                 ))}
               </thead>
-              <tbody className="divide-y divide-slate-200/50 bg-white">
+              <tbody className="divide-y divide-slate-200 bg-white">
                 {table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}

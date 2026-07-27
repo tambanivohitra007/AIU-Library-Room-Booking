@@ -94,8 +94,8 @@ const Layout: React.FC<LayoutProps> = ({
                 className="fixed inset-0 z-30"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 top-14 glass border border-white/20 rounded-lg py-2 min-w-[220px] z-40 animate-slide-down">
-                <div className="px-4 py-3 border-b border-slate-200/50">
+              <div className="absolute right-0 top-14 glass border border-slate-200 rounded-lg py-2 min-w-[220px] z-40 animate-slide-down">
+                <div className="px-4 py-3 border-b border-slate-200">
                   <p className="text-sm font-bold text-slate-800">
                     {user.name}
                   </p>
@@ -141,7 +141,7 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex-1">{children}</div>
 
           {/* Developer Signature */}
-          <div className="mt-12 flex justify-center items-center border-t border-slate-200/30">
+          <div className="mt-12 flex justify-center items-center border-t border-slate-200">
             <a
               href="https://rindra.org"
               target="_blank"
@@ -174,7 +174,7 @@ const Layout: React.FC<LayoutProps> = ({
       </main>
 
       {/* Bottom Navigation (Mobile) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/20 flex justify-around py-3 pb-safe z-30  ">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200 flex justify-around py-3 pb-safe z-30  ">
         {navItems.map((item) => (
           <NavLink
             key={item.path}

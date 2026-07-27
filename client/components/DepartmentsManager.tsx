@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { Department, OperatingHours, User, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
@@ -38,7 +38,25 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
   // Manager assignment (global admin only)
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [managerSearch, setManagerSearch] = useState('');
+
+  // Type-to-search over all users, excluding those already assigned
+  const managerSearchResults = useMemo(() => {
+    const q = managerSearch.trim().toLowerCase();
+    if (!q) return [];
+    return allUsers
+      .filter((u) => !managerIds.includes(u.id))
+      .filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      )
+      .slice(0, 8);
+  }, [managerSearch, allUsers, managerIds]);
+
+  const addManager = (userId: string) => {
+    setManagerIds((prev) => [...prev, userId]);
+    setManagerSearch('');
+  };
   const [form, setForm] = useState<DepartmentFormState>({
     name: '',
     contactEmail: '',
@@ -79,7 +97,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
       });
     }
     setManagerIds([]);
-    setSelectedUserId('');
+    setManagerSearch('');
     setEditing(dept);
     if (isAdmin && dept !== 'new') {
       try {
@@ -349,35 +367,49 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        disabled={isSubmitting}
-                      >
-                        <option value="">Select a user…</option>
-                        {allUsers
-                          .filter((u) => !managerIds.includes(u.id))
-                          .map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {u.name} ({u.email})
-                            </option>
-                          ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selectedUserId) {
-                            setManagerIds([...managerIds, selectedUserId]);
-                            setSelectedUserId('');
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={managerSearch}
+                        onChange={(e) => setManagerSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (managerSearchResults.length > 0) {
+                              addManager(managerSearchResults[0].id);
+                            }
                           }
+                          if (e.key === 'Escape') setManagerSearch('');
                         }}
-                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Search users by name or email…"
                         disabled={isSubmitting}
-                      >
-                        <PlusIcon className="w-5 h-5 text-slate-600" />
-                      </button>
+                      />
+                      {managerSearch.trim() && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg max-h-56 overflow-y-auto">
+                          {managerSearchResults.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-slate-400">
+                              No matching users
+                            </div>
+                          ) : (
+                            managerSearchResults.map((u) => (
+                              <button
+                                type="button"
+                                key={u.id}
+                                onClick={() => addManager(u.id)}
+                                className="w-full text-left px-3 py-2 hover:bg-slate-50 text-sm border-b border-slate-100 last:border-b-0"
+                              >
+                                <span className="font-medium text-slate-800">
+                                  {u.name}
+                                </span>
+                                <span className="text-slate-500 ml-2 text-xs">
+                                  {u.email}
+                                </span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

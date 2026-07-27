@@ -32,10 +32,14 @@ const Timeline: React.FC<TimelineProps> = ({
     () => getEffectiveOperatingHours(room.department, globalHours),
     [room.department, globalHours],
   );
-  const { open: gridOpen, close: gridClose } = useMemo(
+  const { open: boundsOpen, close: boundsClose } = useMemo(
     () => getGridBounds(operatingHours),
     [operatingHours],
   );
+  // Always display 6:00–22:00; extend only if a schedule goes beyond that.
+  // Hours outside the room's schedule are covered by the Closed overlays.
+  const gridOpen = Math.min(6, boundsOpen);
+  const gridClose = Math.max(22, boundsClose);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{
     dayIndex: number;
@@ -231,13 +235,21 @@ const Timeline: React.FC<TimelineProps> = ({
 
           {/* Main Grid Columns */}
           <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100 relative">
-            {/* Horizontal Hour Lines (Background) */}
+            {/* Horizontal Grid Lines: 15-min subdivisions, stronger line on the hour */}
             <div className="absolute inset-0 z-0 flex flex-col pointer-events-none">
               {hours.map((h) => (
-                <div
-                  key={h}
-                  className="flex-1 border-b border-slate-100/60"
-                ></div>
+                <div key={h} className="flex-1 flex flex-col">
+                  {[0, 15, 30, 45].map((m) => (
+                    <div
+                      key={m}
+                      className={`flex-1 border-b ${
+                        m === 45
+                          ? 'border-slate-200'
+                          : 'border-slate-100/50'
+                      }`}
+                    ></div>
+                  ))}
+                </div>
               ))}
             </div>
 

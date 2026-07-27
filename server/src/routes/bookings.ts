@@ -4,7 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
-import { getServiceSettings, getEffectiveOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
+import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
 
 const router = Router();
@@ -225,7 +225,27 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
 
     const settings = await getServiceSettings();
     const effectiveHours = getEffectiveOperatingHours(settings, room.department?.operatingHours);
-    const hoursCheck = checkWithinOperatingHours(bookingStart, bookingEnd, effectiveHours);
+
+    // Date-specific closures/special hours for this day and department
+    const dayStart = new Date(bookingStart);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(bookingStart);
+    dayEnd.setHours(23, 59, 59, 999);
+    const exceptions = await prisma.scheduleException.findMany({
+      where: {
+        startDate: { lte: dayEnd },
+        endDate: { gte: dayStart },
+        OR: [{ departmentId: null }, { departmentId: room.departmentId }],
+      },
+    });
+
+    const hoursCheck = checkBookingSchedule(
+      bookingStart,
+      bookingEnd,
+      effectiveHours,
+      room.departmentId,
+      exceptions,
+    );
     if (!hoursCheck.ok) {
       return res.status(400).json({ error: hoursCheck.error });
     }

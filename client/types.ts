@@ -20,6 +20,20 @@ export interface User {
   managedDepartmentIds?: string[]; // departments this user administers (any role)
 }
 
+// Date-specific schedule override: a closure (holiday, maintenance) or
+// special hours; departmentId null = applies service-wide
+export interface ScheduleException {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string; // inclusive
+  closed: boolean;
+  openHour?: number | null;
+  closeHour?: number | null;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
+}
+
 export interface Department {
   id: string;
   name: string;

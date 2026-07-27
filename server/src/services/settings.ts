@@ -89,6 +89,119 @@ export const getEffectiveOperatingHours = (
 
 const formatHour = (h: number) => `${h}:00`;
 
+// A schedule exception row as needed for resolution (matches ScheduleException)
+export interface ExceptionLike {
+  name: string;
+  startDate: Date;
+  endDate: Date;
+  closed: boolean;
+  openHour: number | null;
+  closeHour: number | null;
+  departmentId: string | null;
+}
+
+// Find the exception applying to a calendar date for a department;
+// a department-specific entry beats a service-wide one.
+export const findException = (
+  date: Date,
+  departmentId: string | null | undefined,
+  exceptions: ExceptionLike[]
+): ExceptionLike | null => {
+  const day = new Date(date);
+  day.setHours(12, 0, 0, 0); // midday avoids boundary/timezone edge cases
+
+  const applicable = exceptions.filter((ex) => {
+    const s = new Date(ex.startDate);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(ex.endDate);
+    e.setHours(23, 59, 59, 999);
+    if (day < s || day > e) return false;
+    return ex.departmentId === null || ex.departmentId === (departmentId || null);
+  });
+
+  if (applicable.length === 0) return null;
+  return (
+    applicable.find((ex) => ex.departmentId !== null) || applicable[0]
+  );
+};
+
+// Effective hours for a specific date: exception overrides the weekly schedule
+export const resolveDayHours = (
+  date: Date,
+  weekly: OperatingHours,
+  departmentId: string | null | undefined,
+  exceptions: ExceptionLike[]
+): { hours: DayHours; exceptionName?: string } => {
+  const ex = findException(date, departmentId, exceptions);
+  if (ex) {
+    if (ex.closed) return { hours: null, exceptionName: ex.name };
+    if (ex.openHour !== null && ex.closeHour !== null) {
+      return {
+        hours: { open: ex.openHour, close: ex.closeHour },
+        exceptionName: ex.name,
+      };
+    }
+  }
+  return { hours: weekly[date.getDay()] };
+};
+
+// Validates that a booking falls entirely within the schedule of its day,
+// including date-specific exceptions. Local-timezone semantics throughout.
+export const checkBookingSchedule = (
+  start: Date,
+  end: Date,
+  weekly: OperatingHours,
+  departmentId: string | null | undefined,
+  exceptions: ExceptionLike[]
+): { ok: true } | { ok: false; error: string } => {
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
+
+  let endMinutes: number;
+  if (sameDay) {
+    endMinutes = end.getHours() * 60 + end.getMinutes();
+  } else {
+    const midnight = new Date(start);
+    midnight.setHours(24, 0, 0, 0);
+    if (end.getTime() === midnight.getTime()) {
+      endMinutes = 24 * 60;
+    } else {
+      return { ok: false, error: 'Bookings must start and end on the same day.' };
+    }
+  }
+
+  const { hours: dayHours, exceptionName } = resolveDayHours(
+    start,
+    weekly,
+    departmentId,
+    exceptions
+  );
+
+  if (!dayHours) {
+    return {
+      ok: false,
+      error: exceptionName
+        ? `Bookings are not available on this date: closed for ${exceptionName}.`
+        : `Bookings are not available on ${WEEKDAY_NAMES[start.getDay()]}s.`,
+    };
+  }
+
+  const startMinutes = start.getHours() * 60 + start.getMinutes();
+  if (startMinutes < dayHours.open * 60 || endMinutes > dayHours.close * 60) {
+    const range = `${formatHour(dayHours.open)} and ${formatHour(dayHours.close)}`;
+    return {
+      ok: false,
+      error: exceptionName
+        ? `On this date (${exceptionName}) bookings are only available between ${range}.`
+        : `Bookings on ${WEEKDAY_NAMES[start.getDay()]}s are only available between ${range}.`,
+    };
+  }
+
+  return { ok: true };
+};
+
 // Validates that a booking falls entirely within the operating hours of its day.
 // Times are interpreted in the server's local timezone, consistent with the rest of the API.
 export const checkWithinOperatingHours = (

@@ -18,6 +18,7 @@ import EditRoomModal from './EditRoomModal';
 import RoomDetailsModal from './RoomDetailsModal';
 import SemestersManager from './SemestersManager';
 import DepartmentsManager from './DepartmentsManager';
+import ClosuresManager from './ClosuresManager';
 import AttendeesModal from './AttendeesModal';
 import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
@@ -116,6 +117,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     | 'rooms'
     | 'departments'
     | 'semesters'
+    | 'closures'
     | 'settings'
   >(isDeptAdminOnly ? 'bookings' : 'overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -1584,13 +1586,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
     { id: 'departments', label: 'Departments', Icon: BuildingIcon },
     { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
+    { id: 'closures', label: 'Closures', Icon: CalendarIcon },
     { id: 'settings', label: 'Settings', Icon: SettingsIcon },
   ].filter((tab) => {
     if (tab.id === 'settings') return isSuperAdmin; // platform config is super admin only
     if (isAdmin) return true;
     if (isDeptAdminOnly)
-      return ['bookings', 'rooms', 'departments'].includes(tab.id);
-    return !['departments', 'semesters'].includes(tab.id);
+      return ['bookings', 'rooms', 'departments', 'closures'].includes(tab.id);
+    return !['departments', 'semesters', 'closures'].includes(tab.id);
   });
 
   const activeTab = tabs.find((t) => t.id === selectedTab);
@@ -1682,6 +1685,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
           )}
           {selectedTab === 'semesters' && <SemestersManager />}
+          {selectedTab === 'closures' && (
+            <ClosuresManager currentUser={currentUser} />
+          )}
           {selectedTab === 'settings' && <SettingsTab />}
         </div>
       </div>

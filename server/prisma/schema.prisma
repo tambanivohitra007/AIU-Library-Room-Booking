@@ -52,6 +52,22 @@ model Department {
   createdAt      DateTime @default(now())
   rooms          Room[]
   admins         DepartmentAdmin[]
+  scheduleExceptions ScheduleException[]
+}
+
+// Date-specific schedule overrides: holidays, maintenance closures,
+// or special hours (e.g. exam-week extended opening)
+model ScheduleException {
+  id           String      @id @default(uuid())
+  name         String      // "Christmas Day", "Exam Week Extended Hours"
+  startDate    DateTime
+  endDate      DateTime    // inclusive; same as startDate for one-day entries
+  closed       Boolean     @default(true)
+  openHour     Int?        // used when closed = false
+  closeHour    Int?
+  departmentId String?     // null = applies service-wide
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
 }
 
 // Grants a user management rights over one department (rooms, bookings, hours)

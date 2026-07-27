@@ -1,5 +1,12 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Booking, Room, User, UserRole, isGlobalAdminRole } from '../types';
+import {
+  Booking,
+  Room,
+  User,
+  UserRole,
+  ScheduleException,
+  isGlobalAdminRole,
+} from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import {
   getGridBounds,
@@ -17,6 +24,7 @@ interface TimelineProps {
   bookings: Booking[];
   room: Room;
   currentUser: User;
+  exceptions?: ScheduleException[];
   onRangeSelect: (start: Date, end: Date) => void;
   onBookingClick: (booking: Booking) => void;
   selectedRange?: { start: Date; end: Date } | null;
@@ -27,6 +35,7 @@ const Timeline: React.FC<TimelineProps> = ({
   bookings,
   room,
   currentUser,
+  exceptions = [],
   onRangeSelect,
   onBookingClick,
   selectedRange,
@@ -88,8 +97,10 @@ const Timeline: React.FC<TimelineProps> = ({
 
   // Check if a range overlaps with existing bookings OR closed hours
   const checkOverlap = (start: Date, end: Date) => {
-    // Check if time falls outside configured operating hours
-    if (isRangeClosed(start, end, operatingHours)) {
+    // Check if time falls outside the schedule (weekly hours + exceptions)
+    if (
+      isRangeClosed(start, end, operatingHours, room.departmentId, exceptions)
+    ) {
       return true;
     }
 
@@ -321,16 +332,21 @@ const Timeline: React.FC<TimelineProps> = ({
                 }
               }
 
-              // Calculate closed hours overlays from configured operating hours
+              // Closed overlays from the weekly schedule and date exceptions
               const totalGridMinutes = (gridClose - gridOpen) * 60;
               const closedOverlays = getClosedRanges(
                 day,
                 operatingHours,
                 gridOpen,
                 gridClose,
+                room.departmentId,
+                exceptions,
               ).map((r) => ({
-                top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
-                height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+                label: r.label,
+                style: {
+                  top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
+                  height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+                },
               }));
 
               return (
@@ -504,11 +520,11 @@ const Timeline: React.FC<TimelineProps> = ({
                   })}
 
                   {/* Closed Hours Overlays */}
-                  {closedOverlays.map((overlayStyle, oIndex) => (
+                  {closedOverlays.map((overlay, oIndex) => (
                     <div
                       key={oIndex}
                       className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center rounded"
-                      style={{ ...overlayStyle, left: '4px', right: '4px' }}
+                      style={{ ...overlay.style, left: '4px', right: '4px' }}
                     >
                       <div className="text-slate-400 text-[10px] sm:text-xs font-semibold p-2 flex items-center gap-1 flex-col sm:flex-row shadow-sm bg-white/50 rounded px-2 py-1">
                         <svg
@@ -524,7 +540,11 @@ const Timeline: React.FC<TimelineProps> = ({
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                           />
                         </svg>
-                        <span>Closed</span>
+                        <span>
+                          {overlay.label
+                            ? `Closed — ${overlay.label}`
+                            : 'Closed'}
+                        </span>
                       </div>
                     </div>
                   ))}

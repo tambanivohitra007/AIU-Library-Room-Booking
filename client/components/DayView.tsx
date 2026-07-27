@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Booking, Room, User, UserRole, isGlobalAdminRole } from '../types';
+import {
+  Booking,
+  Room,
+  User,
+  UserRole,
+  ScheduleException,
+  isGlobalAdminRole,
+} from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import {
   getGridBounds,
@@ -13,6 +20,7 @@ interface DayViewProps {
   bookings: Booking[];
   room: Room;
   currentUser: User;
+  exceptions?: ScheduleException[];
   onRangeSelect: (start: Date, end: Date) => void;
   onBookingClick: (booking: Booking) => void;
   selectedRange?: { start: Date; end: Date } | null;
@@ -23,6 +31,7 @@ const DayView: React.FC<DayViewProps> = ({
   bookings,
   room,
   currentUser,
+  exceptions = [],
   onRangeSelect,
   onBookingClick,
   selectedRange,
@@ -62,7 +71,9 @@ const DayView: React.FC<DayViewProps> = ({
 
   const checkOverlap = (start: Date, end: Date) => {
     // Check if time falls outside configured operating hours
-    if (isRangeClosed(start, end, operatingHours)) {
+    if (
+      isRangeClosed(start, end, operatingHours, room.departmentId, exceptions)
+    ) {
       return true;
     }
 
@@ -166,9 +177,14 @@ const DayView: React.FC<DayViewProps> = ({
     operatingHours,
     gridOpen,
     gridClose,
+    room.departmentId,
+    exceptions,
   ).map((r) => ({
-    top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
-    height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+    label: r.label,
+    style: {
+      top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
+      height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+    },
   }));
 
   return (
@@ -337,11 +353,11 @@ const DayView: React.FC<DayViewProps> = ({
             })}
 
             {/* Closed Hours Overlays */}
-            {closedOverlays.map((overlayStyle, oIndex) => (
+            {closedOverlays.map((overlay, oIndex) => (
               <div
                 key={oIndex}
                 className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center"
-                style={{ ...overlayStyle, left: '8px', right: '8px' }}
+                style={{ ...overlay.style, left: '8px', right: '8px' }}
               >
                 <div className="text-slate-400 text-sm font-semibold p-2 flex items-center gap-2 bg-white/50 rounded px-3 py-1.5 shadow-sm">
                   <svg
@@ -357,7 +373,7 @@ const DayView: React.FC<DayViewProps> = ({
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                     />
                   </svg>
-                  Closed
+                  {overlay.label ? `Closed — ${overlay.label}` : 'Closed'}
                 </div>
               </div>
             ))}

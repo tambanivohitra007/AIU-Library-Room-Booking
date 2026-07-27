@@ -8,7 +8,14 @@ import MiniCalendar from '../components/MiniCalendar';
 import BookingForm from '../components/BookingForm';
 import BookingDetails from '../components/BookingDetails';
 import RoomDetailsModal from '../components/RoomDetailsModal';
-import { User, Room, Booking, Department } from '../types';
+import {
+  User,
+  Room,
+  Booking,
+  Department,
+  ScheduleException,
+} from '../types';
+import { api } from '../services/api';
 import { useSettings } from '../contexts/SettingsContext';
 import {
   getEffectiveOperatingHours,
@@ -107,6 +114,15 @@ const HomePage: React.FC<HomePageProps> = ({
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const { operatingHours: globalHours } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [exceptions, setExceptions] = useState<ScheduleException[]>([]);
+
+  // Closures/special hours change rarely; one fetch per page load is enough
+  useEffect(() => {
+    api
+      .getScheduleExceptions()
+      .then(setExceptions)
+      .catch(() => {});
+  }, []);
 
   // Global search navigates here with ?room=<id> to select a room
   useEffect(() => {
@@ -143,7 +159,8 @@ const HomePage: React.FC<HomePageProps> = ({
       const s = new Date(first.getTime() + i * 30 * 60000);
       const e = new Date(s.getTime() + DURATION_MS);
       if (s.toDateString() !== e.toDateString()) continue; // stay within one day
-      if (isRangeClosed(s, e, hours)) continue;
+      if (isRangeClosed(s, e, hours, activeRoom.departmentId, exceptions))
+        continue;
       if (overlaps(s, e)) continue;
       setSelectedBooking(null);
       setSelectedRange({ start: s, end: e });
@@ -592,6 +609,7 @@ const HomePage: React.FC<HomePageProps> = ({
                   bookings={bookings}
                   room={activeRoom}
                   currentUser={user}
+                  exceptions={exceptions}
                   onRangeSelect={handleRangeSelect}
                   onBookingClick={handleBookingClick}
                   selectedRange={selectedRange}
@@ -603,6 +621,7 @@ const HomePage: React.FC<HomePageProps> = ({
                   bookings={bookings}
                   room={activeRoom}
                   currentUser={user}
+                  exceptions={exceptions}
                   onRangeSelect={handleRangeSelect}
                   onBookingClick={handleBookingClick}
                   selectedRange={selectedRange}

@@ -1,4 +1,11 @@
-import { User, Room, Booking, Semester, Department } from '../types';
+import {
+  User,
+  Room,
+  Booking,
+  Semester,
+  Department,
+  ScheduleException,
+} from '../types';
 
 // Use environment variable or fallback to relative path (for dev proxy)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -303,6 +310,34 @@ export const api = {
     return fetchAPI(`/departments/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // Schedule exceptions (closures / special hours)
+  getScheduleExceptions: async (): Promise<ScheduleException[]> => {
+    return fetchAPI<ScheduleException[]>('/schedule-exceptions');
+  },
+
+  createScheduleException: async (
+    data: Omit<ScheduleException, 'id' | 'department'>,
+  ): Promise<ScheduleException> => {
+    return fetchAPI<ScheduleException>('/schedule-exceptions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateScheduleException: async (
+    id: string,
+    data: Omit<ScheduleException, 'id' | 'department'>,
+  ): Promise<ScheduleException> => {
+    return fetchAPI<ScheduleException>(`/schedule-exceptions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteScheduleException: async (id: string): Promise<{ message: string }> => {
+    return fetchAPI(`/schedule-exceptions/${id}`, { method: 'DELETE' });
   },
 
   // Settings

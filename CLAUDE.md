@@ -66,6 +66,7 @@ The client polls the API every 5 seconds (`App.tsx`) for rooms and bookings. Sta
 - `DepartmentAdmin` grants a user (any role) management rights over one department: edit the department, its rooms, and view/cancel/remind/approve its bookings. Server checks live in `server/src/services/permissions.ts`; auth responses expose `managedDepartmentIds` to the client
 - Roles: `SUPERADMIN` > `ADMIN` > `STUDENT_WORKER` > `STUDENT`. Only SUPERADMIN can edit Service Settings, change roles, or manage admin accounts; ADMIN has full operational powers. `ADMIN_EMAILS` env entries bootstrap as SUPERADMIN on first SSO login
 - Rooms with `requiresApproval` create bookings as `PENDING` (slot is held; blocks overlaps). Staff or the room's department admins approve (`POST /bookings/:id/approve`) or reject; the scheduler auto-cancels PENDING bookings whose start time passes
+- `ScheduleException` holds date-specific overrides (holidays, closures, special hours), service-wide (`departmentId` null) or per-department; dept-specific beats service-wide. Schedule resolution order: semester gate → exception → department weekly hours → global weekly hours (`resolveDayHours`/`checkBookingSchedule` in `server/src/services/settings.ts`, mirrored in `client/utils/operatingHours.ts`). Managed in Admin → Closures
 - `User.provider` defaults to `"LOCAL"`; Microsoft SSO users have a different provider value
 - `Booking` → `Attendee` cascade deletes on booking removal
 - `ServiceSettings` is a singleton row (only one settings record expected). Besides branding, it holds:

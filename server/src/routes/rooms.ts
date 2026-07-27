@@ -45,7 +45,7 @@ router.get('/:id', async (req, res) => {
 // Create new room (global admin, or a department admin within their department)
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms } = req.body;
 
     if (req.userRole !== 'ADMIN') {
       const managed = await getManagedDepartmentIds(req.userId);
@@ -92,6 +92,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         maxCapacity: maxCap,
         features: JSON.stringify(features || []),
         departmentId: departmentId || null,
+        bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
       },
       include: { department: true },
     });
@@ -109,7 +110,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 // Update room (global admin, or a department admin for rooms in their department)
 router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms } = req.body;
 
     if (req.userRole !== 'ADMIN') {
       const managed = await getManagedDepartmentIds(req.userId);
@@ -171,6 +172,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
         maxCapacity: maxCap,
         features: JSON.stringify(features || []),
         departmentId: departmentId || null,
+        bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
       },
       include: { department: true },
     });

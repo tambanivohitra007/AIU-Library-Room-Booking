@@ -20,6 +20,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess, allowed
   const [newFeature, setNewFeature] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentId, setDepartmentId] = useState('');
+  const [bookingTerms, setBookingTerms] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +82,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess, allowed
         maxCapacity: maxCapacityNum,
         features,
         departmentId: departmentId || null,
+        bookingTerms: bookingTerms.trim() || null,
       });
       toast.success('Room created successfully');
       onSuccess();
@@ -195,6 +197,20 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess, allowed
                 </select>
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Terms &amp; Conditions (Optional)
+              </label>
+              <textarea
+                value={bookingTerms}
+                onChange={(e) => setBookingTerms(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                rows={4}
+                placeholder="If set, users must read and accept these terms before booking this room (e.g., lab safety rules)."
+                disabled={isSubmitting}
+              />
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">

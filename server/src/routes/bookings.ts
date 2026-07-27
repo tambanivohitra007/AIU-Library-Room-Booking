@@ -157,6 +157,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
       attendees: booking.attendees,
       status: booking.status,
       cancellationReason: booking.cancellationReason,
+      termsAcceptedAt: booking.termsAcceptedAt ? booking.termsAcceptedAt.toISOString() : null,
       createdAt: booking.createdAt.toISOString(),
     });
   } catch (error) {
@@ -167,7 +168,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 // Create booking
 router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
   try {
-    const { roomId, startTime, endTime, purpose, attendees } = req.body;
+    const { roomId, startTime, endTime, purpose, attendees, termsAccepted } = req.body;
     const userId = req.userId!; // From JWT token
 
     // Validate booking is not in the past
@@ -195,6 +196,21 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
 
     if (!room) {
       return res.status(404).json({ error: 'Room not found' });
+    }
+
+    // Enforce the room's capacity range (attendees list includes the booker)
+    const attendeeCount = Array.isArray(attendees) ? attendees.length : 0;
+    if (attendeeCount < room.minCapacity || attendeeCount > room.maxCapacity) {
+      return res.status(400).json({
+        error: `This room requires between ${room.minCapacity} and ${room.maxCapacity} people (including you).`,
+      });
+    }
+
+    // Rooms with terms & conditions require explicit acceptance
+    if (room.bookingTerms && termsAccepted !== true) {
+      return res.status(400).json({
+        error: "You must accept this room's terms and conditions to book it.",
+      });
     }
 
     const settings = await getServiceSettings();
@@ -268,6 +284,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         purpose,
+        termsAcceptedAt: room.bookingTerms ? new Date() : null,
         attendees: {
           create: attendees,
         },
@@ -289,6 +306,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       purpose: booking.purpose,
       attendees: booking.attendees,
       status: booking.status,
+      termsAcceptedAt: booking.termsAcceptedAt ? booking.termsAcceptedAt.toISOString() : null,
       createdAt: booking.createdAt.toISOString(),
     });
   } catch (error) {

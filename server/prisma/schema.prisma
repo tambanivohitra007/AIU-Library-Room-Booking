@@ -71,6 +71,7 @@ model Room {
   maxCapacity  Int
   description  String
   features     String      // JSON string array
+  bookingTerms String?     // terms & conditions text; null = no acceptance required
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   bookings     Booking[]
@@ -86,6 +87,7 @@ model Booking {
   status    BookingStatus  @default(CONFIRMED)
   cancellationReason String?
   reminderSent Boolean     @default(false)
+  termsAcceptedAt DateTime?  // when the booker accepted the room's terms (audit)
   createdAt DateTime       @default(now())
 
   room      Room           @relation(fields: [roomId], references: [id])

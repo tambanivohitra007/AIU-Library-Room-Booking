@@ -148,14 +148,14 @@ export const api = {
     return fetchAPI<Room>(`/rooms/${id}`);
   },
 
-  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null }): Promise<Room> => {
+  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null }): Promise<Room> => {
     return fetchAPI<Room>('/rooms', {
       method: 'POST',
       body: JSON.stringify(roomData),
     });
   },
 
-  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null }): Promise<Room> => {
+  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null }): Promise<Room> => {
     return fetchAPI<Room>(`/rooms/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roomData),
@@ -206,6 +206,7 @@ export const api = {
     endTime: Date;
     purpose: string;
     attendees: Array<{ name: string; studentId?: string; isCompanion: boolean }>;
+    termsAccepted?: boolean;
   }): Promise<Booking> => {
     return fetchAPI<Booking>('/bookings', {
       method: 'POST',

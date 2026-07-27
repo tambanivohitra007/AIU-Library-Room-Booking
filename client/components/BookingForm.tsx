@@ -23,6 +23,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
   const [purpose, setPurpose] = useState('');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendeeCount, setAttendeeCount] = useState(0);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasConflict, setHasConflict] = useState(false);
@@ -143,6 +144,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         return;
     }
 
+    if (selectedRoom.bookingTerms && !termsAccepted) {
+       setError('Please accept the terms and conditions to book this room.');
+       return;
+    }
+
     const attendees: Attendee[] = uniqueRaw.map((name: string) => ({
         name: name,
         isCompanion: true
@@ -156,7 +162,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         startTime: bookingStart,
         endTime: bookingEnd,
         purpose,
-        attendees
+        attendees,
+        termsAccepted: selectedRoom.bookingTerms ? termsAccepted : undefined
       });
 
       toast.success(`Booking confirmed for ${selectedRoom.name}!`);
@@ -277,14 +284,35 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
 
             <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     value={purpose}
                     onChange={e => setPurpose(e.target.value)}
                     placeholder="Brief description..."
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
                 />
             </div>
+
+            {selectedRoom.bookingTerms && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                        <AlertTriangleIcon className="w-4 h-4" />
+                        Terms &amp; Conditions
+                    </div>
+                    <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar bg-white/60 rounded p-2 border border-amber-100">
+                        {selectedRoom.bookingTerms}
+                    </div>
+                    <label className="flex items-start gap-2 cursor-pointer text-xs font-medium text-slate-700">
+                        <input
+                            type="checkbox"
+                            checked={termsAccepted}
+                            onChange={(e) => setTermsAccepted(e.target.checked)}
+                            className="mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/20"
+                        />
+                        <span>I have read and accept the terms and conditions for booking this room.</span>
+                    </label>
+                </div>
+            )}
         </form>
 
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3 shrink-0 pb-safe">
@@ -297,7 +325,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
              </button>
              <button
                 onClick={handleSubmit}
-                disabled={!isCountValid || isSubmitting || hasConflict || checkingConflict}
+                disabled={!isCountValid || isSubmitting || hasConflict || checkingConflict || (!!selectedRoom.bookingTerms && !termsAccepted)}
                 className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
              >
                 {isSubmitting && <LoadingSpinner size="sm" color="white" />}

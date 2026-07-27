@@ -31,6 +31,7 @@ export interface Room {
   maxCapacity: number;
   description: string;
   features: string[];
+  bookingTerms?: string | null; // terms & conditions; null = no acceptance required
   departmentId?: string | null;
   department?: Department | null;
 }
@@ -67,6 +68,7 @@ export interface Booking {
   attendees: Attendee[];
   status: BookingStatus;
   cancellationReason?: string;
+  termsAcceptedAt?: string | null;
   createdAt: string;
 }
 

@@ -204,11 +204,11 @@ function DataTable<TData>({
                   </tr>
                 ))}
               </thead>
-              <tbody className="divide-y divide-slate-200/50 bg-white/50">
+              <tbody className="divide-y divide-slate-200/50 bg-white">
                 {table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-primary/5 transition-colors"
+                    className="even:bg-slate-50 hover:bg-primary/5 transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="p-4">

@@ -191,7 +191,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {parsedUsers.map((user, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
+                      <tr key={idx} className="even:bg-slate-50 hover:bg-primary/5">
                         <td className="p-3 text-slate-800">{user.name}</td>
                         <td className="p-3 text-slate-600">{user.email}</td>
                         <td className="p-3">

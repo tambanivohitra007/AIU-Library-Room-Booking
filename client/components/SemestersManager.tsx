@@ -389,7 +389,7 @@ const SemestersManager: React.FC = () => {
             {semesters.map((semester) => (
               <tr
                 key={semester.id}
-                className="hover:bg-slate-50/50 transition-colors"
+                className="even:bg-slate-50 hover:bg-primary/5 transition-colors"
               >
                 <td className="px-6 py-4 font-semibold text-slate-800">
                   {semester.name}

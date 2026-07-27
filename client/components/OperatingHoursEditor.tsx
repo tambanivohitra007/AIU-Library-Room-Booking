@@ -28,6 +28,32 @@ export const validateOperatingHours = (
   return null;
 };
 
+// Read-only weekly schedule display
+export const OperatingHoursView: React.FC<{ value: OperatingHours }> = ({
+  value,
+}) => (
+  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
+    {WEEKDAY_NAMES.map((name, day) => {
+      const d = value[day];
+      return (
+        <div
+          key={name}
+          className="flex items-center justify-between px-4 py-1.5 text-sm"
+        >
+          <span className="font-medium text-slate-700">{name}</span>
+          {d ? (
+            <span className="text-slate-600">
+              {d.open}:00 – {d.close}:00
+            </span>
+          ) : (
+            <span className="text-slate-400 italic">Closed</span>
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
 const OperatingHoursEditor: React.FC<OperatingHoursEditorProps> = ({
   value,
   onChange,

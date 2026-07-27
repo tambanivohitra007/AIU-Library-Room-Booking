@@ -6,6 +6,7 @@ import ViewSwitcher, { CalendarView } from '../components/ViewSwitcher';
 import MiniCalendar from '../components/MiniCalendar';
 import BookingForm from '../components/BookingForm';
 import BookingDetails from '../components/BookingDetails';
+import RoomDetailsModal from '../components/RoomDetailsModal';
 import { User, Room, Booking, Department } from '../types';
 
 interface HomePageProps {
@@ -64,6 +65,7 @@ const HomePage: React.FC<HomePageProps> = ({
     start: Date;
     end: Date;
   } | null>(null);
+  const [showRoomDetails, setShowRoomDetails] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleRangeSelect = (start: Date, end: Date) => {
@@ -322,6 +324,25 @@ const HomePage: React.FC<HomePageProps> = ({
                   {activeRoom.name}
                 </span>
               </div>
+              <button
+                onClick={() => setShowRoomDetails(true)}
+                className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-primary/40 hover:text-primary rounded-md transition-colors flex items-center gap-1.5"
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Details
+              </button>
             </div>
             <div className="flex-1 overflow-hidden relative">
               {calendarView === 'week' && (
@@ -391,6 +412,14 @@ const HomePage: React.FC<HomePageProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Read-only Room Details */}
+      {showRoomDetails && activeRoom && (
+        <RoomDetailsModal
+          room={activeRoom}
+          onClose={() => setShowRoomDetails(false)}
+        />
       )}
     </div>
   );

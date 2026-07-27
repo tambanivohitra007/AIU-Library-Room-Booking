@@ -7,6 +7,7 @@ import OperatingHoursEditor, {
   validateOperatingHours,
 } from './OperatingHoursEditor';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
+import DepartmentDetailsModal from './DepartmentDetailsModal';
 import { useToast } from '../contexts/ToastContext';
 import { XIcon, PlusIcon } from './Icons';
 
@@ -34,6 +35,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Department | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Department | null>(null);
+  const [viewing, setViewing] = useState<Department | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Manager assignment (global admin only)
   const [managerIds, setManagerIds] = useState<string[]>([]);
@@ -232,6 +234,12 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setViewing(dept)}
+                  className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  View
+                </button>
                 <button
                   onClick={() => openEditor(dept)}
                   className="px-3 py-1.5 text-sm font-medium text-primary bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
@@ -438,6 +446,15 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Read-only Details */}
+      {viewing && (
+        <DepartmentDetailsModal
+          department={viewing}
+          canViewManagers={isAdmin}
+          onClose={() => setViewing(null)}
+        />
       )}
 
       {/* Delete Confirmation */}

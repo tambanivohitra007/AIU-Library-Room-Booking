@@ -1,10 +1,18 @@
 import logger from '../utils/logger.js';
 import { getServiceSettings } from './settings.js';
 
+// Contact fields hold one or more addresses, comma/semicolon-separated
+export const parseEmails = (value: string | null | undefined): string[] => {
+  return (value || '')
+    .split(/[,;]/)
+    .map((e) => e.trim())
+    .filter((e) => e.includes('@'));
+};
+
 interface Branding {
   serviceName: string;
   logoUrl: string;
-  contactEmail: string | null;
+  contactEmails: string[];
 }
 
 const getBranding = async (): Promise<Branding> => {
@@ -13,14 +21,14 @@ const getBranding = async (): Promise<Branding> => {
     return {
       serviceName: settings.serviceName,
       logoUrl: settings.logoUrl || `${process.env.CLIENT_URL || 'http://localhost:3000'}/assets/logo_small.jpg`,
-      contactEmail: settings.contactEmail || null,
+      contactEmails: parseEmails(settings.contactEmail),
     };
   } catch (error) {
     logger.error('Failed to load branding settings for email:', error);
     return {
       serviceName: 'Room Booking',
       logoUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/assets/logo_small.jpg`,
-      contactEmail: null,
+      contactEmails: [],
     };
   }
 };
@@ -189,7 +197,7 @@ const getEmailTemplate = (title: string, content: string, branding: Branding) =>
         </div>
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} ${branding.serviceName}.</p>
-          ${branding.contactEmail ? `<p>For assistance, please contact <a href="mailto:${branding.contactEmail}">${branding.contactEmail}</a></p>` : ''}
+          ${branding.contactEmails.length > 0 ? `<p>For assistance, please contact ${branding.contactEmails.map((e) => `<a href="mailto:${e}">${e}</a>`).join(', ')}</p>` : ''}
         </div>
       </div>
     </body>
@@ -293,9 +301,10 @@ export const sendApprovalEmail = async (
 };
 
 export const sendApprovalRequestEmail = async (
-  email: string,
+  recipients: string[],
   details: { roomName: string; userName: string; startTime: Date; endTime: Date }
 ) => {
+  if (recipients.length === 0) return;
   const branding = await getBranding();
   const subject = `Booking Awaiting Approval - ${branding.serviceName}`;
 
@@ -335,7 +344,10 @@ export const sendApprovalRequestEmail = async (
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Awaiting Approval', message, branding));
+  const html = getEmailTemplate('Booking Awaiting Approval', message, branding);
+  for (const to of recipients) {
+    await sendEmail(to, subject, html);
+  }
 };
 
 export const sendReminderEmail = async (

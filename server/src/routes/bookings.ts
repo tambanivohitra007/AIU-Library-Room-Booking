@@ -3,7 +3,7 @@ import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
-import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail } from '../services/email.js';
+import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
 
@@ -307,9 +307,26 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // Notify the department contact that a request awaits approval
-    if (initialStatus === BookingStatus.PENDING && room.department?.contactEmail) {
-      await sendApprovalRequestEmail(room.department.contactEmail, {
+    // Notify everyone responsible: the department's admins and its contact address(es).
+    // Fall back to the service contact(s) so requests are never silently unwatched.
+    if (initialStatus === BookingStatus.PENDING) {
+      const departmentAdmins = room.departmentId
+        ? await prisma.departmentAdmin.findMany({
+            where: { departmentId: room.departmentId },
+            include: { user: { select: { email: true } } },
+          })
+        : [];
+
+      const recipients = [...new Set([
+        ...parseEmails(room.department?.contactEmail),
+        ...departmentAdmins.map((a: any) => a.user.email).filter(Boolean),
+      ])];
+
+      if (recipients.length === 0) {
+        recipients.push(...parseEmails(settings.contactEmail));
+      }
+
+      await sendApprovalRequestEmail(recipients, {
         roomName: room.name,
         userName: booking.user.name,
         startTime: booking.startTime,

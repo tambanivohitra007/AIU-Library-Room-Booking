@@ -267,18 +267,22 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Contact Email
+                    Contact Emails
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     value={form.contactEmail}
                     onChange={(e) =>
                       setForm({ ...form, contactEmail: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="dept@example.com"
+                    placeholder="dept@example.com, head@example.com"
                     disabled={isSubmitting}
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Comma-separated. These addresses — plus all assigned
+                    department managers — receive booking approval requests.
+                  </p>
                 </div>
                 <div>
                   <label className="flex items-center gap-2 cursor-pointer mb-2">

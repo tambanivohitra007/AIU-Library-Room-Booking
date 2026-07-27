@@ -118,16 +118,20 @@ const SettingsTab: React.FC = () => {
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Contact Email
+            Contact Emails
           </label>
           <input
-            type="email"
+            type="text"
             name="contactEmail"
             value={formData.contactEmail}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="admin@example.com"
+            placeholder="admin@example.com, help@example.com"
           />
+          <p className="text-xs text-slate-500 mt-1">
+            One or more addresses, comma-separated. Shown as the assistance
+            contact in notification emails.
+          </p>
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">

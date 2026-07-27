@@ -79,6 +79,14 @@ export const getOperatingHours = (settings: ServiceSettings): OperatingHours => 
   return parseOperatingHoursJson(settings.operatingHours) || DEFAULT_OPERATING_HOURS;
 };
 
+// Department hours override the global schedule when set
+export const getEffectiveOperatingHours = (
+  settings: ServiceSettings,
+  departmentHours: string | null | undefined
+): OperatingHours => {
+  return parseOperatingHoursJson(departmentHours) || getOperatingHours(settings);
+};
+
 const formatHour = (h: number) => `${h}:00`;
 
 // Validates that a booking falls entirely within the operating hours of its day.

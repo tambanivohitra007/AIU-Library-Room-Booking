@@ -41,14 +41,25 @@ model User {
   bookings  Booking[]
 }
 
+model Department {
+  id             String   @id @default(uuid())
+  name           String
+  contactEmail   String?
+  operatingHours String?  // same JSON format as ServiceSettings.operatingHours; null = inherit global
+  createdAt      DateTime @default(now())
+  rooms          Room[]
+}
+
 model Room {
-  id          String    @id @default(uuid())
-  name        String
-  minCapacity Int
-  maxCapacity Int
-  description String
-  features    String    // JSON string array
-  bookings    Booking[]
+  id           String      @id @default(uuid())
+  name         String
+  minCapacity  Int
+  maxCapacity  Int
+  description  String
+  features     String      // JSON string array
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
 }
 
 model Booking {

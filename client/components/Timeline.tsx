@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Booking, Room, User, UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
-import { getGridBounds, getClosedRanges, isRangeClosed } from '../utils/operatingHours';
+import { getGridBounds, getClosedRanges, isRangeClosed, getEffectiveOperatingHours } from '../utils/operatingHours';
 
 interface TimelineProps {
   weekStart: Date;
@@ -14,7 +14,11 @@ interface TimelineProps {
 }
 
 const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentUser, onRangeSelect, onBookingClick, selectedRange }) => {
-  const { operatingHours } = useSettings();
+  const { operatingHours: globalHours } = useSettings();
+  const operatingHours = useMemo(
+    () => getEffectiveOperatingHours(room.department, globalHours),
+    [room.department, globalHours]
+  );
   const { open: gridOpen, close: gridClose } = useMemo(() => getGridBounds(operatingHours), [operatingHours]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ dayIndex: number; minutes: number } | null>(null);

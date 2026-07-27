@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useToast } from '../contexts/ToastContext';
 import { OperatingHours } from '../types';
-import { parseOperatingHours, DEFAULT_OPERATING_HOURS } from '../utils/operatingHours';
-
-const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import { parseOperatingHours } from '../utils/operatingHours';
+import OperatingHoursEditor, { validateOperatingHours } from './OperatingHoursEditor';
 
 const SettingsTab: React.FC = () => {
     const { settings, updateSettings } = useSettings();
@@ -38,25 +37,12 @@ const SettingsTab: React.FC = () => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const toggleDayOpen = (day: number) => {
-        setHours(prev => prev.map((d, i) => {
-            if (i !== day) return d;
-            return d === null ? { ...(DEFAULT_OPERATING_HOURS[day] || { open: 8, close: 22 }) } : null;
-        }));
-    };
-
-    const setDayHour = (day: number, field: 'open' | 'close', value: number) => {
-        if (Number.isNaN(value)) return;
-        setHours(prev => prev.map((d, i) => (i === day && d !== null ? { ...d, [field]: value } : d)));
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        for (const d of hours) {
-            if (d !== null && (d.open < 0 || d.close > 24 || d.open >= d.close)) {
-                toast.error('Opening time must be before closing time (0-24)');
-                return;
-            }
+        const hoursError = validateOperatingHours(hours);
+        if (hoursError) {
+            toast.error(hoursError);
+            return;
         }
         try {
             await updateSettings({ ...formData, operatingHours: JSON.stringify(hours) });
@@ -133,50 +119,9 @@ const SettingsTab: React.FC = () => {
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">Operating Hours</label>
-                    <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
-                        {WEEKDAY_NAMES.map((name, day) => {
-                            const dayHours = hours[day];
-                            return (
-                                <div key={name} className="flex items-center gap-3 px-4 py-2">
-                                    <label className="flex items-center gap-2 w-32 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={dayHours !== null}
-                                            onChange={() => toggleDayOpen(day)}
-                                            className="rounded border-slate-300 text-primary focus:ring-primary/20"
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">{name}</span>
-                                    </label>
-                                    {dayHours !== null ? (
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                max={23}
-                                                value={dayHours.open}
-                                                onChange={(e) => setDayHour(day, 'open', parseInt(e.target.value, 10))}
-                                                className="w-16 px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                            />
-                                            <span>:00 to</span>
-                                            <input
-                                                type="number"
-                                                min={1}
-                                                max={24}
-                                                value={dayHours.close}
-                                                onChange={(e) => setDayHour(day, 'close', parseInt(e.target.value, 10))}
-                                                className="w-16 px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                            />
-                                            <span>:00</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-sm text-slate-400 italic">Closed</span>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <OperatingHoursEditor value={hours} onChange={setHours} />
                     <p className="text-xs text-slate-500 mt-1">
-                        Bookings are only allowed within these hours (enforced by the server).
+                        Default schedule for all rooms. Departments with custom hours override it. Enforced by the server.
                     </p>
                 </div>
                 <div className="pt-4">

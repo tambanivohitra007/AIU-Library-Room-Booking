@@ -1,4 +1,4 @@
-import { User, Room, Booking, Semester } from '../types';
+import { User, Room, Booking, Semester, Department } from '../types';
 
 // Use environment variable or fallback to relative path (for dev proxy)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -148,14 +148,14 @@ export const api = {
     return fetchAPI<Room>(`/rooms/${id}`);
   },
 
-  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[] }): Promise<Room> => {
+  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null }): Promise<Room> => {
     return fetchAPI<Room>('/rooms', {
       method: 'POST',
       body: JSON.stringify(roomData),
     });
   },
 
-  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[] }): Promise<Room> => {
+  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null }): Promise<Room> => {
     return fetchAPI<Room>(`/rooms/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roomData),
@@ -260,6 +260,31 @@ export const api = {
 
   deleteSemester: async (id: string): Promise<void> => {
     return fetchAPI(`/semesters/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Departments
+  getDepartments: async (): Promise<Department[]> => {
+    return fetchAPI<Department[]>('/departments');
+  },
+
+  createDepartment: async (data: { name: string; contactEmail?: string | null; operatingHours?: string | null }): Promise<Department> => {
+    return fetchAPI<Department>('/departments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateDepartment: async (id: string, data: { name: string; contactEmail?: string | null; operatingHours?: string | null }): Promise<Department> => {
+    return fetchAPI<Department>(`/departments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteDepartment: async (id: string): Promise<{ message: string }> => {
+    return fetchAPI(`/departments/${id}`, {
       method: 'DELETE',
     });
   },

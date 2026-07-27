@@ -15,6 +15,14 @@ export interface User {
   createdAt?: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  contactEmail?: string | null;
+  operatingHours?: string | null; // JSON-encoded OperatingHours; null = inherit global schedule
+  roomCount?: number;
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -22,6 +30,8 @@ export interface Room {
   maxCapacity: number;
   description: string;
   features: string[];
+  departmentId?: string | null;
+  department?: Department | null;
 }
 
 export enum BookingStatus {

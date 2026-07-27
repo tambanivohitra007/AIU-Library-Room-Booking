@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Room } from '../types';
+import { Room, Department } from '../types';
 import { XIcon, PlusIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
 
@@ -18,8 +18,14 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
   const [maxCapacity, setMaxCapacity] = useState(room.maxCapacity.toString());
   const [features, setFeatures] = useState<string[]>(room.features);
   const [newFeature, setNewFeature] = useState('');
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentId, setDepartmentId] = useState(room.departmentId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getDepartments().then(setDepartments).catch(() => {});
+  }, []);
 
   const handleAddFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature.trim())) {
@@ -67,6 +73,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
         minCapacity: minCapacityNum,
         maxCapacity: maxCapacityNum,
         features,
+        departmentId: departmentId || null,
       });
       toast.success('Room updated successfully');
       onSuccess();
@@ -162,6 +169,25 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
                 />
               </div>
             </div>
+
+            {departments.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Department
+                </label>
+                <select
+                  value={departmentId}
+                  onChange={(e) => setDepartmentId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+                  disabled={isSubmitting}
+                >
+                  <option value="">No department (global hours)</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Booking, Room, User, UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
-import { getGridBounds, getClosedRanges, isRangeClosed } from '../utils/operatingHours';
+import { getGridBounds, getClosedRanges, isRangeClosed, getEffectiveOperatingHours } from '../utils/operatingHours';
 
 interface DayViewProps {
   selectedDate: Date;
@@ -22,7 +22,11 @@ const DayView: React.FC<DayViewProps> = ({
   onBookingClick,
   selectedRange,
 }) => {
-  const { operatingHours } = useSettings();
+  const { operatingHours: globalHours } = useSettings();
+  const operatingHours = useMemo(
+    () => getEffectiveOperatingHours(room.department, globalHours),
+    [room.department, globalHours]
+  );
   const { open: gridOpen, close: gridClose } = useMemo(() => getGridBounds(operatingHours), [operatingHours]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);

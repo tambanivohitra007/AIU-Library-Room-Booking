@@ -11,6 +11,7 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.user.deleteMany();
   await prisma.room.deleteMany();
+  await prisma.department.deleteMany();
 
   // Hash passwords
   const studentPassword = await bcrypt.hash('student123', 10);
@@ -41,6 +42,14 @@ async function main() {
   console.log('  - Alice Student (alice@uni.edu) - Password: student123');
   console.log('  - Bob Admin (bob@uni.edu) - Password: admin123');
 
+  // Create a sample department (rooms without one follow the global schedule)
+  const library = await prisma.department.create({
+    data: {
+      id: 'dept-library',
+      name: 'Library',
+    },
+  });
+
   // Create rooms
   const roomA = await prisma.room.create({
     data: {
@@ -50,6 +59,7 @@ async function main() {
       maxCapacity: 6,
       description: 'Glass-walled room near reference section.',
       features: JSON.stringify(['Whiteboard', 'Power Outlets']),
+      departmentId: library.id,
     },
   });
 
@@ -61,6 +71,7 @@ async function main() {
       maxCapacity: 10,
       description: 'Larger room with projector.',
       features: JSON.stringify(['Projector', 'Large Table', 'Whiteboard']),
+      departmentId: library.id,
     },
   });
 

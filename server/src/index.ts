@@ -9,6 +9,7 @@ import { bookingRouter } from './routes/bookings.js';
 import { adminRouter } from './routes/admin.js';
 import { semesterRouter } from './routes/semesters.js';
 import { settingsRouter } from './routes/settingsRoutes.js';
+import { departmentRouter } from './routes/departments.js';
 import { apiLimiter } from './middleware/security.js';
 import { startBookingScheduler } from './services/bookingScheduler.js';
 import logger from './utils/logger.js';
@@ -49,10 +50,11 @@ app.use('/api/bookings', bookingRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/semesters', semesterRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/departments', departmentRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'LibBook API is running' });
+  res.json({ status: 'ok', message: 'Room Booking API is running' });
 });
 
 // Error handling middleware

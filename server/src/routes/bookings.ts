@@ -4,7 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail } from '../services/email.js';
-import { getServiceSettings, getOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
+import { getServiceSettings, getEffectiveOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -173,9 +173,19 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Check configurable operating hours (was previously only enforced client-side)
+    // Check operating hours: the room's department schedule wins, else the global one
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      include: { department: true },
+    });
+
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
     const settings = await getServiceSettings();
-    const hoursCheck = checkWithinOperatingHours(bookingStart, bookingEnd, getOperatingHours(settings));
+    const effectiveHours = getEffectiveOperatingHours(settings, room.department?.operatingHours);
+    const hoursCheck = checkWithinOperatingHours(bookingStart, bookingEnd, effectiveHours);
     if (!hoursCheck.ok) {
       return res.status(400).json({ error: hoursCheck.error });
     }

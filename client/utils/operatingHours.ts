@@ -1,4 +1,4 @@
-import { DayHours, OperatingHours } from '../types';
+import { DayHours, Department, OperatingHours } from '../types';
 import { OPENING_HOUR, CLOSING_HOUR } from '../constants';
 
 export const DEFAULT_OPERATING_HOURS: OperatingHours = Array.from({ length: 7 }, () => ({
@@ -19,17 +19,29 @@ const isValidDayHours = (entry: unknown): entry is DayHours => {
   );
 };
 
-export const parseOperatingHours = (json: string | null | undefined): OperatingHours => {
-  if (!json) return DEFAULT_OPERATING_HOURS;
+export const parseOperatingHoursOrNull = (json: string | null | undefined): OperatingHours | null => {
+  if (!json) return null;
   try {
     const parsed = JSON.parse(json);
     if (Array.isArray(parsed) && parsed.length === 7 && parsed.every(isValidDayHours)) {
       return parsed;
     }
   } catch {
-    // fall through to default
+    // fall through to null
   }
-  return DEFAULT_OPERATING_HOURS;
+  return null;
+};
+
+export const parseOperatingHours = (json: string | null | undefined): OperatingHours => {
+  return parseOperatingHoursOrNull(json) || DEFAULT_OPERATING_HOURS;
+};
+
+// A department's custom schedule overrides the global one when set
+export const getEffectiveOperatingHours = (
+  department: Department | null | undefined,
+  globalHours: OperatingHours
+): OperatingHours => {
+  return parseOperatingHoursOrNull(department?.operatingHours) || globalHours;
 };
 
 // Grid bounds for the timeline: earliest open and latest close across open days

@@ -62,6 +62,7 @@ The client polls the API every 5 seconds (`App.tsx`) for rooms and bookings. Sta
 
 ### Database schema key points
 - `features` on `Room` is stored as a **JSON string**, not a DB array — parse/stringify manually
+- `Department` is an optional grouping for rooms (`Room.departmentId` is nullable, SetNull on delete). A department's `operatingHours` (same JSON format as settings) overrides the global schedule for its rooms; null = inherit global
 - `User.provider` defaults to `"LOCAL"`; Microsoft SSO users have a different provider value
 - `Booking` → `Attendee` cascade deletes on booking removal
 - `ServiceSettings` is a singleton row (only one settings record expected). Besides branding, it holds:

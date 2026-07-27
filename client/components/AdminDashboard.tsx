@@ -9,6 +9,7 @@ import ConfirmDeleteModal from './ConfirmDeleteModal';
 import AddRoomModal from './AddRoomModal';
 import EditRoomModal from './EditRoomModal';
 import SemestersManager from './SemestersManager';
+import DepartmentsManager from './DepartmentsManager';
 import AttendeesModal from './AttendeesModal';
 import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
@@ -39,7 +40,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'semesters' | 'settings'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'departments' | 'semesters' | 'settings'>('overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -939,9 +940,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
             { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
             { id: 'users', label: 'Users', Icon: UsersIcon },
             { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
+            { id: 'departments', label: 'Departments', Icon: BuildingIcon },
             { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
             { id: 'settings', label: 'Settings', Icon: SettingsIcon }, // Added Settings tab
-          ].filter(tab => isAdmin || !['semesters', 'settings'].includes(tab.id)).map(tab => (
+          ].filter(tab => isAdmin || !['departments', 'semesters', 'settings'].includes(tab.id)).map(tab => (
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
@@ -967,6 +969,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
         {selectedTab === 'bookings' && renderBookings()}
         {selectedTab === 'users' && renderUsers()}
         {selectedTab === 'rooms' && renderRooms()}
+        {selectedTab === 'departments' && <DepartmentsManager onRefresh={onRefresh} />}
         {selectedTab === 'semesters' && <SemestersManager />}
         {selectedTab === 'settings' && <SettingsTab />}
       </div>

@@ -8,7 +8,9 @@ const prisma = new PrismaClient();
 // Get all rooms
 router.get('/', async (req, res) => {
   try {
-    const rooms = await prisma.room.findMany();
+    const rooms = await prisma.room.findMany({
+      include: { department: true },
+    });
     // Parse features JSON string to array
     const roomsWithParsedFeatures = rooms.map((room: any) => ({
       ...room,
@@ -25,6 +27,7 @@ router.get('/:id', async (req, res) => {
   try {
     const room = await prisma.room.findUnique({
       where: { id: req.params.id },
+      include: { department: true },
     });
     if (!room) {
       return res.status(404).json({ error: 'Room not found' });
@@ -41,7 +44,7 @@ router.get('/:id', async (req, res) => {
 // Create new room (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
       return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
@@ -62,6 +65,13 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
       return res.status(400).json({ error: 'Minimum capacity cannot be greater than maximum capacity' });
     }
 
+    if (departmentId) {
+      const department = await prisma.department.findUnique({ where: { id: departmentId } });
+      if (!department) {
+        return res.status(400).json({ error: 'Department not found' });
+      }
+    }
+
     // Create room with features as JSON string
     const room = await prisma.room.create({
       data: {
@@ -70,7 +80,9 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
         minCapacity: minCap,
         maxCapacity: maxCap,
         features: JSON.stringify(features || []),
+        departmentId: departmentId || null,
       },
+      include: { department: true },
     });
 
     res.status(201).json({
@@ -86,7 +98,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
 // Update room (admin only)
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
       return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
@@ -116,6 +128,13 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       return res.status(404).json({ error: 'Room not found' });
     }
 
+    if (departmentId) {
+      const department = await prisma.department.findUnique({ where: { id: departmentId } });
+      if (!department) {
+        return res.status(400).json({ error: 'Department not found' });
+      }
+    }
+
     // Update room
     const room = await prisma.room.update({
       where: { id: req.params.id },
@@ -125,7 +144,9 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
         minCapacity: minCap,
         maxCapacity: maxCap,
         features: JSON.stringify(features || []),
+        departmentId: departmentId || null,
       },
+      include: { department: true },
     });
 
     res.json({

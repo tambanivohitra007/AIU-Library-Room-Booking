@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Timeline from '../components/Timeline';
 import DayView from '../components/DayView';
 import MonthView from '../components/MonthView';
@@ -6,7 +6,7 @@ import ViewSwitcher, { CalendarView } from '../components/ViewSwitcher';
 import MiniCalendar from '../components/MiniCalendar';
 import BookingForm from '../components/BookingForm';
 import BookingDetails from '../components/BookingDetails';
-import { User, Room, Booking } from '../types';
+import { User, Room, Booking, Department } from '../types';
 
 interface HomePageProps {
   user: User;
@@ -19,6 +19,29 @@ interface HomePageProps {
 const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, onCancelBooking }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>(rooms.length > 0 ? rooms[0].id : '');
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
+
+  // Departments derived from the rooms themselves; empty when the feature is unused
+  const departments = useMemo(() => {
+    const map = new Map<string, Department>();
+    rooms.forEach(r => { if (r.department) map.set(r.department.id, r.department); });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [rooms]);
+
+  const visibleRooms = useMemo(() => {
+    if (selectedDeptId === 'all') return rooms;
+    return rooms.filter(r => r.departmentId === selectedDeptId);
+  }, [rooms, selectedDeptId]);
+
+  const handleDeptSelect = (deptId: string) => {
+    setSelectedDeptId(deptId);
+    const pool = deptId === 'all' ? rooms : rooms.filter(r => r.departmentId === deptId);
+    if (!pool.some(r => r.id === selectedRoomId) && pool.length > 0) {
+      setSelectedRoomId(pool[0].id);
+      setSelectedRange(null);
+      setSelectedBooking(null);
+    }
+  };
   // Default to Day view on mobile (screens < 640px)
   const [calendarView, setCalendarView] = useState<CalendarView>(() => {
     return window.innerWidth < 640 ? 'day' : 'week';
@@ -150,9 +173,31 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           </div>
         </div>
 
+        {/* Department Filter (only when departments are in use) */}
+        {departments.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto px-1 -mx-1 scrollbar-hide snap-x">
+            {[{ id: 'all', name: 'All Departments' } as Department, ...departments].map(dept => {
+              const isSelected = selectedDeptId === dept.id;
+              return (
+                <button
+                  key={dept.id}
+                  onClick={() => handleDeptSelect(dept.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap snap-start
+                    ${isSelected
+                      ? 'bg-accent text-white border-accent shadow-sm'
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-accent/50 hover:text-accent'
+                    }`}
+                >
+                  {dept.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Bottom Row: Compact Room List */}
         <div className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide snap-x sticky top-0 z-10 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/50">
-          {rooms.map((room, idx) => {
+          {visibleRooms.map((room, idx) => {
              const isSelected = selectedRoomId === room.id;
              return (
               <button

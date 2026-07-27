@@ -251,6 +251,93 @@ export const sendCancellationEmail = async (
   await sendEmail(email, subject, getEmailTemplate('Booking Cancelled', message, branding));
 };
 
+export const sendApprovalEmail = async (
+  email: string,
+  userName: string,
+  details: { roomName: string; startTime: Date; endTime: Date }
+) => {
+  const branding = await getBranding();
+  const subject = `Booking Approved - ${branding.serviceName}`;
+
+  const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+  const startTimeStr = new Date(details.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const endTimeStr = new Date(details.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const message = `
+    <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
+    <p>Good news — your booking request has been approved.</p>
+
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-label">Room</div>
+        <div class="info-value">${details.roomName}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Date</div>
+        <div class="info-value">${dateStr}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Time</div>
+        <div class="info-value">${startTimeStr} - ${endTimeStr}</div>
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">View My Bookings</a>
+    </div>
+  `;
+
+  await sendEmail(email, subject, getEmailTemplate('Booking Approved', message, branding));
+};
+
+export const sendApprovalRequestEmail = async (
+  email: string,
+  details: { roomName: string; userName: string; startTime: Date; endTime: Date }
+) => {
+  const branding = await getBranding();
+  const subject = `Booking Awaiting Approval - ${branding.serviceName}`;
+
+  const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+  const startTimeStr = new Date(details.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const endTimeStr = new Date(details.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+  const message = `
+    <p style="font-size: 16px; margin-bottom: 20px;">Hello,</p>
+    <p>A new booking request is awaiting approval.</p>
+
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-label">Room</div>
+        <div class="info-value">${details.roomName}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Requested by</div>
+        <div class="info-value">${details.userName}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Date</div>
+        <div class="info-value">${dateStr}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Time</div>
+        <div class="info-value">${startTimeStr} - ${endTimeStr}</div>
+      </div>
+    </div>
+
+    <p>Please review it in the admin dashboard. Unapproved requests are cancelled automatically when their start time passes.</p>
+
+    <div style="text-align: center;">
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/admin" class="button">Review Requests</a>
+    </div>
+  `;
+
+  await sendEmail(email, subject, getEmailTemplate('Booking Awaiting Approval', message, branding));
+};
+
 export const sendReminderEmail = async (
   email: string, 
   userName: string, 

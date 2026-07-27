@@ -3,15 +3,25 @@ import { PrismaClient, BookingStatus } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
-import { sendCancellationEmail, sendReminderEmail } from '../services/email.js';
+import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
-import { getManagedDepartmentIds } from '../services/permissions.js';
+import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Apply authentication to all booking routes
 router.use(authenticateToken);
+
+// PENDING requests hold their slot, so both statuses block overlapping bookings
+const BLOCKING_STATUSES = [BookingStatus.CONFIRMED, BookingStatus.PENDING];
+
+// Staff, or a department admin of the room's department, may approve/reject/cancel
+const canModerateBooking = async (req: AuthRequest, departmentId: string | null): Promise<boolean> => {
+  if (isGlobalAdmin(req.userRole) || req.userRole === 'STUDENT_WORKER') return true;
+  const managed = await getManagedDepartmentIds(req.userId);
+  return !!departmentId && managed.includes(departmentId);
+};
 
 // Get all bookings with user and room details
 router.get('/', async (req: AuthRequest, res) => {
@@ -77,7 +87,7 @@ router.post('/check-conflicts', async (req: AuthRequest, res) => {
     const conflicts = await prisma.booking.findMany({
       where: {
         roomId,
-        status: BookingStatus.CONFIRMED,
+        status: { in: BLOCKING_STATUSES },
         OR: [
           {
             AND: [
@@ -137,7 +147,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 
     // Full details only for the owner, staff, or a department admin of the room
     const isOwner = booking.userId === req.userId;
-    const isStaff = req.userRole === 'ADMIN' || req.userRole === 'STUDENT_WORKER';
+    const isStaff = isGlobalAdmin(req.userRole) || req.userRole === 'STUDENT_WORKER';
     if (!isOwner && !isStaff) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
@@ -237,7 +247,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     const overlapping = await prisma.booking.findFirst({
       where: {
         roomId,
-        status: BookingStatus.CONFIRMED,
+        status: { in: BLOCKING_STATUSES },
         OR: [
           {
             AND: [
@@ -276,7 +286,8 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Create booking with attendees
+    // Create booking with attendees; approval-gated rooms start as PENDING
+    const initialStatus = room.requiresApproval ? BookingStatus.PENDING : BookingStatus.CONFIRMED;
     const booking = await prisma.booking.create({
       data: {
         roomId,
@@ -284,6 +295,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         purpose,
+        status: initialStatus,
         termsAcceptedAt: room.bookingTerms ? new Date() : null,
         attendees: {
           create: attendees,
@@ -294,6 +306,16 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
         attendees: true,
       },
     });
+
+    // Notify the department contact that a request awaits approval
+    if (initialStatus === BookingStatus.PENDING && room.department?.contactEmail) {
+      await sendApprovalRequestEmail(room.department.contactEmail, {
+        roomName: room.name,
+        userName: booking.user.name,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+      });
+    }
 
     res.status(201).json({
       id: booking.id,
@@ -315,6 +337,97 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Approve a pending booking (staff or the room's department admin)
+router.post('/:id/approve', async (req: AuthRequest, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: { user: true, room: true },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (!(await canModerateBooking(req, booking.room.departmentId))) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    if (booking.status !== BookingStatus.PENDING) {
+      return res.status(400).json({ error: 'Only pending bookings can be approved' });
+    }
+
+    if (booking.endTime <= new Date()) {
+      return res.status(400).json({ error: 'This booking request has already passed' });
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: BookingStatus.CONFIRMED },
+    });
+
+    if (booking.user.email) {
+      await sendApprovalEmail(booking.user.email, booking.user.name, {
+        roomName: booking.room.name,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+      });
+    }
+
+    logger.info(`Booking ${booking.id} approved by user ${req.userId}`);
+    res.json({ id: updated.id, status: updated.status });
+  } catch (error) {
+    logger.error('Error approving booking:', error);
+    res.status(500).json({ error: 'Failed to approve booking' });
+  }
+});
+
+// Reject a pending booking (staff or the room's department admin)
+router.post('/:id/reject', async (req: AuthRequest, res) => {
+  try {
+    const { reason } = req.body;
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: { user: true, room: true },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (!(await canModerateBooking(req, booking.room.departmentId))) {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    if (booking.status !== BookingStatus.PENDING) {
+      return res.status(400).json({ error: 'Only pending bookings can be rejected' });
+    }
+
+    const rejectionReason = (reason && String(reason).trim()) || 'Booking request rejected';
+    const updated = await prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        status: BookingStatus.CANCELLED,
+        cancellationReason: rejectionReason,
+      },
+    });
+
+    if (booking.user.email) {
+      await sendCancellationEmail(booking.user.email, booking.user.name, {
+        roomName: booking.room.name,
+        startTime: booking.startTime,
+        reason: rejectionReason,
+      });
+    }
+
+    logger.info(`Booking ${booking.id} rejected by user ${req.userId}. Reason: ${rejectionReason}`);
+    res.json({ id: updated.id, status: updated.status, cancellationReason: updated.cancellationReason });
+  } catch (error) {
+    logger.error('Error rejecting booking:', error);
+    res.status(500).json({ error: 'Failed to reject booking' });
+  }
+});
+
 // Send manual reminder
 router.post('/:id/remind', async (req: AuthRequest, res) => {
   try {
@@ -328,7 +441,7 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
     }
 
     // Check permissions (Admin, Student Worker, Owner, or Department Admin of the room)
-    if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
+    if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
         return res.status(403).json({ error: 'Permission denied' });
@@ -383,15 +496,15 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     }
 
     // Check if user owns the booking, is admin/worker, or manages the room's department
-    if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
+    if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
         return res.status(403).json({ error: 'You can only cancel your own bookings' });
       }
     }
 
-    // Only allow canceling CONFIRMED bookings
-    if (booking.status !== BookingStatus.CONFIRMED) {
+    // Only confirmed bookings and pending requests can be cancelled/withdrawn
+    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.PENDING) {
       return res.status(400).json({
         error: `Cannot cancel a ${booking.status.toLowerCase()} booking`,
       });

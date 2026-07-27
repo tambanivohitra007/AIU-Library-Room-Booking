@@ -115,18 +115,18 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      // Create new user (No password)
-      const isAdmin = getAdminEmails().includes(email);
-      
+      // Create new user (No password). ADMIN_EMAILS entries bootstrap as SUPERADMIN.
+      const isSuperAdmin = getAdminEmails().includes(email);
+
       user = await prisma.user.create({
         data: {
           email,
           name: name || 'Microsoft User',
           provider: 'MICROSOFT',
-          role: isAdmin ? 'ADMIN' : 'STUDENT',
+          role: isSuperAdmin ? 'SUPERADMIN' : 'STUDENT',
         },
       });
-      logger.info(`New SSO user created: ${email} (Role: ${isAdmin ? 'ADMIN' : 'STUDENT'})`);
+      logger.info(`New SSO user created: ${email} (Role: ${isSuperAdmin ? 'SUPERADMIN' : 'STUDENT'})`);
     } else {
       // Update provider if switching from LOCAL (optional, or just allow login)
       if (user.provider === 'LOCAL') {

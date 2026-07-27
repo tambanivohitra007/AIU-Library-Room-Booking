@@ -158,6 +158,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               <option value="STUDENT">Student</option>
               <option value="STUDENT_WORKER">Student Worker</option>
               <option value="ADMIN">Admin</option>
+              <option value="SUPERADMIN">Super Admin</option>
             </select>
           </div>
 

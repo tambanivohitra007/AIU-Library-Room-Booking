@@ -31,6 +31,24 @@ export const startBookingScheduler = () => {
         logger.info(`Marked ${completedBookings.count} booking(s) as COMPLETED`);
       }
 
+      // 1b. Cancel PENDING requests whose start time passed without a decision
+      const expiredPending = await prisma.booking.updateMany({
+        where: {
+          status: 'PENDING',
+          startTime: {
+            lt: now,
+          },
+        },
+        data: {
+          status: 'CANCELLED',
+          cancellationReason: 'Not approved before the booking start time',
+        },
+      });
+
+      if (expiredPending.count > 0) {
+        logger.info(`Auto-cancelled ${expiredPending.count} unapproved pending booking(s)`);
+      }
+
       // 2. Send Reminders (Start checking 30 minutes before)
       const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
       const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60000);

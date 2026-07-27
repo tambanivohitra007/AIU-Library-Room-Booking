@@ -50,7 +50,7 @@ const MonthView: React.FC<MonthViewProps> = ({
         bDate.getDate() === date.getDate() &&
         bDate.getMonth() === date.getMonth() &&
         bDate.getFullYear() === date.getFullYear() &&
-        b.status === 'CONFIRMED'
+        (b.status === 'CONFIRMED' || b.status === 'PENDING')
       );
     });
   };

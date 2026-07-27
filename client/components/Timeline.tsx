@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Booking, Room, User, UserRole } from '../types';
+import { Booking, Room, User, UserRole, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { getGridBounds, getClosedRanges, isRangeClosed, getEffectiveOperatingHours } from '../utils/operatingHours';
 
@@ -46,11 +46,11 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
 
     return bookings.filter(b => {
       const bDate = new Date(b.startTime);
-      // Only show CONFIRMED bookings - hide COMPLETED and CANCELLED
+      // Show CONFIRMED and PENDING (slot-holding) bookings - hide COMPLETED and CANCELLED
       return b.roomId === room.id &&
              bDate >= weekStart &&
              bDate < weekEnd &&
-             b.status === 'CONFIRMED';
+             (b.status === 'CONFIRMED' || b.status === 'PENDING');
     });
   }, [bookings, weekStart, room.id]);
 
@@ -304,17 +304,22 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     {dayEvents.map(b => {
                         const style = getPositionStyle(new Date(b.startTime), new Date(b.endTime));
                         const isOwner = b.userId === currentUser.id;
-                        const canViewAll = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.STUDENT_WORKER;
+                        const canViewAll = isGlobalAdminRole(currentUser.role) ||
+                          currentUser.role === UserRole.STUDENT_WORKER ||
+                          (!!room.departmentId && (currentUser.managedDepartmentIds || []).includes(room.departmentId));
                         const canView = isOwner || canViewAll;
+                        const isPending = b.status === 'PENDING';
 
                         return (
                           <div
                             key={b.id}
                             className={`absolute rounded-md px-2 py-1.5 text-[10px] sm:text-xs leading-tight border-l-4 overflow-hidden shadow-medium z-20 transition-all hover:z-30 hover:shadow-strong active:scale-95
-                              ${canView ? 'bg-gradient-to-br from-indigo-50 to-blue-50 border-primary text-primary cursor-pointer' : 'glass border-slate-400 text-slate-600 cursor-default'}
+                              ${isPending
+                                ? (canView ? 'bg-amber-50 border-amber-400 text-amber-700 cursor-pointer' : 'bg-amber-50/80 border-amber-300 text-amber-600 cursor-default')
+                                : canView ? 'bg-gradient-to-br from-indigo-50 to-blue-50 border-primary text-primary cursor-pointer' : 'glass border-slate-400 text-slate-600 cursor-default'}
                             `}
                             style={{ ...style, left: '4px', right: '4px' }}
-                            title={`${canView ? b.userDisplay : 'Reserved'}`}
+                            title={`${canView ? b.userDisplay : 'Reserved'}${isPending ? ' (pending approval)' : ''}`}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 if (canView) onBookingClick(b);
@@ -328,6 +333,7 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                             <div className="truncate opacity-80 font-medium text-[10px] sm:text-xs">
                               {new Date(b.startTime).getHours()}:{new Date(b.startTime).getMinutes().toString().padStart(2,'0')} - {new Date(b.endTime).getHours()}:{new Date(b.endTime).getMinutes().toString().padStart(2,'0')}
                             </div>
+                            {isPending && <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">Pending</div>}
                           </div>
                         )
                     })}

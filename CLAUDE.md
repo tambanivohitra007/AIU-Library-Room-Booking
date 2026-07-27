@@ -63,7 +63,9 @@ The client polls the API every 5 seconds (`App.tsx`) for rooms and bookings. Sta
 ### Database schema key points
 - `features` on `Room` is stored as a **JSON string**, not a DB array — parse/stringify manually
 - `Department` is an optional grouping for rooms (`Room.departmentId` is nullable, SetNull on delete). A department's `operatingHours` (same JSON format as settings) overrides the global schedule for its rooms; null = inherit global
-- `DepartmentAdmin` grants a user (any role) management rights over one department: edit the department, its rooms, and view/cancel/remind its bookings. Server checks live in `server/src/services/permissions.ts`; auth responses expose `managedDepartmentIds` to the client
+- `DepartmentAdmin` grants a user (any role) management rights over one department: edit the department, its rooms, and view/cancel/remind/approve its bookings. Server checks live in `server/src/services/permissions.ts`; auth responses expose `managedDepartmentIds` to the client
+- Roles: `SUPERADMIN` > `ADMIN` > `STUDENT_WORKER` > `STUDENT`. Only SUPERADMIN can edit Service Settings, change roles, or manage admin accounts; ADMIN has full operational powers. `ADMIN_EMAILS` env entries bootstrap as SUPERADMIN on first SSO login
+- Rooms with `requiresApproval` create bookings as `PENDING` (slot is held; blocks overlaps). Staff or the room's department admins approve (`POST /bookings/:id/approve`) or reject; the scheduler auto-cancels PENDING bookings whose start time passes
 - `User.provider` defaults to `"LOCAL"`; Microsoft SSO users have a different provider value
 - `Booking` → `Attendee` cascade deletes on booking removal
 - `ServiceSettings` is a singleton row (only one settings record expected). Besides branding, it holds:

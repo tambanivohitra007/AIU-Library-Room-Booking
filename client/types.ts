@@ -1,8 +1,12 @@
 export enum UserRole {
   STUDENT = 'STUDENT',
   STUDENT_WORKER = 'STUDENT_WORKER',
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  SUPERADMIN = 'SUPERADMIN'
 }
+
+export const isGlobalAdminRole = (role?: UserRole): boolean =>
+  role === UserRole.ADMIN || role === UserRole.SUPERADMIN;
 
 export interface User {
   id: string;
@@ -32,11 +36,13 @@ export interface Room {
   description: string;
   features: string[];
   bookingTerms?: string | null; // terms & conditions; null = no acceptance required
+  requiresApproval?: boolean; // bookings start as PENDING until approved
   departmentId?: string | null;
   department?: Department | null;
 }
 
 export enum BookingStatus {
+  PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
   CANCELLED = 'CANCELLED',
   COMPLETED = 'COMPLETED'

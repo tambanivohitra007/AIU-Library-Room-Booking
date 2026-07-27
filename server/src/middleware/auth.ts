@@ -62,14 +62,21 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 };
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (req.userRole !== 'ADMIN') {
+  if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
 };
 
+export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.userRole !== 'SUPERADMIN') {
+    return res.status(403).json({ error: 'Super admin access required' });
+  }
+  next();
+};
+
 export const requireAdminOrWorker = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
+  if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN' && req.userRole !== 'STUDENT_WORKER') {
     return res.status(403).json({ error: 'Access required' });
   }
   next();

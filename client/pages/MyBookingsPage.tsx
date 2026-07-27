@@ -24,7 +24,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
     const now = new Date();
     return {
       upcoming: myBookings
-        .filter(b => b.status === 'CONFIRMED' && new Date(b.endTime) > now)
+        .filter(b => (b.status === 'CONFIRMED' || b.status === 'PENDING') && new Date(b.endTime) > now)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
       past: myBookings
         .filter(b => (b.status === 'CONFIRMED' || b.status === 'COMPLETED') && new Date(b.endTime) <= now)
@@ -123,7 +123,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
         <div className="grid gap-4">
           {paginatedBookings.map((b, idx) => {
             const hasEnded = new Date(b.endTime) <= new Date();
-            const canCancel = b.status === 'CONFIRMED' && !hasEnded;
+            const canCancel = (b.status === 'CONFIRMED' || b.status === 'PENDING') && !hasEnded;
             const room = rooms.find(r => r.id === b.roomId);
 
             return (
@@ -146,12 +146,13 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({ user, rooms, bookings, 
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${
                               b.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+                              b.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
                               b.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
                               'bg-slate-50 border border-slate-200 text-slate-700'
                             }`}>
                               {b.status}
                             </span>
-                            {!hasEnded && b.status === 'CONFIRMED' && (
+                            {!hasEnded && (b.status === 'CONFIRMED' || b.status === 'PENDING') && (
                               <span className="px-2 py-1 bg-accent/10 border border-accent/20 rounded-lg text-xs font-bold text-accent flex items-center gap-1">
                                 <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></div>
                                 Active

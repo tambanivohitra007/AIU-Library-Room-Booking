@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
+import { authenticateToken, requireAdmin, requireAdminOrWorker, requireSuperAdmin, AuthRequest } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
@@ -14,9 +14,9 @@ router.use(authenticateToken);
 
 // ===== USER MANAGEMENT =====
 
-// Update user role
-router.patch('/users/:id/role', requireAdmin, [
-  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN']).withMessage('Invalid role'),
+// Update user role (super admin only: role changes are privilege escalation)
+router.patch('/users/:id/role', requireSuperAdmin, [
+  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN']).withMessage('Invalid role'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -53,6 +53,11 @@ router.delete('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
+    const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (target && ['ADMIN', 'SUPERADMIN'].includes(target.role) && req.userRole !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Only a super admin can delete admin accounts' });
+    }
+
     // Delete user's bookings first (cascade should handle this, but being explicit)
     await prisma.attendee.deleteMany({
       where: {
@@ -78,8 +83,8 @@ router.delete('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
   }
 });
 
-// Create admin user
-router.post('/users/admin', requireAdmin, [
+// Create admin user (super admin only)
+router.post('/users/admin', requireSuperAdmin, [
   body('email').isEmail().withMessage('Invalid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('name').trim().notEmpty().withMessage('Name is required'),

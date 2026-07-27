@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Booking, Room, User, UserRole } from '../types';
+import { Booking, Room, User, UserRole, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { getGridBounds, getClosedRanges, isRangeClosed, getEffectiveOperatingHours } from '../utils/operatingHours';
 
@@ -47,7 +47,7 @@ const DayView: React.FC<DayViewProps> = ({
         bDate.getDate() === selectedDate.getDate() &&
         bDate.getMonth() === selectedDate.getMonth() &&
         bDate.getFullYear() === selectedDate.getFullYear() &&
-        b.status === 'CONFIRMED'
+        (b.status === 'CONFIRMED' || b.status === 'PENDING')
       );
     });
   }, [bookings, selectedDate, room.id]);
@@ -242,21 +242,26 @@ const DayView: React.FC<DayViewProps> = ({
             {dayBookings.map((b) => {
               const style = getPositionStyle(new Date(b.startTime), new Date(b.endTime));
               const isOwner = b.userId === currentUser.id;
-              const isAdmin = currentUser.role === UserRole.ADMIN;
-              const canView = isOwner || isAdmin;
+              const canViewAll = isGlobalAdminRole(currentUser.role) ||
+                currentUser.role === UserRole.STUDENT_WORKER ||
+                (!!room.departmentId && (currentUser.managedDepartmentIds || []).includes(room.departmentId));
+              const canView = isOwner || canViewAll;
+              const isPending = b.status === 'PENDING';
 
               return (
                 <div
                   key={b.id}
                   className={`absolute rounded px-2 py-1 text-xs border-l-4 overflow-hidden shadow-sm z-20 transition-all hover:z-30 hover:shadow-md
                     ${
-                      canView
+                      isPending
+                        ? (canView ? 'bg-amber-50 border-amber-400 text-amber-700 cursor-pointer' : 'bg-amber-50/80 border-amber-300 text-amber-600 cursor-default')
+                        : canView
                         ? 'bg-indigo-100 border-primary text-primary cursor-pointer'
                         : 'bg-slate-200 border-slate-400 text-slate-500 cursor-default'
                     }
                   `}
                   style={{ ...style, left: '8px', right: '8px' }}
-                  title={`${canView ? b.userDisplay : 'Reserved'}`}
+                  title={`${canView ? b.userDisplay : 'Reserved'}${isPending ? ' (pending approval)' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (canView) onBookingClick(b);
@@ -270,6 +275,7 @@ const DayView: React.FC<DayViewProps> = ({
                     {new Date(b.endTime).getMinutes().toString().padStart(2, '0')}
                   </div>
                   {b.purpose && <div className="truncate text-[10px] mt-1">{b.purpose}</div>}
+                  {isPending && <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">Pending</div>}
                 </div>
               );
             })}

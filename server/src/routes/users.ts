@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import { authenticateToken, requireAdmin, requireAdminOrWorker } from '../middleware/auth.js';
+import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 const DEFAULT_PASSWORD = 'Password123!';
+
+// Appointing or managing privileged accounts is reserved for super admins
+const PRIVILEGED_ROLES = ['ADMIN', 'SUPERADMIN'];
+const isPrivileged = (role: string | null | undefined) => !!role && PRIVILEGED_ROLES.includes(role);
 
 // All user routes require authentication
 router.use(authenticateToken);
@@ -50,13 +54,17 @@ router.get('/:id', requireAdminOrWorker, async (req, res) => {
 });
 
 // Create user
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { name, email, password, role } = req.body;
 
     // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    if (isPrivileged(role) && req.userRole !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Only a super admin can create admin accounts' });
     }
 
     // Check if user already exists
@@ -90,7 +98,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // Bulk import users
-router.post('/import', requireAdmin, async (req, res) => {
+router.post('/import', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { users } = req.body;
     
@@ -111,6 +119,14 @@ router.post('/import', requireAdmin, async (req, res) => {
           results.failed.push({
             email: userData.email || 'unknown',
             reason: 'Missing required fields (email or name)',
+          });
+          continue;
+        }
+
+        if (isPrivileged(userData.role) && req.userRole !== 'SUPERADMIN') {
+          results.failed.push({
+            email: userData.email,
+            reason: 'Only a super admin can import admin accounts',
           });
           continue;
         }
@@ -162,7 +178,7 @@ router.post('/import', requireAdmin, async (req, res) => {
 });
 
 // Update user
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, password, status } = req.body;
@@ -174,6 +190,11 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Only super admins may grant privileged roles or modify privileged accounts
+    if ((isPrivileged(role) || isPrivileged(existingUser.role)) && req.userRole !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Only a super admin can manage admin accounts' });
     }
 
     // If email is being changed, check if new email is already in use
@@ -212,7 +233,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // Delete user
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
 
@@ -223,6 +244,10 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (isPrivileged(user.role) && req.userRole !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Only a super admin can delete admin accounts' });
     }
 
     // Delete user (this will cascade delete their bookings due to foreign key)

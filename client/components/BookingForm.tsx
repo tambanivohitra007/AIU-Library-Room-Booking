@@ -157,7 +157,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
 
     setIsSubmitting(true);
     try {
-      await api.createBooking({
+      const booking = await api.createBooking({
         roomId: selectedRoom.id,
         startTime: bookingStart,
         endTime: bookingEnd,
@@ -166,7 +166,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         termsAccepted: selectedRoom.bookingTerms ? termsAccepted : undefined
       });
 
-      toast.success(`Booking confirmed for ${selectedRoom.name}!`);
+      if (booking.status === 'PENDING') {
+        toast.success(`Request submitted for ${selectedRoom.name} — awaiting approval.`);
+      } else {
+        toast.success(`Booking confirmed for ${selectedRoom.name}!`);
+      }
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -221,6 +225,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
             {error && (
                 <div className="bg-red-50 p-2 text-xs text-red-600 rounded border border-red-200">
                     {error}
+                </div>
+            )}
+
+            {selectedRoom.requiresApproval && (
+                <div className="bg-amber-50 p-3 text-xs text-amber-800 rounded border border-amber-200">
+                    This room requires approval. Your booking will be <strong>pending</strong> (the time slot is
+                    reserved for you) until a department admin approves it.
                 </div>
             )}
 

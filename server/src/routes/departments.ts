@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
 import { parseOperatingHoursJson } from '../services/settings.js';
-import { getManagedDepartmentIds, canManageDepartment } from '../services/permissions.js';
+import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -89,7 +89,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
 
-    if (req.userRole !== 'ADMIN') {
+    if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!canManageDepartment(req.userRole, managed, existing.id)) {
         return res.status(403).json({ error: 'You can only manage your own department' });
@@ -106,7 +106,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     // Only global admins may (re)assign managers; sent as the full desired list
-    if (Array.isArray(adminUserIds) && req.userRole === 'ADMIN') {
+    if (Array.isArray(adminUserIds) && isGlobalAdmin(req.userRole)) {
       const userIds: string[] = [...new Set(adminUserIds.filter((id: any) => typeof id === 'string'))];
       const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true } });
       if (users.length !== userIds.length) {

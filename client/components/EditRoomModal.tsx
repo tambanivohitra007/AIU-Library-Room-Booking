@@ -22,6 +22,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentId, setDepartmentId] = useState(room.departmentId || '');
   const [bookingTerms, setBookingTerms] = useState(room.bookingTerms || '');
+  const [requiresApproval, setRequiresApproval] = useState(!!room.requiresApproval);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,6 +80,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
         features,
         departmentId: departmentId || null,
         bookingTerms: bookingTerms.trim() || null,
+        requiresApproval,
       });
       toast.success('Room updated successfully');
       onSuccess();
@@ -193,6 +195,22 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
                 </select>
               </div>
             )}
+
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={requiresApproval}
+                  onChange={(e) => setRequiresApproval(e.target.checked)}
+                  className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm font-medium text-slate-700">Require approval for bookings</span>
+              </label>
+              <p className="text-xs text-slate-500 mt-1 ml-6">
+                Bookings stay pending (the slot is held) until a department admin or staff member approves them.
+              </p>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">

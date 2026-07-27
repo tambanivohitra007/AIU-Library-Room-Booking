@@ -14,9 +14,11 @@ enum UserRole {
   STUDENT
   STUDENT_WORKER
   ADMIN
+  SUPERADMIN
 }
 
 enum BookingStatus {
+  PENDING
   CONFIRMED
   CANCELLED
   COMPLETED
@@ -72,6 +74,7 @@ model Room {
   description  String
   features     String      // JSON string array
   bookingTerms String?     // terms & conditions text; null = no acceptance required
+  requiresApproval Boolean @default(false) // bookings start as PENDING until approved
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   bookings     Booking[]

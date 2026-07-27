@@ -1,11 +1,11 @@
 
 import { Router } from 'express';
 import { getSettings, updateSettings } from '../controllers/settingsController.js';
-import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
 router.get('/', getSettings);
-router.put('/', authenticateToken, requireAdmin, updateSettings);
+router.put('/', authenticateToken, requireSuperAdmin, updateSettings);
 
 export { router as settingsRouter };

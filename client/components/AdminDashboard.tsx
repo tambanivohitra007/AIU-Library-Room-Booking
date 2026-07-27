@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, Room, Booking, UserRole } from '../types';
+import { User, Room, Booking, UserRole, isGlobalAdminRole } from '../types';
 import { api } from '../services/api';
 import { BarChartIcon, CalendarIcon, UsersIcon, BuildingIcon, SettingsIcon } from './Icons';
 import UserImportModal from './UserImportModal';
@@ -37,7 +37,8 @@ interface Stats {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: allBookings, rooms: allRooms, onExportCSV, onCancelBooking, onRefresh }) => {
   const toast = useToast();
-  const isAdmin = currentUser.role === UserRole.ADMIN;
+  const isAdmin = isGlobalAdminRole(currentUser.role);
+  const isSuperAdmin = currentUser.role === UserRole.SUPERADMIN;
   const managedDeptIds = currentUser.managedDepartmentIds || [];
   // A department admin without a global staff role only sees their departments' data
   const isDeptAdminOnly = !isAdmin && currentUser.role !== UserRole.STUDENT_WORKER && managedDeptIds.length > 0;
@@ -80,6 +81,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send reminder';
       toast.error(errorMessage);
+    }
+  };
+
+  const handleApprove = async (bookingId: string) => {
+    try {
+      await api.approveBooking(bookingId);
+      toast.success('Booking approved');
+      onRefresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to approve booking');
+    }
+  };
+
+  const handleReject = async (bookingId: string) => {
+    const reason = window.prompt('Reason for rejection (optional):');
+    if (reason === null) return; // user cancelled the prompt
+    try {
+      await api.rejectBooking(bookingId, reason.trim() || undefined);
+      toast.success('Booking rejected');
+      onRefresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to reject booking');
     }
   };
 
@@ -167,6 +190,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
       header: 'Status',
       cell: ({ row }) => (
         <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${row.original.status === 'CONFIRMED' ? 'bg-green-50 border border-green-200 text-green-700' :
+          row.original.status === 'PENDING' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
           row.original.status === 'CANCELLED' ? 'bg-red-50 border border-red-200 text-red-700' :
             'bg-slate-50 border border-slate-200 text-slate-700'
           }`}>
@@ -178,27 +202,48 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
-      cell: ({ row }) => (
-        row.original.status === 'CONFIRMED' ? (
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleRemind(row.original.id)}
-              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-500 border border-blue-200 hover:border-blue-500 text-blue-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-              title="Send Reminder Email"
-            >
-              Remind
-            </button>
-            <button
-              onClick={() => onCancelBooking(row.original.id)}
-              className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : null
-      ),
+      cell: ({ row }) => {
+        if (row.original.status === 'PENDING') {
+          return (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleApprove(row.original.id)}
+                className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleReject(row.original.id)}
+                className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+              >
+                Reject
+              </button>
+            </div>
+          );
+        }
+        if (row.original.status === 'CONFIRMED') {
+          return (
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleRemind(row.original.id)}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-500 border border-blue-200 hover:border-blue-500 text-blue-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+                title="Send Reminder Email"
+              >
+                Remind
+              </button>
+              <button
+                onClick={() => onCancelBooking(row.original.id)}
+                className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm hover:shadow-md"
+              >
+                Cancel
+              </button>
+            </div>
+          );
+        }
+        return null;
+      },
     },
-  ], [rooms, onCancelBooking, handleRemind]);
+  ], [rooms, onCancelBooking, handleRemind, handleApprove, handleReject]);
 
   // Column definitions for users table
   const userColumns = useMemo<ColumnDef<User>[]>(() => [
@@ -220,7 +265,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
       accessorKey: 'role',
       header: 'Role',
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${row.original.role === 'ADMIN' ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-soft ${['ADMIN', 'SUPERADMIN'].includes(row.original.role) ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-blue-50 border border-blue-200 text-blue-700'
           }`}>
           {row.original.role}
         </span>
@@ -943,9 +988,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
     { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
     { id: 'settings', label: 'Settings', Icon: SettingsIcon },
   ].filter(tab => {
+    if (tab.id === 'settings') return isSuperAdmin; // platform config is super admin only
     if (isAdmin) return true;
     if (isDeptAdminOnly) return ['bookings', 'rooms', 'departments'].includes(tab.id);
-    return !['departments', 'semesters', 'settings'].includes(tab.id);
+    return !['departments', 'semesters'].includes(tab.id);
   });
 
   const activeTab = tabs.find(t => t.id === selectedTab);

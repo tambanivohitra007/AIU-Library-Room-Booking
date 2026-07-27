@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Department, OperatingHours, User, UserRole } from '../types';
+import { Department, OperatingHours, User, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { parseOperatingHoursOrNull } from '../utils/operatingHours';
 import OperatingHoursEditor, { validateOperatingHours } from './OperatingHoursEditor';
@@ -24,7 +24,7 @@ interface DepartmentsManagerProps {
 const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ currentUser, onRefresh }) => {
     const toast = useToast();
     const { operatingHours: globalHours } = useSettings();
-    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isAdmin = isGlobalAdminRole(currentUser.role);
     const managedIds = currentUser.managedDepartmentIds || [];
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);

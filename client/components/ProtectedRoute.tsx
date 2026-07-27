@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { User, UserRole } from '../types';
+import { User, UserRole, isGlobalAdminRole } from '../types';
 
 interface ProtectedRouteProps {
   user: User | null;
@@ -21,7 +21,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
 
-  if (requireAdmin && user.role !== UserRole.ADMIN && user.role !== UserRole.STUDENT_WORKER && !isDeptAdmin) {
+  if (requireAdmin && !isGlobalAdminRole(user.role) && user.role !== UserRole.STUDENT_WORKER && !isDeptAdmin) {
     return <Navigate to="/" replace />;
   }
 

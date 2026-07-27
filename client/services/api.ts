@@ -148,14 +148,14 @@ export const api = {
     return fetchAPI<Room>(`/rooms/${id}`);
   },
 
-  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null }): Promise<Room> => {
+  createRoom: async (roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null; requiresApproval?: boolean }): Promise<Room> => {
     return fetchAPI<Room>('/rooms', {
       method: 'POST',
       body: JSON.stringify(roomData),
     });
   },
 
-  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null }): Promise<Room> => {
+  updateRoom: async (id: string, roomData: { name: string; description: string; minCapacity: number; maxCapacity: number; features: string[]; departmentId?: string | null; bookingTerms?: string | null; requiresApproval?: boolean }): Promise<Room> => {
     return fetchAPI<Room>(`/rooms/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roomData),
@@ -224,6 +224,17 @@ export const api = {
     } catch {
       return false;
     }
+  },
+
+  approveBooking: async (id: string): Promise<{ id: string; status: string }> => {
+    return fetchAPI(`/bookings/${id}/approve`, { method: 'POST' });
+  },
+
+  rejectBooking: async (id: string, reason?: string): Promise<{ id: string; status: string }> => {
+    return fetchAPI(`/bookings/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   },
 
   remindBooking: async (id: string): Promise<void> => {

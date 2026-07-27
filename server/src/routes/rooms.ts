@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
-import { getManagedDepartmentIds, canManageDepartment } from '../services/permissions.js';
+import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -45,9 +45,9 @@ router.get('/:id', async (req, res) => {
 // Create new room (global admin, or a department admin within their department)
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval } = req.body;
 
-    if (req.userRole !== 'ADMIN') {
+    if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (managed.length === 0) {
         return res.status(403).json({ error: 'Admin access required' });
@@ -93,6 +93,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         features: JSON.stringify(features || []),
         departmentId: departmentId || null,
         bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
+        requiresApproval: requiresApproval === true,
       },
       include: { department: true },
     });
@@ -110,9 +111,9 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 // Update room (global admin, or a department admin for rooms in their department)
 router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval } = req.body;
 
-    if (req.userRole !== 'ADMIN') {
+    if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       const current = await prisma.room.findUnique({ where: { id: req.params.id } });
       if (!current) {
@@ -173,6 +174,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
         features: JSON.stringify(features || []),
         departmentId: departmentId || null,
         bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
+        requiresApproval: requiresApproval === true,
       },
       include: { department: true },
     });
@@ -199,7 +201,7 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Room not found' });
     }
 
-    if (req.userRole !== 'ADMIN') {
+    if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!canManageDepartment(req.userRole, managed, existingRoom.departmentId)) {
         return res.status(403).json({ error: 'You can only manage rooms in your own department' });

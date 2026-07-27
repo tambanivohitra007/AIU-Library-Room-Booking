@@ -12,12 +12,15 @@ export const getManagedDepartmentIds = async (userId: string | undefined): Promi
   return rows.map((r) => r.departmentId);
 };
 
+export const isGlobalAdmin = (role: string | undefined): boolean =>
+  role === 'ADMIN' || role === 'SUPERADMIN';
+
 // Global admins manage everything; department admins manage only their departments
 export const canManageDepartment = (
   role: string | undefined,
   managedDepartmentIds: string[],
   departmentId: string | null | undefined
 ): boolean => {
-  if (role === 'ADMIN') return true;
+  if (isGlobalAdmin(role)) return true;
   return !!departmentId && managedDepartmentIds.includes(departmentId);
 };

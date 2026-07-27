@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { HomeIcon, CalendarIcon, SettingsIcon, UserCircleIcon, LogOutIcon, LockIcon } from './Icons';
-import { User, UserRole } from '../types';
+import { User, UserRole, isGlobalAdminRole } from '../types';
 import logo from '../assets/logo_small.jpg';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -22,7 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
   ];
 
   const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
-  if (user.role === UserRole.ADMIN || user.role === UserRole.STUDENT_WORKER || isDeptAdmin) {
+  if (isGlobalAdminRole(user.role) || user.role === UserRole.STUDENT_WORKER || isDeptAdmin) {
     navItems.push({ path: '/admin', label: 'Admin', icon: SettingsIcon });
   }
 
@@ -44,7 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-white">{user.name}</p>
             <p className="text-xs text-blue-200 font-medium flex items-center gap-1 justify-end">
-              <span className={`w-2 h-2 rounded-full ${user.role === 'ADMIN' ? 'bg-accent' : 'bg-green-400'} animate-pulse`}></span>
+              <span className={`w-2 h-2 rounded-full ${isGlobalAdminRole(user.role) ? 'bg-accent' : 'bg-green-400'} animate-pulse`}></span>
               {user.role}
             </p>
           </div>

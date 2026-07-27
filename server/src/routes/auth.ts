@@ -128,14 +128,24 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
       });
       logger.info(`New SSO user created: ${email} (Role: ${isSuperAdmin ? 'SUPERADMIN' : 'STUDENT'})`);
     } else {
-      // Update provider if switching from LOCAL (optional, or just allow login)
+      const updates: { provider?: string; role?: 'SUPERADMIN' } = {};
+
+      // Note that they used SSO if the account was created locally
       if (user.provider === 'LOCAL') {
-         // Maybe update to LINKED or just allow.
-         // Let's update provider to note they used SSO
-         await prisma.user.update({
-             where: { id: user.id },
-             data: { provider: 'MICROSOFT' }
-         });
+        updates.provider = 'MICROSOFT';
+      }
+
+      // ADMIN_EMAILS is authoritative: re-assert SUPERADMIN on every SSO login
+      if (getAdminEmails().includes(email) && user.role !== 'SUPERADMIN') {
+        updates.role = 'SUPERADMIN';
+        logger.info(`Re-asserted SUPERADMIN for ${email} (listed in ADMIN_EMAILS)`);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: updates,
+        });
       }
     }
 

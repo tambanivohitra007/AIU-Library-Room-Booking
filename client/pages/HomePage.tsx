@@ -8,6 +8,11 @@ import BookingForm from '../components/BookingForm';
 import BookingDetails from '../components/BookingDetails';
 import RoomDetailsModal from '../components/RoomDetailsModal';
 import { User, Room, Booking, Department } from '../types';
+import { useSettings } from '../contexts/SettingsContext';
+import {
+  getEffectiveOperatingHours,
+  isRangeClosed,
+} from '../utils/operatingHours';
 
 interface HomePageProps {
   user: User;
@@ -99,14 +104,46 @@ const HomePage: React.FC<HomePageProps> = ({
   } | null>(null);
   const [detailsRoom, setDetailsRoom] = useState<Room | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const { operatingHours: globalHours } = useSettings();
 
-  // Open the booking form pre-filled with the next half-hour slot
+  // Open the booking form pre-filled with the next FREE one-hour slot:
+  // within the room's operating hours and clear of existing bookings.
   const handleNewBooking = () => {
-    const start = new Date();
-    start.setMinutes(start.getMinutes() + (30 - (start.getMinutes() % 30)), 0, 0);
-    const end = new Date(start.getTime() + 60 * 60000);
+    if (!activeRoom) return;
+    const hours = getEffectiveOperatingHours(activeRoom.department, globalHours);
+    const roomBookings = bookings.filter(
+      (b) =>
+        b.roomId === activeRoom.id &&
+        (b.status === 'CONFIRMED' || b.status === 'PENDING'),
+    );
+    const overlaps = (s: Date, e: Date) =>
+      roomBookings.some(
+        (b) => s < new Date(b.endTime) && e > new Date(b.startTime),
+      );
+
+    const DURATION_MS = 60 * 60000;
+    const first = new Date();
+    first.setMinutes(first.getMinutes() + (30 - (first.getMinutes() % 30)), 0, 0);
+
+    // Scan forward in 30-minute steps, up to 14 days out
+    for (let i = 0; i < 14 * 48; i++) {
+      const s = new Date(first.getTime() + i * 30 * 60000);
+      const e = new Date(s.getTime() + DURATION_MS);
+      if (s.toDateString() !== e.toDateString()) continue; // stay within one day
+      if (isRangeClosed(s, e, hours)) continue;
+      if (overlaps(s, e)) continue;
+      setSelectedBooking(null);
+      setSelectedRange({ start: s, end: e });
+      setCurrentDate(new Date(s)); // bring the found day into view
+      return;
+    }
+
+    // Nothing free in two weeks — open the form anyway with the naive slot
     setSelectedBooking(null);
-    setSelectedRange({ start, end });
+    setSelectedRange({
+      start: first,
+      end: new Date(first.getTime() + DURATION_MS),
+    });
   };
 
   const handleRangeSelect = (start: Date, end: Date) => {

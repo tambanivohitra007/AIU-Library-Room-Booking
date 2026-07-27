@@ -59,6 +59,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showMoreSheet, setShowMoreSheet] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -933,6 +934,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
     </>
   );
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', Icon: BarChartIcon },
+    { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
+    { id: 'users', label: 'Users', Icon: UsersIcon },
+    { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
+    { id: 'departments', label: 'Departments', Icon: BuildingIcon },
+    { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
+    { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+  ].filter(tab => {
+    if (isAdmin) return true;
+    if (isDeptAdminOnly) return ['bookings', 'rooms', 'departments'].includes(tab.id);
+    return !['departments', 'semesters', 'settings'].includes(tab.id);
+  });
+
+  const activeTab = tabs.find(t => t.id === selectedTab);
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -951,35 +968,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
         </button>
       </div>
 
-      {/* Menu + Content: vertical sidebar on desktop, horizontal strip on mobile */}
+      {/* Menu + Content: vertical sidebar on desktop, bottom nav on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-16 z-10 backdrop-blur-md sm:w-52 sm:shrink-0">
-        <nav className="flex sm:flex-col items-center sm:items-stretch gap-1 sm:gap-1.5 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x" aria-label="Tabs">
-          {[
-            { id: 'overview', label: 'Overview', Icon: BarChartIcon },
-            { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
-            { id: 'users', label: 'Users', Icon: UsersIcon },
-            { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
-            { id: 'departments', label: 'Departments', Icon: BuildingIcon },
-            { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
-            { id: 'settings', label: 'Settings', Icon: SettingsIcon }, // Added Settings tab
-          ].filter(tab => {
-            if (isAdmin) return true;
-            if (isDeptAdminOnly) return ['bookings', 'rooms', 'departments'].includes(tab.id);
-            return !['departments', 'semesters', 'settings'].includes(tab.id);
-          }).map(tab => (
+      <div className="hidden sm:block glass rounded-lg border border-white/20 shadow-medium p-2 sticky top-16 z-10 backdrop-blur-md w-52 shrink-0">
+        <nav className="flex flex-col items-stretch gap-1.5" aria-label="Tabs">
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
               className={`
-                shrink-0 snap-start px-3 sm:px-4 py-2 sm:py-2.5 rounded-md font-bold text-xs sm:text-sm transition-all-smooth flex items-center sm:w-full sm:justify-start gap-1.5 sm:gap-3 whitespace-nowrap
+                px-4 py-2.5 rounded-md font-bold text-sm transition-all-smooth flex items-center w-full justify-start gap-3 whitespace-nowrap
                 ${selectedTab === tab.id
                   ? 'bg-primary text-white shadow-md'
                   : 'text-slate-600 hover:bg-primary/5 hover:text-primary'
                 }
               `}
             >
-              <tab.Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform flex-shrink-0`} />
+              <tab.Icon className={`w-5 h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform flex-shrink-0`} />
               <span className="leading-tight">{tab.label}</span>
             </button>
           ))}
@@ -997,6 +1002,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
         {selectedTab === 'settings' && <SettingsTab />}
       </div>
       </div>
+
+      {/* Mobile: floating admin-menu trigger, sits above the app bottom nav */}
+      <button
+        onClick={() => setShowMoreSheet(true)}
+        className="sm:hidden fixed bottom-24 right-4 z-40 px-4 py-3 rounded-full bg-primary text-white font-bold text-sm shadow-strong flex items-center gap-2 active:scale-95 transition-transform"
+        aria-label="Open admin menu"
+      >
+        {activeTab && <activeTab.Icon className="w-5 h-5" />}
+        <span>{activeTab?.label || 'Menu'}</span>
+        <svg className="w-4 h-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
+
+      {/* Mobile Admin Menu Bottom Sheet */}
+      {showMoreSheet && (
+        <div className="sm:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40 animate-fade-in" onClick={() => setShowMoreSheet(false)} />
+          <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-2xl p-4 pb-8 animate-slide-up shadow-2xl">
+            <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
+            <nav className="flex flex-col gap-1" aria-label="Admin sections">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => { setSelectedTab(tab.id as any); setShowMoreSheet(false); }}
+                  className={`px-4 py-3 rounded-lg font-bold text-sm flex items-center gap-3 transition-colors ${selectedTab === tab.id ? 'bg-primary text-white' : 'text-slate-700 hover:bg-slate-50'}`}
+                >
+                  <tab.Icon className="w-5 h-5" />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
 
       <ExportReportModal
         isOpen={showExportModal}

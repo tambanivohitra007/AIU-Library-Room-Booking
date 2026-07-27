@@ -7,10 +7,13 @@ interface AttendeesModalProps {
   onClose: () => void;
 }
 
-const AttendeesModal: React.FC<AttendeesModalProps> = ({ booking, onClose }) => {
+const AttendeesModal: React.FC<AttendeesModalProps> = ({
+  booking,
+  onClose,
+}) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
+      <div className="bg-white rounded-xl max-w-md w-full animate-scale-in">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -29,10 +32,12 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({ booking, onClose }) => 
         <div className="p-6">
           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
             <p className="text-sm text-slate-600 mb-1">
-              <span className="font-medium text-slate-700">Booking ID:</span> {booking.id}
+              <span className="font-medium text-slate-700">Booking ID:</span>{' '}
+              {booking.id}
             </p>
             <p className="text-sm text-slate-600 mb-1">
-              <span className="font-medium text-slate-700">Organizer:</span> {booking.userDisplay}
+              <span className="font-medium text-slate-700">Organizer:</span>{' '}
+              {booking.userDisplay}
             </p>
             <p className="text-sm text-slate-600">
               <span className="font-medium text-slate-700">Time:</span>{' '}
@@ -40,10 +45,12 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({ booking, onClose }) => 
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
-              })} - {new Date(booking.endTime).toLocaleTimeString([], {
+                minute: '2-digit',
+              })}{' '}
+              -{' '}
+              {new Date(booking.endTime).toLocaleTimeString([], {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
             </p>
           </div>
@@ -53,7 +60,9 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({ booking, onClose }) => 
               Attendees ({booking.attendees.length})
             </p>
             {booking.attendees.length === 0 ? (
-              <p className="text-sm text-slate-500 text-center py-4">No attendees listed</p>
+              <p className="text-sm text-slate-500 text-center py-4">
+                No attendees listed
+              </p>
             ) : (
               <div className="max-h-[300px] overflow-y-auto space-y-2">
                 {booking.attendees.map((attendee, idx) => (
@@ -63,9 +72,13 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({ booking, onClose }) => 
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="font-medium text-slate-800">{attendee.name}</p>
+                        <p className="font-medium text-slate-800">
+                          {attendee.name}
+                        </p>
                         {attendee.studentId && (
-                          <p className="text-xs text-slate-500 mt-1">ID: {attendee.studentId}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            ID: {attendee.studentId}
+                          </p>
                         )}
                       </div>
                       {attendee.isCompanion && (

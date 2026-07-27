@@ -11,7 +11,14 @@ interface AdminPageProps {
   onRefresh: () => void;
 }
 
-const AdminPage: React.FC<AdminPageProps> = ({ user, rooms, bookings, onExportCSV, onCancelBooking, onRefresh }) => {
+const AdminPage: React.FC<AdminPageProps> = ({
+  user,
+  rooms,
+  bookings,
+  onExportCSV,
+  onCancelBooking,
+  onRefresh,
+}) => {
   return (
     <AdminDashboard
       currentUser={user}

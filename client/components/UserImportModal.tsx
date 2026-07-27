@@ -16,7 +16,10 @@ interface ImportResult {
   defaultPassword: string;
 }
 
-const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSuccess }) => {
+const UserImportModal: React.FC<UserImportModalProps> = ({
+  onClose,
+  onImportSuccess,
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedUsers, setParsedUsers] = useState<ParsedUser[]>([]);
   const [importing, setImporting] = useState(false);
@@ -30,7 +33,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
       setFile(selectedFile);
       setParseError('');
       setImportResult(null);
-      
+
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
@@ -53,7 +56,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
     try {
       const result = await api.importUsers(parsedUsers);
       setImportResult(result.results);
-      
+
       if (result.results.success.length > 0) {
         onImportSuccess();
       }
@@ -82,7 +85,9 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
         <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Import Users</h2>
-            <p className="text-sm text-slate-600 mt-1">Upload a CSV file to bulk import users</p>
+            <p className="text-sm text-slate-600 mt-1">
+              Upload a CSV file to bulk import users
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -97,9 +102,20 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h3 className="font-semibold text-blue-900 mb-2">Instructions</h3>
             <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-              <li>CSV file must contain columns: <code className="bg-blue-100 px-1 rounded">name</code>, <code className="bg-blue-100 px-1 rounded">email</code></li>
-              <li>Optional column: <code className="bg-blue-100 px-1 rounded">role</code> (STUDENT or ADMIN, defaults to STUDENT)</li>
-              <li>All imported users will have the default password: <strong>{DEFAULT_USER_PASSWORD}</strong></li>
+              <li>
+                CSV file must contain columns:{' '}
+                <code className="bg-blue-100 px-1 rounded">name</code>,{' '}
+                <code className="bg-blue-100 px-1 rounded">email</code>
+              </li>
+              <li>
+                Optional column:{' '}
+                <code className="bg-blue-100 px-1 rounded">role</code> (STUDENT
+                or ADMIN, defaults to STUDENT)
+              </li>
+              <li>
+                All imported users will have the default password:{' '}
+                <strong>{DEFAULT_USER_PASSWORD}</strong>
+              </li>
               <li>Users should change their password after first login</li>
             </ul>
             <button
@@ -144,7 +160,9 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
             <div className="bg-red-50 p-4 rounded-lg border border-red-200 flex items-start gap-3">
               <AlertTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-red-900">Error Parsing File</h4>
+                <h4 className="font-semibold text-red-900">
+                  Error Parsing File
+                </h4>
                 <p className="text-sm text-red-700 mt-1">{parseError}</p>
               </div>
             </div>
@@ -160,9 +178,15 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
                 <table className="w-full text-sm min-w-[500px]">
                   <thead className="bg-slate-50 sticky top-0">
                     <tr>
-                      <th className="text-left p-3 font-semibold text-slate-700">Name</th>
-                      <th className="text-left p-3 font-semibold text-slate-700">Email</th>
-                      <th className="text-left p-3 font-semibold text-slate-700">Role</th>
+                      <th className="text-left p-3 font-semibold text-slate-700">
+                        Name
+                      </th>
+                      <th className="text-left p-3 font-semibold text-slate-700">
+                        Email
+                      </th>
+                      <th className="text-left p-3 font-semibold text-slate-700">
+                        Role
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -171,11 +195,13 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
                         <td className="p-3 text-slate-800">{user.name}</td>
                         <td className="p-3 text-slate-600">{user.email}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === 'ADMIN' 
-                              ? 'bg-purple-100 text-purple-700' 
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              user.role === 'ADMIN'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
                             {user.role}
                           </span>
                         </td>
@@ -196,16 +222,20 @@ const UserImportModal: React.FC<UserImportModalProps> = ({ onClose, onImportSucc
                 </h3>
                 <p className="text-sm text-green-800">
                   Successfully imported {importResult.success.length} user(s)
-                  {importResult.failed.length > 0 && `, ${importResult.failed.length} failed`}
+                  {importResult.failed.length > 0 &&
+                    `, ${importResult.failed.length} failed`}
                 </p>
                 <p className="text-sm text-green-800 mt-2">
-                  Default password for all imported users: <strong>{DEFAULT_USER_PASSWORD}</strong>
+                  Default password for all imported users:{' '}
+                  <strong>{DEFAULT_USER_PASSWORD}</strong>
                 </p>
               </div>
 
               {importResult.failed.length > 0 && (
                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <h4 className="font-semibold text-yellow-900 mb-2">Failed Imports</h4>
+                  <h4 className="font-semibold text-yellow-900 mb-2">
+                    Failed Imports
+                  </h4>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
                     {importResult.failed.map((fail, idx) => (
                       <div key={idx} className="text-sm text-yellow-800">

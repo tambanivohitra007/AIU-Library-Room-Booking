@@ -46,7 +46,7 @@ function App() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => { },
+    onConfirm: () => {},
   });
 
   // Change Password Modal State
@@ -55,7 +55,7 @@ function App() {
   // Force refresh trigger
   const [tick, setTick] = useState(0);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  const refresh = () => setTick(t => t + 1);
+  const refresh = () => setTick((t) => t + 1);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -101,7 +101,7 @@ function App() {
       try {
         const [loadedRooms, loadedBookings] = await Promise.all([
           api.getRooms(),
-          api.getBookings()
+          api.getBookings(),
         ]);
 
         // Only update state if data has actually changed to prevent unnecessary re-renders
@@ -151,25 +151,42 @@ function App() {
   const handleExportCSV = async () => {
     try {
       const allBookings = await api.getAllBookingsForAdmin();
-      const headers = ["Booking ID", "Room", "User Name", "User ID", "Start Time", "End Time", "Status", "Attendees Count", "Attendees List", "Purpose"];
-      const rows = allBookings.map(b => [
+      const headers = [
+        'Booking ID',
+        'Room',
+        'User Name',
+        'User ID',
+        'Start Time',
+        'End Time',
+        'Status',
+        'Attendees Count',
+        'Attendees List',
+        'Purpose',
+      ];
+      const rows = allBookings.map((b) => [
         b.id,
-        rooms.find(r => r.id === b.roomId)?.name || b.roomId,
+        rooms.find((r) => r.id === b.roomId)?.name || b.roomId,
         `"${b.userDisplay}"`,
         b.userId,
         new Date(b.startTime).toISOString(),
         new Date(b.endTime).toISOString(),
         b.status,
         b.attendees.length,
-        `"${b.attendees.map(a => a.name).join(', ')}"`,
-        `"${b.purpose || ''}"`
+        `"${b.attendees.map((a) => a.name).join(', ')}"`,
+        `"${b.purpose || ''}"`,
       ]);
-      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((r) => r.join(',')),
+      ].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute(
+        'download',
+        `bookings_export_${new Date().toISOString().slice(0, 10)}.csv`,
+      );
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -188,25 +205,33 @@ function App() {
       toast.success(`Welcome back, ${loggedInUser.name}!`);
       refresh();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Login failed';
       setAuthError(errorMessage);
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const handleRegister = async (name: string, email: string, password: string) => {
+  const handleRegister = async (
+    name: string,
+    email: string,
+    password: string,
+  ) => {
     try {
       setAuthError(null);
       const { message } = await api.register(name, email, password);
       // Do not log in immediately. Show success message and redirect to login.
-      toast.success(message || 'Registration successful. Waiting for approval.');
-      // Returning true/false or similar might be needed if RegisterForm expects it, 
+      toast.success(
+        message || 'Registration successful. Waiting for approval.',
+      );
+      // Returning true/false or similar might be needed if RegisterForm expects it,
       // but usually throwing error handles failure.
 
       // We need to tell the RegisterForm to switch to Login view
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Registration failed';
       setAuthError(errorMessage);
       toast.error(errorMessage);
       throw error;
@@ -230,12 +255,16 @@ function App() {
     });
   };
 
-  const handleChangePassword = async (currentPassword: string, newPassword: string) => {
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string,
+  ) => {
     try {
       await api.changePassword(currentPassword, newPassword);
       toast.success('Password changed successfully');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to change password';
       toast.error(errorMessage);
       throw error;
     }
@@ -257,10 +286,7 @@ function App() {
               isAuthenticated && user ? (
                 <Navigate to="/" replace />
               ) : (
-                <LoginForm
-                  onLogin={handleLogin}
-                  error={authError}
-                />
+                <LoginForm onLogin={handleLogin} error={authError} />
               )
             }
           />
@@ -270,10 +296,7 @@ function App() {
               isAuthenticated && user ? (
                 <Navigate to="/" replace />
               ) : (
-                <RegisterForm
-                  onRegister={handleRegister}
-                  error={authError}
-                />
+                <RegisterForm onRegister={handleRegister} error={authError} />
               )
             }
           />
@@ -323,7 +346,11 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute user={user} isAuthenticated={isAuthenticated} requireAdmin={true}>
+              <ProtectedRoute
+                user={user}
+                isAuthenticated={isAuthenticated}
+                requireAdmin={true}
+              >
                 <Layout
                   user={user!}
                   onLogout={handleLogout}
@@ -347,7 +374,9 @@ function App() {
         <CancelBookingModal
           isOpen={cancelBookingModal.isOpen}
           onConfirm={onConfirmCancelBooking}
-          onCancel={() => setCancelBookingModal({ isOpen: false, bookingId: null })}
+          onCancel={() =>
+            setCancelBookingModal({ isOpen: false, bookingId: null })
+          }
         />
 
         <ConfirmModal

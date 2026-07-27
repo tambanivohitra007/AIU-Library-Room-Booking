@@ -14,12 +14,18 @@ interface BookingFormProps {
   onCancel: () => void;
 }
 
-const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: initialStartTime, endTime: initialEndTime, onSuccess, onCancel }) => {
+const BookingForm: React.FC<BookingFormProps> = ({
+  selectedRoom,
+  startTime: initialStartTime,
+  endTime: initialEndTime,
+  onSuccess,
+  onCancel,
+}) => {
   const toast = useToast();
   // Local state for time selection (allows editing in form)
   const [bookingStart, setBookingStart] = useState(initialStartTime);
   const [bookingEnd, setBookingEnd] = useState(initialEndTime);
-  
+
   const [purpose, setPurpose] = useState('');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [attendeeCount, setAttendeeCount] = useState(0);
@@ -67,7 +73,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         const conflictEnd = new Date(conflict.endTime);
         setHasConflict(true);
         setConflictDetails(
-          `Conflicts with booking by ${conflict.userDisplay} (${conflictStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${conflictEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
+          `Conflicts with booking by ${conflict.userDisplay} (${conflictStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${conflictEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
         );
       }
     } catch (err) {
@@ -80,7 +86,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
   // Helper to handle time changes
   const handleTimeChange = (type: 'start' | 'end', timeString: string) => {
     if (!timeString) return;
-    
+
     const [hours, minutes] = timeString.split(':').map(Number);
     const newDate = new Date(type === 'start' ? bookingStart : bookingEnd);
     newDate.setHours(hours, minutes);
@@ -103,7 +109,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
 
   // Parse attendees
   useEffect(() => {
-    const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    const rawLines = attendeeInput
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
     const unique = new Set(rawLines);
     setAttendeeCount(unique.size);
   }, [attendeeInput]);
@@ -115,7 +124,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     // Validate booking is not in the past
     const now = new Date();
     if (bookingStart <= now) {
-      setError('Cannot book a time slot in the past. Please select a future time.');
+      setError(
+        'Cannot book a time slot in the past. Please select a future time.',
+      );
       return;
     }
 
@@ -125,33 +136,38 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     }
 
     if (bookingStart >= bookingEnd) {
-       setError('End time must be after start time.');
-       return;
+      setError('End time must be after start time.');
+      return;
     }
 
-    const rawLines = attendeeInput.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    const rawLines = attendeeInput
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
     const uniqueRaw = Array.from(new Set(rawLines));
 
     const minAttendees = selectedRoom.minCapacity;
     const maxAttendees = selectedRoom.maxCapacity;
 
     if (uniqueRaw.length + 1 < minAttendees) {
-       setError(`Minimum ${minAttendees} people required (You + ${minAttendees - 1} others).`);
-       return;
+      setError(
+        `Minimum ${minAttendees} people required (You + ${minAttendees - 1} others).`,
+      );
+      return;
     }
     if (uniqueRaw.length + 1 > maxAttendees) {
-        setError(`Maximum capacity is ${maxAttendees} people.`);
-        return;
+      setError(`Maximum capacity is ${maxAttendees} people.`);
+      return;
     }
 
     if (selectedRoom.bookingTerms && !termsAccepted) {
-       setError('Please accept the terms and conditions to book this room.');
-       return;
+      setError('Please accept the terms and conditions to book this room.');
+      return;
     }
 
     const attendees: Attendee[] = uniqueRaw.map((name: string) => ({
-        name: name,
-        isCompanion: true
+      name: name,
+      isCompanion: true,
     }));
     attendees.unshift({ name: 'Me (Booker)', isCompanion: false });
 
@@ -163,11 +179,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
         endTime: bookingEnd,
         purpose,
         attendees,
-        termsAccepted: selectedRoom.bookingTerms ? termsAccepted : undefined
+        termsAccepted: selectedRoom.bookingTerms ? termsAccepted : undefined,
       });
 
       if (booking.status === 'PENDING') {
-        toast.success(`Request submitted for ${selectedRoom.name} — awaiting approval.`);
+        toast.success(
+          `Request submitted for ${selectedRoom.name} — awaiting approval.`,
+        );
       } else {
         toast.success(`Booking confirmed for ${selectedRoom.name}!`);
       }
@@ -181,8 +199,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
     }
   };
 
-  const isCountValid = (attendeeCount + 1) >= selectedRoom.minCapacity && (attendeeCount + 1) <= selectedRoom.maxCapacity;
-  const durationMinutes = (bookingEnd.getTime() - bookingStart.getTime()) / 60000;
+  const isCountValid =
+    attendeeCount + 1 >= selectedRoom.minCapacity &&
+    attendeeCount + 1 <= selectedRoom.maxCapacity;
+  const durationMinutes =
+    (bookingEnd.getTime() - bookingStart.getTime()) / 60000;
 
   // Format time for input type="time"
   const formatTimeInput = (date: Date) => {
@@ -190,159 +211,198 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedRoom, startTime: init
   };
 
   const formContent = (
-    <div className={`flex flex-col bg-white shadow-xl ${isMobile ? 'fixed inset-0 z-[100] animate-slide-up' : 'h-full border-l border-slate-200'}`}>
-        <div className="bg-slate-800 text-white p-4 flex items-center justify-between shadow-md shrink-0">
-            <div>
-              <h3 className="font-bold text-lg">New Booking</h3>
-              <p className="text-slate-300 text-sm">{selectedRoom.name}</p>
+    <div
+      className={`flex flex-col bg-white  ${isMobile ? 'fixed inset-0 z-[100] animate-slide-up' : 'h-full border-l border-slate-200'}`}
+    >
+      <div className="bg-slate-800 text-white p-4 flex items-center justify-between shrink-0">
+        <div>
+          <h3 className="font-bold text-lg">New Booking</h3>
+          <p className="text-slate-300 text-sm">{selectedRoom.name}</p>
+        </div>
+        {isMobile && (
+          <button
+            onClick={onCancel}
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+          >
+            <XIcon className="w-5 h-5 text-white" />
+          </button>
+        )}
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar"
+      >
+        {checkingConflict && (
+          <div className="bg-blue-50 p-3 text-sm text-blue-600 rounded border border-blue-200 flex items-center gap-2">
+            <LoadingSpinner size="sm" color="primary" />
+            Checking availability...
+          </div>
+        )}
+
+        {hasConflict && !checkingConflict && (
+          <div className="bg-red-50 p-3 text-sm text-red-700 rounded border border-red-300">
+            <div className="font-semibold mb-1 flex items-center gap-2">
+              <AlertTriangleIcon className="w-4 h-4" />
+              Time Conflict Detected
             </div>
-            {isMobile && (
-              <button onClick={onCancel} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
-                <XIcon className="w-5 h-5 text-white" />
-              </button>
-            )}
+            <div className="text-xs">{conflictDetails}</div>
+            <div className="text-xs mt-2 text-red-600">
+              Please select a different time slot.
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 p-2 text-xs text-red-600 rounded border border-red-200">
+            {error}
+          </div>
+        )}
+
+        {selectedRoom.requiresApproval && (
+          <div className="bg-amber-50 p-3 text-xs text-amber-800 rounded border border-amber-200">
+            This room requires approval. Your booking will be{' '}
+            <strong>pending</strong> (the time slot is reserved for you) until a
+            department admin approves it.
+          </div>
+        )}
+
+        <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-indigo-100 pb-2">
+            <ClockIcon className="w-5 h-5 text-primary" />
+            <span>
+              {bookingStart.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              })}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                Start Time
+              </label>
+              <input
+                type="time"
+                className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
+                value={formatTimeInput(bookingStart)}
+                onChange={(e) => handleTimeChange('start', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                End Time
+              </label>
+              <input
+                type="time"
+                className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
+                value={formatTimeInput(bookingEnd)}
+                onChange={(e) => handleTimeChange('end', e.target.value)}
+                min={formatTimeInput(bookingStart)}
+              />
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-500 text-right font-medium">
+            Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}
+            m
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar">
-            {checkingConflict && (
-                <div className="bg-blue-50 p-3 text-sm text-blue-600 rounded border border-blue-200 flex items-center gap-2">
-                    <LoadingSpinner size="sm" color="primary" />
-                    Checking availability...
-                </div>
-            )}
-
-            {hasConflict && !checkingConflict && (
-                <div className="bg-red-50 p-3 text-sm text-red-700 rounded border border-red-300">
-                    <div className="font-semibold mb-1 flex items-center gap-2">
-                        <AlertTriangleIcon className="w-4 h-4" />
-                        Time Conflict Detected
-                    </div>
-                    <div className="text-xs">{conflictDetails}</div>
-                    <div className="text-xs mt-2 text-red-600">Please select a different time slot.</div>
-                </div>
-            )}
-
-            {error && (
-                <div className="bg-red-50 p-2 text-xs text-red-600 rounded border border-red-200">
-                    {error}
-                </div>
-            )}
-
-            {selectedRoom.requiresApproval && (
-                <div className="bg-amber-50 p-3 text-xs text-amber-800 rounded border border-amber-200">
-                    This room requires approval. Your booking will be <strong>pending</strong> (the time slot is
-                    reserved for you) until a department admin approves it.
-                </div>
-            )}
-
-            <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-indigo-100 pb-2">
-                    <ClockIcon className="w-5 h-5 text-primary" />
-                    <span>
-                        {bookingStart.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}
-                    </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">Start Time</label>
-                        <input 
-                            type="time" 
-                            className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
-                            value={formatTimeInput(bookingStart)}
-                            onChange={(e) => handleTimeChange('start', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1">End Time</label>
-                         <input 
-                            type="time" 
-                            className="w-full p-1.5 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-primary"
-                            value={formatTimeInput(bookingEnd)}
-                            onChange={(e) => handleTimeChange('end', e.target.value)}
-                            min={formatTimeInput(bookingStart)}
-                        />
-                    </div>
-                </div>
-                
-                <div className="text-xs text-slate-500 text-right font-medium">
-                    Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Other Attendees
-                </label>
-                <div className="relative">
-                    <textarea
-                        required
-                        rows={3}
-                        value={attendeeInput}
-                        onChange={e => setAttendeeInput(e.target.value)}
-                        placeholder="Enter names..."
-                        className={`w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary ${!isCountValid && attendeeInput.length > 0 ? 'border-orange-300' : 'border-slate-300'}`}
-                    />
-                    <UsersIcon className="w-4 h-4 absolute right-2 top-2 text-slate-300" />
-                </div>
-                <div className="flex justify-between mt-1 text-xs">
-                    <span className={isCountValid ? 'text-green-600' : 'text-orange-500'}>
-                        Count: {attendeeCount} (+ You)
-                    </span>
-                    <span className="text-slate-400">Min {selectedRoom.minCapacity}, Max {selectedRoom.maxCapacity}</span>
-                </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
-                <input
-                    type="text"
-                    value={purpose}
-                    onChange={e => setPurpose(e.target.value)}
-                    placeholder="Brief description..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
-                />
-            </div>
-
-            {selectedRoom.bookingTerms && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
-                        <AlertTriangleIcon className="w-4 h-4" />
-                        Terms &amp; Conditions
-                    </div>
-                    <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar bg-white/60 rounded p-2 border border-amber-100">
-                        {selectedRoom.bookingTerms}
-                    </div>
-                    <label className="flex items-start gap-2 cursor-pointer text-xs font-medium text-slate-700">
-                        <input
-                            type="checkbox"
-                            checked={termsAccepted}
-                            onChange={(e) => setTermsAccepted(e.target.checked)}
-                            className="mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/20"
-                        />
-                        <span>I have read and accept the terms and conditions for booking this room.</span>
-                    </label>
-                </div>
-            )}
-        </form>
-
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3 shrink-0 pb-safe">
-             <button 
-                type="button"
-                onClick={onCancel}
-                className="flex-1 py-2 text-sm font-medium text-slate-600 hover:bg-white border border-transparent hover:border-slate-300 rounded-lg transition-colors"
-             >
-                Cancel
-             </button>
-             <button
-                onClick={handleSubmit}
-                disabled={!isCountValid || isSubmitting || hasConflict || checkingConflict || (!!selectedRoom.bookingTerms && !termsAccepted)}
-                className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-             >
-                {isSubmitting && <LoadingSpinner size="sm" color="white" />}
-                {isSubmitting ? 'Booking...' : hasConflict ? 'Time Unavailable' : 'Confirm'}
-             </button>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Other Attendees
+          </label>
+          <div className="relative">
+            <textarea
+              required
+              rows={3}
+              value={attendeeInput}
+              onChange={(e) => setAttendeeInput(e.target.value)}
+              placeholder="Enter names..."
+              className={`w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary ${!isCountValid && attendeeInput.length > 0 ? 'border-orange-300' : 'border-slate-300'}`}
+            />
+            <UsersIcon className="w-4 h-4 absolute right-2 top-2 text-slate-300" />
+          </div>
+          <div className="flex justify-between mt-1 text-xs">
+            <span
+              className={isCountValid ? 'text-green-600' : 'text-orange-500'}
+            >
+              Count: {attendeeCount} (+ You)
+            </span>
+            <span className="text-slate-400">
+              Min {selectedRoom.minCapacity}, Max {selectedRoom.maxCapacity}
+            </span>
+          </div>
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Purpose
+          </label>
+          <input
+            type="text"
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
+            placeholder="Brief description..."
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        {selectedRoom.bookingTerms && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+              <AlertTriangleIcon className="w-4 h-4" />
+              Terms &amp; Conditions
+            </div>
+            <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar bg-white/60 rounded p-2 border border-amber-100">
+              {selectedRoom.bookingTerms}
+            </div>
+            <label className="flex items-start gap-2 cursor-pointer text-xs font-medium text-slate-700">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/20"
+              />
+              <span>
+                I have read and accept the terms and conditions for booking this
+                room.
+              </span>
+            </label>
+          </div>
+        )}
+      </form>
+
+      <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3 shrink-0 pb-safe">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2 text-sm font-medium text-slate-600 hover:bg-white border border-transparent hover:border-slate-300 rounded-lg transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={
+            !isCountValid ||
+            isSubmitting ||
+            hasConflict ||
+            checkingConflict ||
+            (!!selectedRoom.bookingTerms && !termsAccepted)
+          }
+          className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        >
+          {isSubmitting && <LoadingSpinner size="sm" color="white" />}
+          {isSubmitting
+            ? 'Booking...'
+            : hasConflict
+              ? 'Time Unavailable'
+              : 'Confirm'}
+        </button>
+      </div>
     </div>
   );
 

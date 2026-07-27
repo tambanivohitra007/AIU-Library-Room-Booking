@@ -78,10 +78,23 @@ const MonthView: React.FC<MonthViewProps> = ({
     <div className="flex flex-col h-full bg-white">
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
-        {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, i) => (
-          <div key={day} className="text-center py-2 sm:py-3 text-xs sm:text-sm font-semibold text-slate-600 border-r last:border-r-0 border-slate-200">
+        {[
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ].map((day, i) => (
+          <div
+            key={day}
+            className="text-center py-2 sm:py-3 text-xs sm:text-sm font-semibold text-slate-600 border-r last:border-r-0 border-slate-200"
+          >
             <span className="hidden sm:inline">{day}</span>
-            <span className="sm:hidden">{['S', 'M', 'T', 'W', 'T', 'F', 'S'][i]}</span>
+            <span className="sm:hidden">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'][i]}
+            </span>
           </div>
         ))}
       </div>
@@ -98,7 +111,9 @@ const MonthView: React.FC<MonthViewProps> = ({
               className={`border-r border-b border-slate-200 p-1 sm:p-2 min-h-[80px] sm:min-h-[100px] ${
                 !date ? 'bg-slate-50' : ''
               } ${isToday(date) ? 'bg-indigo-50/30' : ''} ${
-                isSelected(date) ? 'bg-indigo-100/50 ring-2 ring-inset ring-primary' : ''
+                isSelected(date)
+                  ? 'bg-indigo-100/50 ring-2 ring-inset ring-primary'
+                  : ''
               }`}
             >
               {date && (
@@ -110,8 +125,8 @@ const MonthView: React.FC<MonthViewProps> = ({
                       isToday(date)
                         ? 'bg-primary text-white'
                         : isSelected(date)
-                        ? 'bg-indigo-200 text-primary'
-                        : 'text-slate-700 hover:bg-slate-100 active:bg-slate-200'
+                          ? 'bg-indigo-200 text-primary'
+                          : 'text-slate-700 hover:bg-slate-100 active:bg-slate-200'
                     }`}
                   >
                     {date.getDate()}
@@ -140,13 +155,18 @@ const MonthView: React.FC<MonthViewProps> = ({
                           title={`${startTime.getHours()}:${startTime
                             .getMinutes()
                             .toString()
-                            .padStart(2, '0')} - ${canView ? booking.userDisplay : 'Reserved'}`}
+                            .padStart(
+                              2,
+                              '0',
+                            )} - ${canView ? booking.userDisplay : 'Reserved'}`}
                         >
                           <span className="font-semibold">
-                            {startTime.getHours()}:{startTime.getMinutes().toString().padStart(2, '0')}
+                            {startTime.getHours()}:
+                            {startTime.getMinutes().toString().padStart(2, '0')}
                           </span>
                           <span className="hidden sm:inline">
-                            {' '}{canView ? booking.userDisplay : 'Reserved'}
+                            {' '}
+                            {canView ? booking.userDisplay : 'Reserved'}
                           </span>
                         </div>
                       );

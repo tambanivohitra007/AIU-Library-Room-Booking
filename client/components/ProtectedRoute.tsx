@@ -13,7 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   user,
   isAuthenticated,
   children,
-  requireAdmin = false
+  requireAdmin = false,
 }) => {
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
@@ -21,7 +21,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
 
-  if (requireAdmin && !isGlobalAdminRole(user.role) && user.role !== UserRole.STUDENT_WORKER && !isDeptAdmin) {
+  if (
+    requireAdmin &&
+    !isGlobalAdminRole(user.role) &&
+    user.role !== UserRole.STUDENT_WORKER &&
+    !isDeptAdmin
+  ) {
     return <Navigate to="/" replace />;
   }
 

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
@@ -21,9 +20,12 @@ const AuthCallbackPage: React.FC = () => {
     const error = params.get('error');
 
     if (error) {
-       showToast('Microsoft Login Failed: ' + (params.get('error_description') || error), 'error');
-       navigate('/');
-       return;
+      showToast(
+        'Microsoft Login Failed: ' + (params.get('error_description') || error),
+        'error',
+      );
+      navigate('/');
+      return;
     }
 
     if (!code) {
@@ -39,9 +41,9 @@ const AuthCallbackPage: React.FC = () => {
         navigate('/'); // Go to dashboard
         // Force a page reload or context update if necessary to update user state in App
         // But usually navigate is enough if App checks token on mount/route change.
-        // However, App.tsx likely needs to re-fetch "currentUser". 
+        // However, App.tsx likely needs to re-fetch "currentUser".
         // We'll see how App handles auth state.
-        window.location.reload(); 
+        window.location.reload();
       } catch (err: any) {
         console.error(err);
         showToast(err.message || 'Failed to login with Microsoft', 'error');
@@ -55,7 +57,9 @@ const AuthCallbackPage: React.FC = () => {
   return (
     <div className="flex h-screen items-center justify-center bg-slate-50 flex-col gap-4">
       <LoadingSpinner />
-      <p className="text-slate-500 font-medium animate-pulse">Authenticating with Microsoft...</p>
+      <p className="text-slate-500 font-medium animate-pulse">
+        Authenticating with Microsoft...
+      </p>
     </div>
   );
 };

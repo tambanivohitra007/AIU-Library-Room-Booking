@@ -5,11 +5,17 @@ interface MiniCalendarProps {
   onDateSelect: (date: Date) => void;
 }
 
-const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect }) => {
+const MiniCalendar: React.FC<MiniCalendarProps> = ({
+  selectedDate,
+  onDateSelect,
+}) => {
   const currentMonth = selectedDate.getMonth();
   const currentYear = selectedDate.getFullYear();
 
-  const monthName = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthName = selectedDate.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -45,16 +51,20 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect 
   const isToday = (date: Date | null) => {
     if (!date) return false;
     const today = new Date();
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
   };
 
   const isSelected = (date: Date | null) => {
     if (!date) return false;
-    return date.getDate() === selectedDate.getDate() &&
-           date.getMonth() === selectedDate.getMonth() &&
-           date.getFullYear() === selectedDate.getFullYear();
+    return (
+      date.getDate() === selectedDate.getDate() &&
+      date.getMonth() === selectedDate.getMonth() &&
+      date.getFullYear() === selectedDate.getFullYear()
+    );
   };
 
   return (
@@ -65,17 +75,39 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect 
           onClick={goToPrevMonth}
           className="p-1 hover:bg-slate-100 rounded transition-colors"
         >
-          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="w-5 h-5 text-slate-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-slate-700">{monthName}</span>
+        <span className="text-sm font-semibold text-slate-700">
+          {monthName}
+        </span>
         <button
           onClick={goToNextMonth}
           className="p-1 hover:bg-slate-100 rounded transition-colors"
         >
-          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-5 h-5 text-slate-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </button>
       </div>
@@ -83,7 +115,10 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-          <div key={i} className="text-xs font-medium text-slate-500 text-center">
+          <div
+            key={i}
+            className="text-xs font-medium text-slate-500 text-center"
+          >
             {day}
           </div>
         ))}
@@ -97,7 +132,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({ selectedDate, onDateSelect 
             onClick={() => date && onDateSelect(date)}
             disabled={!date}
             className={`
-              aspect-square text-xs rounded transition-colors
+ aspect-square text-xs rounded transition-colors
               ${!date ? 'invisible' : ''}
               ${isSelected(date) ? 'bg-primary text-white font-semibold' : ''}
               ${isToday(date) && !isSelected(date) ? 'bg-indigo-50 text-primary font-semibold' : ''}

@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Booking, Room, User, UserRole, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
-import { getGridBounds, getClosedRanges, isRangeClosed, getEffectiveOperatingHours } from '../utils/operatingHours';
+import {
+  getGridBounds,
+  getClosedRanges,
+  isRangeClosed,
+  getEffectiveOperatingHours,
+} from '../utils/operatingHours';
 
 interface DayViewProps {
   selectedDate: Date;
@@ -25,9 +30,12 @@ const DayView: React.FC<DayViewProps> = ({
   const { operatingHours: globalHours } = useSettings();
   const operatingHours = useMemo(
     () => getEffectiveOperatingHours(room.department, globalHours),
-    [room.department, globalHours]
+    [room.department, globalHours],
   );
-  const { open: gridOpen, close: gridClose } = useMemo(() => getGridBounds(operatingHours), [operatingHours]);
+  const { open: gridOpen, close: gridClose } = useMemo(
+    () => getGridBounds(operatingHours),
+    [operatingHours],
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragCurrent, setDragCurrent] = useState<number | null>(null);
@@ -67,7 +75,8 @@ const DayView: React.FC<DayViewProps> = ({
   };
 
   const getPositionStyle = (start: Date, end: Date) => {
-    const startMinutes = (start.getHours() - gridOpen) * 60 + start.getMinutes();
+    const startMinutes =
+      (start.getHours() - gridOpen) * 60 + start.getMinutes();
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
     const totalDayMinutes = (gridClose - gridOpen) * 60;
 
@@ -152,7 +161,12 @@ const DayView: React.FC<DayViewProps> = ({
 
   // Calculate closed hours overlays from configured operating hours
   const totalGridMinutes = (gridClose - gridOpen) * 60;
-  const closedOverlays = getClosedRanges(selectedDate, operatingHours, gridOpen, gridClose).map((r) => ({
+  const closedOverlays = getClosedRanges(
+    selectedDate,
+    operatingHours,
+    gridOpen,
+    gridClose,
+  ).map((r) => ({
     top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
     height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
   }));
@@ -165,9 +179,14 @@ const DayView: React.FC<DayViewProps> = ({
           <div className="text-xs font-semibold uppercase mb-1 text-slate-500">
             {selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}
           </div>
-          <div className="text-2xl font-light text-slate-700">{selectedDate.getDate()}</div>
+          <div className="text-2xl font-light text-slate-700">
+            {selectedDate.getDate()}
+          </div>
           <div className="text-xs text-slate-500">
-            {selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            {selectedDate.toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            })}
           </div>
         </div>
       </div>
@@ -178,8 +197,13 @@ const DayView: React.FC<DayViewProps> = ({
           {/* Time Sidebar */}
           <div className="w-16 shrink-0 bg-white border-r border-slate-100 text-xs text-slate-400 font-mono flex flex-col relative z-20 pt-2">
             {hours.map((h, idx) => (
-              <div key={h} className="flex-1 border-b border-transparent relative">
-                <span className={`absolute right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}>
+              <div
+                key={h}
+                className="flex-1 border-b border-transparent relative"
+              >
+                <span
+                  className={`absolute right-2 ${idx === 0 ? 'top-0' : '-top-2.5'}`}
+                >
                   {h}:00
                 </span>
               </div>
@@ -191,14 +215,21 @@ const DayView: React.FC<DayViewProps> = ({
             {/* Horizontal Hour Lines */}
             <div className="absolute inset-0 z-0 flex flex-col pointer-events-none">
               {hours.map((h) => (
-                <div key={h} className="flex-1 border-b border-slate-100/60"></div>
+                <div
+                  key={h}
+                  className="flex-1 border-b border-slate-100/60"
+                ></div>
               ))}
             </div>
 
             {/* Time Slots */}
             <div className="absolute inset-0 z-10">
               {hours.map((h, hIndex) => (
-                <div key={h} style={{ height: `${100 / hours.length}%` }} className="flex flex-col">
+                <div
+                  key={h}
+                  style={{ height: `${100 / hours.length}%` }}
+                  className="flex flex-col"
+                >
                   {[0, 15, 30, 45].map((m) => (
                     <div
                       key={m}
@@ -234,30 +265,41 @@ const DayView: React.FC<DayViewProps> = ({
                 className="absolute left-0 right-0 z-20 rounded bg-indigo-50 border-2 border-indigo-400 border-dashed pointer-events-none animate-pulse"
                 style={{ ...selectionStyle, left: '8px', right: '8px' }}
               >
-                <div className="text-indigo-600 text-xs font-bold p-2">Selected</div>
+                <div className="text-indigo-600 text-xs font-bold p-2">
+                  Selected
+                </div>
               </div>
             )}
 
             {/* Bookings */}
             {dayBookings.map((b) => {
-              const style = getPositionStyle(new Date(b.startTime), new Date(b.endTime));
+              const style = getPositionStyle(
+                new Date(b.startTime),
+                new Date(b.endTime),
+              );
               const isOwner = b.userId === currentUser.id;
-              const canViewAll = isGlobalAdminRole(currentUser.role) ||
+              const canViewAll =
+                isGlobalAdminRole(currentUser.role) ||
                 currentUser.role === UserRole.STUDENT_WORKER ||
-                (!!room.departmentId && (currentUser.managedDepartmentIds || []).includes(room.departmentId));
+                (!!room.departmentId &&
+                  (currentUser.managedDepartmentIds || []).includes(
+                    room.departmentId,
+                  ));
               const canView = isOwner || canViewAll;
               const isPending = b.status === 'PENDING';
 
               return (
                 <div
                   key={b.id}
-                  className={`absolute rounded px-2 py-1 text-xs border-l-4 overflow-hidden shadow-sm z-20 transition-all hover:z-30 hover:shadow-md
+                  className={`absolute rounded px-2 py-1 text-xs border-l-4 overflow-hidden shadow-sm z-20 transition-all hover:z-30 
                     ${
                       isPending
-                        ? (canView ? 'bg-amber-50 border-amber-400 text-amber-700 cursor-pointer' : 'bg-amber-50/80 border-amber-300 text-amber-600 cursor-default')
+                        ? canView
+                          ? 'bg-amber-50 border-amber-400 text-amber-700 cursor-pointer'
+                          : 'bg-amber-50/80 border-amber-300 text-amber-600 cursor-default'
                         : canView
-                        ? 'bg-indigo-100 border-primary text-primary cursor-pointer'
-                        : 'bg-slate-200 border-slate-400 text-slate-500 cursor-default'
+                          ? 'bg-indigo-100 border-primary text-primary cursor-pointer'
+                          : 'bg-slate-200 border-slate-400 text-slate-500 cursor-default'
                     }
                   `}
                   style={{ ...style, left: '8px', right: '8px' }}
@@ -267,15 +309,29 @@ const DayView: React.FC<DayViewProps> = ({
                     if (canView) onBookingClick(b);
                   }}
                 >
-                  <div className="font-bold truncate">{canView ? b.userDisplay : 'Reserved'}</div>
+                  <div className="font-bold truncate">
+                    {canView ? b.userDisplay : 'Reserved'}
+                  </div>
                   <div className="truncate opacity-75">
                     {new Date(b.startTime).getHours()}:
-                    {new Date(b.startTime).getMinutes().toString().padStart(2, '0')} -{' '}
-                    {new Date(b.endTime).getHours()}:
-                    {new Date(b.endTime).getMinutes().toString().padStart(2, '0')}
+                    {new Date(b.startTime)
+                      .getMinutes()
+                      .toString()
+                      .padStart(2, '0')}{' '}
+                    - {new Date(b.endTime).getHours()}:
+                    {new Date(b.endTime)
+                      .getMinutes()
+                      .toString()
+                      .padStart(2, '0')}
                   </div>
-                  {b.purpose && <div className="truncate text-[10px] mt-1">{b.purpose}</div>}
-                  {isPending && <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">Pending</div>}
+                  {b.purpose && (
+                    <div className="truncate text-[10px] mt-1">{b.purpose}</div>
+                  )}
+                  {isPending && (
+                    <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">
+                      Pending
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -288,8 +344,18 @@ const DayView: React.FC<DayViewProps> = ({
                 style={{ ...overlayStyle, left: '8px', right: '8px' }}
               >
                 <div className="text-slate-400 text-sm font-semibold p-2 flex items-center gap-2 bg-white/50 rounded px-3 py-1.5 shadow-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                   Closed
                 </div>

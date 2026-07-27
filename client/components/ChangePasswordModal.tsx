@@ -7,7 +7,11 @@ interface ChangePasswordModalProps {
   onSubmit: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
-const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+}) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -51,7 +55,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
       setError(null);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change password');
+      setError(
+        err instanceof Error ? err.message : 'Failed to change password',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -67,10 +73,12 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
+      <div className="bg-white rounded-xl max-w-md w-full animate-scale-in">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Change Password</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Change Password
+          </h3>
           <button
             onClick={handleClose}
             className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -115,7 +123,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                 disabled={isSubmitting}
                 autoComplete="new-password"
               />
-              <p className="mt-1 text-xs text-slate-500">Minimum 6 characters</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Minimum 6 characters
+              </p>
             </div>
 
             <div>

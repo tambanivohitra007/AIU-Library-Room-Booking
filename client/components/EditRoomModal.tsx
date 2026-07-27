@@ -11,7 +11,12 @@ interface EditRoomModalProps {
   allowedDepartmentIds?: string[]; // department admins may only pick their own departments
 }
 
-const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess, allowedDepartmentIds }) => {
+const EditRoomModal: React.FC<EditRoomModalProps> = ({
+  room,
+  onClose,
+  onSuccess,
+  allowedDepartmentIds,
+}) => {
   const toast = useToast();
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description);
@@ -22,14 +27,23 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentId, setDepartmentId] = useState(room.departmentId || '');
   const [bookingTerms, setBookingTerms] = useState(room.bookingTerms || '');
-  const [requiresApproval, setRequiresApproval] = useState(!!room.requiresApproval);
+  const [requiresApproval, setRequiresApproval] = useState(
+    !!room.requiresApproval,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getDepartments().then((all) => {
-      setDepartments(allowedDepartmentIds ? all.filter(d => allowedDepartmentIds.includes(d.id)) : all);
-    }).catch(() => {});
+    api
+      .getDepartments()
+      .then((all) => {
+        setDepartments(
+          allowedDepartmentIds
+            ? all.filter((d) => allowedDepartmentIds.includes(d.id))
+            : all,
+        );
+      })
+      .catch(() => {});
   }, []);
 
   const handleAddFeature = () => {
@@ -40,7 +54,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
   };
 
   const handleRemoveFeature = (feature: string) => {
-    setFeatures(features.filter(f => f !== feature));
+    setFeatures(features.filter((f) => f !== feature));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,23 +62,25 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
     setError(null);
 
     if (!name.trim() || !description.trim() || !minCapacity || !maxCapacity) {
-      setError('Name, description, minimum capacity, and maximum capacity are required');
+      setError(
+        'Name, description, minimum capacity, and maximum capacity are required',
+      );
       return;
     }
 
     const minCapacityNum = parseInt(minCapacity);
     const maxCapacityNum = parseInt(maxCapacity);
-    
+
     if (isNaN(minCapacityNum) || minCapacityNum < 1) {
       setError('Minimum capacity must be a number greater than 0');
       return;
     }
-    
+
     if (isNaN(maxCapacityNum) || maxCapacityNum < 1) {
       setError('Maximum capacity must be a number greater than 0');
       return;
     }
-    
+
     if (minCapacityNum > maxCapacityNum) {
       setError('Minimum capacity cannot be greater than maximum capacity');
       return;
@@ -86,7 +102,8 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
       onSuccess();
       onClose();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update room';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update room';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -96,7 +113,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
           <h3 className="text-lg font-semibold text-slate-900">Edit Room</h3>
@@ -188,9 +205,13 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
                   disabled={isSubmitting}
                 >
-                  {!allowedDepartmentIds && <option value="">No department (global hours)</option>}
+                  {!allowedDepartmentIds && (
+                    <option value="">No department (global hours)</option>
+                  )}
                   {departments.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -205,10 +226,13 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
                   className="rounded border-slate-300 text-primary focus:ring-primary/20"
                   disabled={isSubmitting}
                 />
-                <span className="text-sm font-medium text-slate-700">Require approval for bookings</span>
+                <span className="text-sm font-medium text-slate-700">
+                  Require approval for bookings
+                </span>
               </label>
               <p className="text-xs text-slate-500 mt-1 ml-6">
-                Bookings stay pending (the slot is held) until a department admin or staff member approves them.
+                Bookings stay pending (the slot is held) until a department
+                admin or staff member approves them.
               </p>
             </div>
 
@@ -235,7 +259,10 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess,
                   type="text"
                   value={newFeature}
                   onChange={(e) => setNewFeature(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddFeature())}
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' &&
+                    (e.preventDefault(), handleAddFeature())
+                  }
                   className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="e.g., Projector, Whiteboard"
                   disabled={isSubmitting}

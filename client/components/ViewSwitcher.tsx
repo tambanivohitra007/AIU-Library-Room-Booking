@@ -7,7 +7,10 @@ interface ViewSwitcherProps {
   onViewChange: (view: CalendarView) => void;
 }
 
-const ViewSwitcher: React.FC<ViewSwitcherProps> = ({ currentView, onViewChange }) => {
+const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
+  currentView,
+  onViewChange,
+}) => {
   const views: { id: CalendarView; label: string }[] = [
     { id: 'day', label: 'Day' },
     { id: 'week', label: 'Week' },

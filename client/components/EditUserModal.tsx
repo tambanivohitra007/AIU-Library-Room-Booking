@@ -10,7 +10,11 @@ interface EditUserModalProps {
   onSuccess: () => void;
 }
 
-const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess }) => {
+const EditUserModal: React.FC<EditUserModalProps> = ({
+  user,
+  onClose,
+  onSuccess,
+}) => {
   const [formData, setFormData] = useState({
     name: user.name,
     email: user.email,
@@ -74,7 +78,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
         <div className="border-b border-slate-200 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">Edit User</h2>
-            <p className="text-sm text-slate-600 mt-1">Update user information</p>
+            <p className="text-sm text-slate-600 mt-1">
+              Update user information
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -101,7 +107,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="John Doe"
               required
@@ -116,7 +124,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
             <input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="john.doe@example.com"
               required
@@ -130,7 +140,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
             </label>
             <select
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value as UserRole })
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="STUDENT">Student</option>
@@ -143,21 +155,36 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
           {/* Password Section */}
           <div className="pt-4 border-t border-slate-200">
             <p className="text-sm font-medium text-slate-700 mb-3">
-              Change Password {(!user.provider || user.provider === 'LOCAL') ? '(leave blank to keep current password)' : ''}
+              Change Password{' '}
+              {!user.provider || user.provider === 'LOCAL'
+                ? '(leave blank to keep current password)'
+                : ''}
             </p>
 
             {user.provider === 'MICROSOFT' ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p>
-                      This user signed in with a Microsoft account.<br/>
-                      Their password is managed by the university and cannot be changed here.
-                    </p>
-                </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-start gap-2">
+                <svg
+                  className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p>
+                  This user signed in with a Microsoft account.
+                  <br />
+                  Their password is managed by the university and cannot be
+                  changed here.
+                </p>
+              </div>
             ) : (
-                <>
+              <>
                 {/* New Password */}
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -166,7 +193,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
                   <input
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     placeholder="Minimum 8 characters"
                     minLength={8}
@@ -182,14 +211,19 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
                     <input
                       type="password"
                       value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                       placeholder="Re-enter password"
                       minLength={8}
                     />
                   </div>
                 )}
-                </>
+              </>
             )}
           </div>
 

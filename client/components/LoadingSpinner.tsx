@@ -9,7 +9,7 @@ interface LoadingSpinnerProps {
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
   color = 'primary',
-  className = ''
+  className = '',
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4 border-2',
@@ -26,7 +26,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return (
     <div
       className={`
-        inline-block rounded-full animate-spin
+ inline-block rounded-full animate-spin
         ${sizeClasses[size]}
         ${colorClasses[color]}
         ${className}

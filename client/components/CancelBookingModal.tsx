@@ -23,21 +23,27 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
+      <div className="bg-white rounded-xl max-w-md w-full animate-scale-in">
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">Cancel Booking</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            Cancel Booking
+          </h3>
         </div>
 
         {/* Body */}
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             <p className="text-slate-600">
-              Are you sure you want to cancel this booking? This action cannot be undone.
+              Are you sure you want to cancel this booking? This action cannot
+              be undone.
             </p>
-            
+
             <div>
-              <label htmlFor="reason" className="block text-sm font-medium text-slate-700 mb-1">
+              <label
+                htmlFor="reason"
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
                 Reason (Optional)
               </label>
               <textarea

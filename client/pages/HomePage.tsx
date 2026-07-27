@@ -16,27 +16,40 @@ interface HomePageProps {
   onCancelBooking: (id: string) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, onCancelBooking }) => {
+const HomePage: React.FC<HomePageProps> = ({
+  user,
+  rooms,
+  bookings,
+  onRefresh,
+  onCancelBooking,
+}) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(rooms.length > 0 ? rooms[0].id : '');
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(
+    rooms.length > 0 ? rooms[0].id : '',
+  );
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
 
   // Departments derived from the rooms themselves; empty when the feature is unused
   const departments = useMemo(() => {
     const map = new Map<string, Department>();
-    rooms.forEach(r => { if (r.department) map.set(r.department.id, r.department); });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    rooms.forEach((r) => {
+      if (r.department) map.set(r.department.id, r.department);
+    });
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
   }, [rooms]);
 
   const visibleRooms = useMemo(() => {
     if (selectedDeptId === 'all') return rooms;
-    return rooms.filter(r => r.departmentId === selectedDeptId);
+    return rooms.filter((r) => r.departmentId === selectedDeptId);
   }, [rooms, selectedDeptId]);
 
   const handleDeptSelect = (deptId: string) => {
     setSelectedDeptId(deptId);
-    const pool = deptId === 'all' ? rooms : rooms.filter(r => r.departmentId === deptId);
-    if (!pool.some(r => r.id === selectedRoomId) && pool.length > 0) {
+    const pool =
+      deptId === 'all' ? rooms : rooms.filter((r) => r.departmentId === deptId);
+    if (!pool.some((r) => r.id === selectedRoomId) && pool.length > 0) {
       setSelectedRoomId(pool[0].id);
       setSelectedRange(null);
       setSelectedBooking(null);
@@ -47,7 +60,10 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
     return window.innerWidth < 640 ? 'day' : 'week';
   });
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
-  const [selectedRange, setSelectedRange] = useState<{start: Date, end: Date} | null>(null);
+  const [selectedRange, setSelectedRange] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleRangeSelect = (start: Date, end: Date) => {
@@ -58,7 +74,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
   const handleBookingClick = (booking: Booking) => {
     setSelectedRange(null);
     setSelectedBooking(booking);
-  }
+  };
 
   const handleBookingSuccess = () => {
     setSelectedRange(null);
@@ -80,14 +96,22 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
 
   const goToToday = () => setCurrentDate(new Date());
 
-  const activeRoom = rooms.find(r => r.id === selectedRoomId);
+  const activeRoom = rooms.find((r) => r.id === selectedRoomId);
   const weekStart = getStartOfWeek(currentDate);
   const showSidePanel = selectedRange || selectedBooking;
 
-  const viewLabel = calendarView === 'day' ? 'Day' : calendarView === 'week' ? 'Week' : 'Month';
-  const dateDisplay = calendarView === 'month'
-    ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const viewLabel =
+    calendarView === 'day' ? 'Day' : calendarView === 'week' ? 'Week' : 'Month';
+  const dateDisplay =
+    calendarView === 'month'
+      ? currentDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        })
+      : currentDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        });
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-100px)] animate-fade-in">
@@ -96,12 +120,19 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
         {/* Top Row: Date & View Switcher */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl sm:text-3xl font-bold gradient-text truncate">{dateDisplay}</h2>
-            <p className="text-sm text-slate-500 font-medium mt-1">Select a room and time to book</p>
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-text truncate">
+              {dateDisplay}
+            </h2>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              Select a room and time to book
+            </p>
           </div>
           {/* View Switcher - Desktop */}
           <div className="hidden sm:block">
-            <ViewSwitcher currentView={calendarView} onViewChange={setCalendarView} />
+            <ViewSwitcher
+              currentView={calendarView}
+              onViewChange={setCalendarView}
+            />
           </div>
         </div>
 
@@ -111,39 +142,69 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigateWeek('prev')}
-              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium group"
+              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth group"
               aria-label={`Previous ${viewLabel}`}
             >
-              <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-5 h-5 text-primary transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-md shadow-sm hover:shadow-md transition-all-smooth"
+              className="px-3 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-md shadow-sm transition-all-smooth"
             >
               Today
             </button>
             <button
               onClick={() => navigateWeek('next')}
-              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium group"
+              className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth group"
               aria-label={`Next ${viewLabel}`}
             >
-              <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <svg
+                className="w-5 h-5 text-primary transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
             <div className="relative">
               <button
                 onClick={() => setShowMiniCalendar(!showMiniCalendar)}
-                className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth shadow-soft hover:shadow-medium ml-1 group"
+                className="p-2.5 glass hover:bg-white/80 rounded-md transition-all-smooth ml-1 group"
                 aria-label="Open calendar picker"
               >
-                <svg className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-5 h-5 text-accent transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </button>
-              
+
               {/* Mini Calendar Popup */}
               {showMiniCalendar && (
                 <>
@@ -169,23 +230,30 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
 
           {/* View Switcher - Mobile */}
           <div className="sm:hidden">
-            <ViewSwitcher currentView={calendarView} onViewChange={setCalendarView} />
+            <ViewSwitcher
+              currentView={calendarView}
+              onViewChange={setCalendarView}
+            />
           </div>
         </div>
 
         {/* Department Filter (only when departments are in use) */}
         {departments.length > 0 && (
           <div className="flex gap-2 overflow-x-auto px-1 -mx-1 scrollbar-hide snap-x">
-            {[{ id: 'all', name: 'All Departments' } as Department, ...departments].map(dept => {
+            {[
+              { id: 'all', name: 'All Departments' } as Department,
+              ...departments,
+            ].map((dept) => {
               const isSelected = selectedDeptId === dept.id;
               return (
                 <button
                   key={dept.id}
                   onClick={() => handleDeptSelect(dept.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap snap-start
-                    ${isSelected
-                      ? 'bg-accent text-white border-accent shadow-sm'
-                      : 'bg-white text-slate-500 border-slate-200 hover:border-accent/50 hover:text-accent'
+                    ${
+                      isSelected
+                        ? 'bg-accent text-white border-accent shadow-sm'
+                        : 'bg-white text-slate-500 border-slate-200 hover:border-accent/50 hover:text-accent'
                     }`}
                 >
                   {dept.name}
@@ -198,30 +266,44 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
         {/* Bottom Row: Compact Room List */}
         <div className="flex gap-2 overflow-x-auto pb-2 px-1 -mx-1 scrollbar-hide snap-x sticky top-0 z-10 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/50">
           {visibleRooms.map((room, idx) => {
-             const isSelected = selectedRoomId === room.id;
-             return (
+            const isSelected = selectedRoomId === room.id;
+            return (
               <button
                 key={room.id}
-                onClick={() => { setSelectedRoomId(room.id); setSelectedRange(null); setSelectedBooking(null); }}
+                onClick={() => {
+                  setSelectedRoomId(room.id);
+                  setSelectedRange(null);
+                  setSelectedBooking(null);
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 border whitespace-nowrap snap-start
                   ${
                     isSelected
-                      ? 'bg-primary text-white border-primary shadow-md scale-100 ring-2 ring-primary/20'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/50 hover:text-primary hover:shadow-sm'
+                      ? 'bg-primary text-white border-primary scale-100 ring-2 ring-primary/20'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/50 hover:text-primary '
                   }`}
                 style={{ animationDelay: `${idx * 0.05}s` }}
               >
                 <span>{room.name}</span>
                 {isSelected && (
-                   <span className="flex items-center gap-1 text-[10px] font-medium bg-white/20 px-1.5 py-0.5 rounded text-white/90 ml-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {room.maxCapacity}
-                   </span>
+                  <span className="flex items-center gap-1 text-[10px] font-medium bg-white/20 px-1.5 py-0.5 rounded text-white/90 ml-1">
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    {room.maxCapacity}
+                  </span>
                 )}
               </button>
-             );
+            );
           })}
         </div>
       </div>
@@ -233,8 +315,12 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           <div className="flex-1 flex flex-col min-w-0">
             <div className="p-3 border-b bg-slate-50 flex justify-between items-center">
               <div className="text-sm font-medium text-slate-600">
-                {calendarView === 'month' ? 'Click date to book' : 'Select time for'}{' '}
-                <span className="text-slate-900 font-bold">{activeRoom.name}</span>
+                {calendarView === 'month'
+                  ? 'Click date to book'
+                  : 'Select time for'}{' '}
+                <span className="text-slate-900 font-bold">
+                  {activeRoom.name}
+                </span>
               </div>
             </div>
             <div className="flex-1 overflow-hidden relative">
@@ -279,7 +365,7 @@ const HomePage: React.FC<HomePageProps> = ({ user, rooms, bookings, onRefresh, o
           {/* Right: Side Panel (Conditional Slide-in) */}
           {calendarView !== 'month' && (
             <div
-              className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white z-40 absolute inset-y-0 right-0 shadow-2xl sm:relative sm:shadow-none
+              className={`transition-all duration-300 ease-in-out border-l border-slate-200 bg-white z-40 absolute inset-y-0 right-0 sm:relative sm:shadow-none
                 ${showSidePanel ? 'w-full sm:w-80 translate-x-0' : 'w-0 translate-x-full sm:translate-x-0 overflow-hidden opacity-0 sm:opacity-100 sm:w-0'}
               `}
             >

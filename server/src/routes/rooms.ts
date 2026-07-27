@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
+import { authenticateToken, AuthRequest } from '../middleware/auth.js';
+import { getManagedDepartmentIds, canManageDepartment } from '../services/permissions.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -41,10 +42,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new room (admin only)
-router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Create new room (global admin, or a department admin within their department)
+router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
+
+    if (req.userRole !== 'ADMIN') {
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (managed.length === 0) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      if (!canManageDepartment(req.userRole, managed, departmentId)) {
+        return res.status(403).json({ error: 'You can only create rooms in your own department' });
+      }
+    }
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
       return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
@@ -95,10 +106,25 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
   }
 });
 
-// Update room (admin only)
-router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Update room (global admin, or a department admin for rooms in their department)
+router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, description, minCapacity, maxCapacity, features, departmentId } = req.body;
+
+    if (req.userRole !== 'ADMIN') {
+      const managed = await getManagedDepartmentIds(req.userId);
+      const current = await prisma.room.findUnique({ where: { id: req.params.id } });
+      if (!current) {
+        return res.status(404).json({ error: 'Room not found' });
+      }
+      if (!canManageDepartment(req.userRole, managed, current.departmentId)) {
+        return res.status(403).json({ error: 'You can only manage rooms in your own department' });
+      }
+      // A department admin cannot move a room outside their own departments
+      if (!canManageDepartment(req.userRole, managed, departmentId)) {
+        return res.status(403).json({ error: 'You can only assign rooms to your own department' });
+      }
+    }
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
       return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
@@ -159,8 +185,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
   }
 });
 
-// Delete room (admin only)
-router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Delete room (global admin, or a department admin for rooms in their department)
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     // Check if room exists
     const existingRoom = await prisma.room.findUnique({
@@ -169,6 +195,13 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
 
     if (!existingRoom) {
       return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (req.userRole !== 'ADMIN') {
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (!canManageDepartment(req.userRole, managed, existingRoom.departmentId)) {
+        return res.status(403).json({ error: 'You can only manage rooms in your own department' });
+      }
     }
 
     // Check if there are any active bookings for this room

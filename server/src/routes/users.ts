@@ -1,16 +1,32 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { authenticateToken, requireAdmin, requireAdminOrWorker } from '../middleware/auth.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 const DEFAULT_PASSWORD = 'Password123!';
 
+// All user routes require authentication
+router.use(authenticateToken);
+
+// Never expose password hashes
+const userSelect = {
+  id: true,
+  email: true,
+  name: true,
+  provider: true,
+  role: true,
+  status: true,
+  avatarUrl: true,
+  createdAt: true,
+};
+
 // Get all users
-router.get('/', async (req, res) => {
+router.get('/', requireAdminOrWorker, async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({ select: userSelect });
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -18,10 +34,11 @@ router.get('/', async (req, res) => {
 });
 
 // Get user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAdminOrWorker, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id },
+      select: userSelect,
     });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -33,7 +50,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create user
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -73,7 +90,7 @@ router.post('/', async (req, res) => {
 });
 
 // Bulk import users
-router.post('/import', async (req, res) => {
+router.post('/import', requireAdmin, async (req, res) => {
   try {
     const { users } = req.body;
     
@@ -145,7 +162,7 @@ router.post('/import', async (req, res) => {
 });
 
 // Update user
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, password, status } = req.body;
@@ -195,7 +212,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete user
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 

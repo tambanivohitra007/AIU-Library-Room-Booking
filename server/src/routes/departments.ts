@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
 import { parseOperatingHoursJson } from '../services/settings.js';
+import { getManagedDepartmentIds, canManageDepartment } from '../services/permissions.js';
 import logger from '../utils/logger.js';
 
 const router = Router();
@@ -56,10 +57,24 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
   }
 });
 
-// Update department (admin only)
-router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// List a department's managers (admin only)
+router.get('/:id/admins', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { name, contactEmail, operatingHours } = req.body;
+    const admins = await prisma.departmentAdmin.findMany({
+      where: { departmentId: req.params.id },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+    res.json(admins.map((a: any) => a.user));
+  } catch (error) {
+    console.error('List department admins error:', error);
+    res.status(500).json({ error: 'Failed to fetch department managers' });
+  }
+});
+
+// Update department (global admin, or a manager of this department)
+router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { name, contactEmail, operatingHours, adminUserIds } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Department name is required' });
@@ -74,6 +89,13 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       return res.status(404).json({ error: 'Department not found' });
     }
 
+    if (req.userRole !== 'ADMIN') {
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (!canManageDepartment(req.userRole, managed, existing.id)) {
+        return res.status(403).json({ error: 'You can only manage your own department' });
+      }
+    }
+
     const department = await prisma.department.update({
       where: { id: req.params.id },
       data: {
@@ -82,6 +104,21 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
         operatingHours: operatingHours || null,
       },
     });
+
+    // Only global admins may (re)assign managers; sent as the full desired list
+    if (Array.isArray(adminUserIds) && req.userRole === 'ADMIN') {
+      const userIds: string[] = [...new Set(adminUserIds.filter((id: any) => typeof id === 'string'))];
+      const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true } });
+      if (users.length !== userIds.length) {
+        return res.status(400).json({ error: 'One or more selected users do not exist' });
+      }
+      await prisma.departmentAdmin.deleteMany({ where: { departmentId: department.id } });
+      if (userIds.length > 0) {
+        await prisma.departmentAdmin.createMany({
+          data: userIds.map((userId) => ({ userId, departmentId: department.id })),
+        });
+      }
+    }
 
     res.json(department);
   } catch (error) {

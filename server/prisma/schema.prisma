@@ -39,6 +39,7 @@ model User {
   avatarUrl String?
   createdAt DateTime  @default(now())
   bookings  Booking[]
+  managedDepartments DepartmentAdmin[]
 }
 
 model Department {
@@ -48,6 +49,19 @@ model Department {
   operatingHours String?  // same JSON format as ServiceSettings.operatingHours; null = inherit global
   createdAt      DateTime @default(now())
   rooms          Room[]
+  admins         DepartmentAdmin[]
+}
+
+// Grants a user management rights over one department (rooms, bookings, hours)
+model DepartmentAdmin {
+  id           String     @id @default(uuid())
+  userId       String
+  departmentId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
 }
 
 model Room {

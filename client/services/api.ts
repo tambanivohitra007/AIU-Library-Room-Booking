@@ -276,11 +276,15 @@ export const api = {
     });
   },
 
-  updateDepartment: async (id: string, data: { name: string; contactEmail?: string | null; operatingHours?: string | null }): Promise<Department> => {
+  updateDepartment: async (id: string, data: { name: string; contactEmail?: string | null; operatingHours?: string | null; adminUserIds?: string[] }): Promise<Department> => {
     return fetchAPI<Department>(`/departments/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  },
+
+  getDepartmentAdmins: async (id: string): Promise<Array<{ id: string; name: string; email: string }>> => {
+    return fetchAPI(`/departments/${id}/admins`);
   },
 
   deleteDepartment: async (id: string): Promise<{ message: string }> => {

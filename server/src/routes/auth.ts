@@ -7,6 +7,7 @@ import { validateRegister, validateLogin } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { getAdminEmails } from '../config/admins.js';
 import { getServiceSettings, isEmailAllowed, allowedDomainsMessage } from '../services/settings.js';
+import { getManagedDepartmentIds } from '../services/permissions.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -149,6 +150,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
         name: user.name,
         role: user.role,
         provider: user.provider,
+        managedDepartmentIds: await getManagedDepartmentIds(user.id),
       },
     });
 
@@ -262,6 +264,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
         role: user.role,
         avatarUrl: user.avatarUrl,
         provider: user.provider,
+        managedDepartmentIds: await getManagedDepartmentIds(user.id),
       },
     });
   } catch (error) {
@@ -290,7 +293,10 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(user);
+    res.json({
+      ...user,
+      managedDepartmentIds: await getManagedDepartmentIds(user.id),
+    });
   } catch (error) {
     logger.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });

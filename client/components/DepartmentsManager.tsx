@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Department, OperatingHours } from '../types';
+import { Department, OperatingHours, User, UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 import { parseOperatingHoursOrNull } from '../utils/operatingHours';
 import OperatingHoursEditor, { validateOperatingHours } from './OperatingHoursEditor';
@@ -17,17 +17,24 @@ interface DepartmentFormState {
 }
 
 interface DepartmentsManagerProps {
+    currentUser: User;
     onRefresh?: () => void;
 }
 
-const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) => {
+const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ currentUser, onRefresh }) => {
     const toast = useToast();
     const { operatingHours: globalHours } = useSettings();
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const managedIds = currentUser.managedDepartmentIds || [];
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState<Department | 'new' | null>(null);
     const [deleting, setDeleting] = useState<Department | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Manager assignment (global admin only)
+    const [managerIds, setManagerIds] = useState<string[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState('');
     const [form, setForm] = useState<DepartmentFormState>({
         name: '',
         contactEmail: '',
@@ -50,7 +57,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
         loadDepartments();
     }, []);
 
-    const openEditor = (dept: Department | 'new') => {
+    const openEditor = async (dept: Department | 'new') => {
         if (dept === 'new') {
             setForm({ name: '', contactEmail: '', useCustomHours: false, hours: globalHours });
         } else {
@@ -62,7 +69,21 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
                 hours: customHours || globalHours,
             });
         }
+        setManagerIds([]);
+        setSelectedUserId('');
         setEditing(dept);
+        if (isAdmin && dept !== 'new') {
+            try {
+                const [admins, users] = await Promise.all([
+                    api.getDepartmentAdmins(dept.id),
+                    api.getUsers(),
+                ]);
+                setManagerIds(admins.map((a) => a.id));
+                setAllUsers(users);
+            } catch {
+                toast.error('Failed to load department managers');
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +104,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
             name: form.name.trim(),
             contactEmail: form.contactEmail.trim() || null,
             operatingHours: form.useCustomHours ? JSON.stringify(form.hours) : null,
+            ...(isAdmin && editing !== 'new' ? { adminUserIds: managerIds } : {}),
         };
 
         setIsSubmitting(true);
@@ -124,33 +146,40 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
         return parseOperatingHoursOrNull(dept.operatingHours) ? 'Custom schedule' : 'Default schedule';
     };
 
+    // Department admins only see and edit their own departments
+    const visibleDepartments = isAdmin ? departments : departments.filter((d) => managedIds.includes(d.id));
+
     return (
         <div className="max-w-3xl mx-auto animate-slide-up space-y-4">
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-xl font-bold gradient-text">Departments</h3>
                     <p className="text-sm text-slate-500 mt-1">
-                        Group rooms by department, each with its own contact and operating hours.
+                        {isAdmin
+                            ? 'Group rooms by department, each with its own contact, operating hours, and managers.'
+                            : 'Departments you manage.'}
                     </p>
                 </div>
-                <button
-                    onClick={() => openEditor('new')}
-                    className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md transition-all-smooth flex items-center gap-2"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                    Add Department
-                </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => openEditor('new')}
+                        className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md transition-all-smooth flex items-center gap-2"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Add Department
+                    </button>
+                )}
             </div>
 
             {loading ? (
                 <div className="glass rounded-xl border border-white/20 p-8 text-center text-slate-500">Loading…</div>
-            ) : departments.length === 0 ? (
+            ) : visibleDepartments.length === 0 ? (
                 <div className="glass rounded-xl border border-white/20 p-8 text-center text-slate-500">
                     No departments yet. Rooms without a department follow the global operating hours.
                 </div>
             ) : (
                 <div className="glass rounded-xl border border-white/20 divide-y divide-slate-100 shadow-medium">
-                    {departments.map((dept) => (
+                    {visibleDepartments.map((dept) => (
                         <div key={dept.id} className="flex items-center justify-between px-6 py-4 gap-4">
                             <div className="min-w-0">
                                 <p className="font-bold text-slate-800 truncate">{dept.name}</p>
@@ -166,12 +195,14 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
                                 >
                                     Edit
                                 </button>
-                                <button
-                                    onClick={() => setDeleting(dept)}
-                                    className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                                >
-                                    Delete
-                                </button>
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => setDeleting(dept)}
+                                        className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                    >
+                                        Delete
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -242,6 +273,61 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({ onRefresh }) =>
                                         </p>
                                     )}
                                 </div>
+                                {isAdmin && editing !== 'new' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Department Managers</label>
+                                        <p className="text-xs text-slate-500 mb-2">
+                                            Managers can edit this department, its rooms, and its bookings without being global admins.
+                                        </p>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {managerIds.map((id) => {
+                                                const u = allUsers.find((user) => user.id === id);
+                                                return (
+                                                    <span key={id} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-1">
+                                                        {u ? u.name : id}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setManagerIds(managerIds.filter((m) => m !== id))}
+                                                            className="hover:text-indigo-900"
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            <XIcon className="w-3 h-3" />
+                                                        </button>
+                                                    </span>
+                                                );
+                                            })}
+                                            {managerIds.length === 0 && (
+                                                <span className="text-xs text-slate-400 italic">No managers assigned</span>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={selectedUserId}
+                                                onChange={(e) => setSelectedUserId(e.target.value)}
+                                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                disabled={isSubmitting}
+                                            >
+                                                <option value="">Select a user…</option>
+                                                {allUsers.filter((u) => !managerIds.includes(u.id)).map((u) => (
+                                                    <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (selectedUserId) {
+                                                        setManagerIds([...managerIds, selectedUserId]);
+                                                        setSelectedUserId('');
+                                                    }
+                                                }}
+                                                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                                                disabled={isSubmitting}
+                                            >
+                                                <PlusIcon className="w-5 h-5 text-slate-600" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="p-6 border-t border-slate-200 flex justify-end gap-3 sticky bottom-0 bg-white">
                                 <button

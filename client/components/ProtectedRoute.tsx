@@ -19,7 +19,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && user.role !== UserRole.ADMIN && user.role !== UserRole.STUDENT_WORKER) {
+  const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
+
+  if (requireAdmin && user.role !== UserRole.ADMIN && user.role !== UserRole.STUDENT_WORKER && !isDeptAdmin) {
     return <Navigate to="/" replace />;
   }
 

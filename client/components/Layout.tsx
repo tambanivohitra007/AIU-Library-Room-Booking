@@ -21,7 +21,8 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
     { path: '/my-bookings', label: 'My Bookings', icon: CalendarIcon },
   ];
 
-  if (user.role === UserRole.ADMIN) {
+  const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
+  if (user.role === UserRole.ADMIN || user.role === UserRole.STUDENT_WORKER || isDeptAdmin) {
     navItems.push({ path: '/admin', label: 'Admin', icon: SettingsIcon });
   }
 

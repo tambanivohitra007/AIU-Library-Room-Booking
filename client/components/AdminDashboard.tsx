@@ -35,12 +35,26 @@ interface Stats {
   roomUtilization: { [key: string]: number };
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, rooms, onExportCSV, onCancelBooking, onRefresh }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: allBookings, rooms: allRooms, onExportCSV, onCancelBooking, onRefresh }) => {
   const toast = useToast();
   const isAdmin = currentUser.role === UserRole.ADMIN;
+  const managedDeptIds = currentUser.managedDepartmentIds || [];
+  // A department admin without a global staff role only sees their departments' data
+  const isDeptAdminOnly = !isAdmin && currentUser.role !== UserRole.STUDENT_WORKER && managedDeptIds.length > 0;
+
+  const rooms = useMemo(
+    () => (isDeptAdminOnly ? allRooms.filter(r => r.departmentId && managedDeptIds.includes(r.departmentId)) : allRooms),
+    [allRooms, isDeptAdminOnly, currentUser]
+  );
+  const bookings = useMemo(() => {
+    if (!isDeptAdminOnly) return allBookings;
+    const roomIds = new Set(rooms.map(r => r.id));
+    return allBookings.filter(b => roomIds.has(b.roomId));
+  }, [allBookings, rooms, isDeptAdminOnly]);
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'departments' | 'semesters' | 'settings'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'bookings' | 'users' | 'rooms' | 'departments' | 'semesters' | 'settings'>(isDeptAdminOnly ? 'bookings' : 'overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [showImportModal, setShowImportModal] = useState(false);
@@ -69,8 +83,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
   };
 
   useEffect(() => {
-    loadStats();
-    loadUsers();
+    // Stats and user management endpoints are admin/worker only
+    if (!isDeptAdminOnly) {
+      loadStats();
+      loadUsers();
+    }
   }, [bookings]);
 
   // Column definitions for bookings table
@@ -817,7 +834,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
             </svg>
             Room Management
           </h3>
-          {isAdmin && (
+          {(isAdmin || isDeptAdminOnly) && (
             <button
               onClick={() => setShowAddRoomModal(true)}
               className="w-full sm:w-auto px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
@@ -858,7 +875,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
                   </span>
                 ))}
               </div>
-              {isAdmin && (
+              {(isAdmin || isDeptAdminOnly) && (
                 <div className="flex gap-2 pt-3 border-t border-slate-200/50">
                   <button
                     onClick={() => setEditingRoom(room)}
@@ -890,6 +907,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
         <AddRoomModal
           onClose={() => setShowAddRoomModal(false)}
           onSuccess={onRefresh}
+          allowedDepartmentIds={isDeptAdminOnly ? managedDeptIds : undefined}
         />
       )}
       {editingRoom && (
@@ -897,6 +915,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
           room={editingRoom}
           onClose={() => setEditingRoom(null)}
           onSuccess={onRefresh}
+          allowedDepartmentIds={isDeptAdminOnly ? managedDeptIds : undefined}
         />
       )}
       {deletingRoom && (
@@ -943,7 +962,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
             { id: 'departments', label: 'Departments', Icon: BuildingIcon },
             { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
             { id: 'settings', label: 'Settings', Icon: SettingsIcon }, // Added Settings tab
-          ].filter(tab => isAdmin || !['departments', 'semesters', 'settings'].includes(tab.id)).map(tab => (
+          ].filter(tab => {
+            if (isAdmin) return true;
+            if (isDeptAdminOnly) return ['bookings', 'rooms', 'departments'].includes(tab.id);
+            return !['departments', 'semesters', 'settings'].includes(tab.id);
+          }).map(tab => (
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
@@ -969,7 +992,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings, 
         {selectedTab === 'bookings' && renderBookings()}
         {selectedTab === 'users' && renderUsers()}
         {selectedTab === 'rooms' && renderRooms()}
-        {selectedTab === 'departments' && <DepartmentsManager onRefresh={onRefresh} />}
+        {selectedTab === 'departments' && <DepartmentsManager currentUser={currentUser} onRefresh={onRefresh} />}
         {selectedTab === 'semesters' && <SemestersManager />}
         {selectedTab === 'settings' && <SettingsTab />}
       </div>

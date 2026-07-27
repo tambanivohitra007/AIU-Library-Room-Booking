@@ -7,9 +7,10 @@ import { useToast } from '../contexts/ToastContext';
 interface AddRoomModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  allowedDepartmentIds?: string[]; // department admins may only pick their own departments
 }
 
-const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess }) => {
+const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess, allowedDepartmentIds }) => {
   const toast = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -23,7 +24,14 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getDepartments().then(setDepartments).catch(() => {});
+    api.getDepartments().then((all) => {
+      const selectable = allowedDepartmentIds ? all.filter(d => allowedDepartmentIds.includes(d.id)) : all;
+      setDepartments(selectable);
+      // Department admins must assign the room to one of their departments
+      if (allowedDepartmentIds && selectable.length > 0) {
+        setDepartmentId(selectable[0].id);
+      }
+    }).catch(() => {});
   }, []);
 
   const handleAddFeature = () => {
@@ -180,7 +188,7 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({ onClose, onSuccess }) => {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
                   disabled={isSubmitting}
                 >
-                  <option value="">No department (global hours)</option>
+                  {!allowedDepartmentIds && <option value="">No department (global hours)</option>}
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}

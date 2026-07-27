@@ -5,6 +5,7 @@ import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
+import { getManagedDepartmentIds } from '../services/permissions.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -27,11 +28,14 @@ router.get('/', async (req: AuthRequest, res) => {
     });
 
     const isStudent = req.userRole === 'STUDENT';
+    // Department admins see full details for their departments' rooms
+    const managedDepartmentIds = isStudent ? await getManagedDepartmentIds(req.userId) : [];
 
     // Format bookings to match client expectations
     const formattedBookings = bookings.map((booking: any) => {
       const isOwner = booking.userId === req.userId;
-      const canViewDetails = !isStudent || isOwner;
+      const managesRoom = !!booking.room.departmentId && managedDepartmentIds.includes(booking.room.departmentId);
+      const canViewDetails = !isStudent || isOwner || managesRoom;
 
       return {
         id: booking.id,
@@ -295,9 +299,12 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Check permissions (Admin, Student Worker, or Owner)
+    // Check permissions (Admin, Student Worker, Owner, or Department Admin of the room)
     if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
-      return res.status(403).json({ error: 'Permission denied' });
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
+        return res.status(403).json({ error: 'Permission denied' });
+      }
     }
 
     if (booking.status !== BookingStatus.CONFIRMED) {
@@ -340,15 +347,19 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     const { reason } = req.body; // Optional cancellation reason
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
+      include: { room: true },
     });
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    // Check if user owns the booking, is admin, or is a student worker
+    // Check if user owns the booking, is admin/worker, or manages the room's department
     if (booking.userId !== req.userId && req.userRole !== 'ADMIN' && req.userRole !== 'STUDENT_WORKER') {
-      return res.status(403).json({ error: 'You can only cancel your own bookings' });
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
+        return res.status(403).json({ error: 'You can only cancel your own bookings' });
+      }
     }
 
     // Only allow canceling CONFIRMED bookings

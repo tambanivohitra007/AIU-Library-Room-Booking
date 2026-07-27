@@ -13,6 +13,7 @@ export interface User {
   provider?: 'LOCAL' | 'MICROSOFT';
   avatarUrl?: string;
   createdAt?: string;
+  managedDepartmentIds?: string[]; // departments this user administers (any role)
 }
 
 export interface Department {

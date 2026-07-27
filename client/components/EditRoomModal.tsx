@@ -8,9 +8,10 @@ interface EditRoomModalProps {
   room: Room;
   onClose: () => void;
   onSuccess: () => void;
+  allowedDepartmentIds?: string[]; // department admins may only pick their own departments
 }
 
-const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess }) => {
+const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess, allowedDepartmentIds }) => {
   const toast = useToast();
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description);
@@ -24,7 +25,9 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getDepartments().then(setDepartments).catch(() => {});
+    api.getDepartments().then((all) => {
+      setDepartments(allowedDepartmentIds ? all.filter(d => allowedDepartmentIds.includes(d.id)) : all);
+    }).catch(() => {});
   }, []);
 
   const handleAddFeature = () => {
@@ -181,7 +184,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ room, onClose, onSuccess 
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
                   disabled={isSubmitting}
                 >
-                  <option value="">No department (global hours)</option>
+                  {!allowedDepartmentIds && <option value="">No department (global hours)</option>}
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}

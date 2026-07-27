@@ -135,6 +135,16 @@ router.get('/:id', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
+    // Full details only for the owner, staff, or a department admin of the room
+    const isOwner = booking.userId === req.userId;
+    const isStaff = req.userRole === 'ADMIN' || req.userRole === 'STUDENT_WORKER';
+    if (!isOwner && !isStaff) {
+      const managed = await getManagedDepartmentIds(req.userId);
+      if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
+        return res.status(403).json({ error: 'Permission denied' });
+      }
+    }
+
     res.json({
       id: booking.id,
       roomId: booking.roomId,

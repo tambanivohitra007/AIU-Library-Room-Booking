@@ -1663,7 +1663,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Mobile: floating admin-menu trigger, sits above the app bottom nav */}
       <button
         onClick={() => setShowMoreSheet(true)}
-        className="sm:hidden fixed bottom-24 right-4 z-40 px-4 py-3 rounded-full bg-primary text-white font-bold text-sm flex items-center gap-2 transition-transform"
+        className="sm:hidden fixed bottom-24 right-4 z-40 px-4 py-3 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2 transition-transform"
         aria-label="Open admin menu"
       >
         {activeTab && <activeTab.Icon className="w-5 h-5" />}

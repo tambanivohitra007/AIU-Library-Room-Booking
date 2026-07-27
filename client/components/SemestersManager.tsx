@@ -400,11 +400,11 @@ const SemestersManager: React.FC = () => {
                 </td>
                 <td className="px-6 py-4">
                   {semester.isActive ? (
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold border border-green-200">
                       Active
                     </span>
                   ) : (
-                    <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold border border-slate-200">
+                    <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-md text-xs font-bold border border-slate-200">
                       Inactive
                     </span>
                   )}
@@ -475,11 +475,11 @@ const SemestersManager: React.FC = () => {
                   </p>
                 </div>
                 {semester.isActive ? (
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold border border-green-200">
                     Active
                   </span>
                 ) : (
-                  <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold border border-slate-200">
+                  <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-md text-xs font-bold border border-slate-200">
                     Inactive
                   </span>
                 )}

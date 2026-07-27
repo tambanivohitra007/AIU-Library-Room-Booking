@@ -251,7 +251,7 @@ const HomePage: React.FC<HomePageProps> = ({
                 <button
                   key={dept.id}
                   onClick={() => handleDeptSelect(dept.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border whitespace-nowrap snap-start
+                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-300 border whitespace-nowrap snap-start
                     ${
                       isSelected
                         ? 'bg-accent text-white border-accent shadow-sm'
@@ -277,7 +277,7 @@ const HomePage: React.FC<HomePageProps> = ({
                   setSelectedRange(null);
                   setSelectedBooking(null);
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 border whitespace-nowrap snap-start
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all duration-300 border whitespace-nowrap snap-start
                   ${
                     isSelected
                       ? 'bg-primary text-white border-primary scale-100 ring-2 ring-primary/20'

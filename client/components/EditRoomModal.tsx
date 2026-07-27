@@ -280,7 +280,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
                 {features.map((feature, idx) => (
                   <span
                     key={idx}
-                    className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-1"
+                    className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium flex items-center gap-1"
                   >
                     {feature}
                     <button

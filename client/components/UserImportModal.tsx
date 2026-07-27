@@ -196,7 +196,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({
                         <td className="p-3 text-slate-600">{user.email}</td>
                         <td className="p-3">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`px-2 py-1 rounded-md text-xs font-medium ${
                               user.role === 'ADMIN'
                                 ? 'bg-purple-100 text-purple-700'
                                 : 'bg-blue-100 text-blue-700'

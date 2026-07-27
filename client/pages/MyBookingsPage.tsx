@@ -118,7 +118,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             >
               {tab.label}
               <span
-                className={`px-2 py-0.5 rounded-full text-xs ${
+                className={`px-2 py-0.5 rounded-md text-xs ${
                   activeTab === tab.key
                     ? 'bg-white/20 text-white'
                     : 'bg-slate-200 text-slate-600'

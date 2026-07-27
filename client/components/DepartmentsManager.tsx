@@ -351,7 +351,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                         return (
                           <span
                             key={id}
-                            className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-1"
+                            className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium flex items-center gap-1"
                           >
                             {u ? u.name : id}
                             <button

@@ -49,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
-      <header className="px-3 sm:px-4 py-2 flex items-center justify-between sticky top-0 z-20 glass-dark border-b border-white/10">
+      <header className="px-3 sm:px-4 py-2 flex items-center justify-between sticky top-0 z-50 glass-dark border-b border-white/10">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="relative hover-lift">
             <img

@@ -65,7 +65,7 @@ const HomePage: React.FC<HomePageProps> = ({
     start: Date;
     end: Date;
   } | null>(null);
-  const [showRoomDetails, setShowRoomDetails] = useState(false);
+  const [detailsRoom, setDetailsRoom] = useState<Room | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const handleRangeSelect = (start: Date, end: Date) => {
@@ -304,6 +304,32 @@ const HomePage: React.FC<HomePageProps> = ({
                     {room.maxCapacity}
                   </span>
                 )}
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDetailsRoom(room);
+                  }}
+                  title={`About ${room.name}`}
+                  className={`ml-1 -mr-1 p-0.5 rounded-full transition-colors ${
+                    isSelected
+                      ? 'text-white/70 hover:text-white hover:bg-white/20'
+                      : 'text-slate-400 hover:text-primary hover:bg-primary/10'
+                  }`}
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </span>
               </button>
             );
           })}
@@ -325,7 +351,7 @@ const HomePage: React.FC<HomePageProps> = ({
                 </span>
               </div>
               <button
-                onClick={() => setShowRoomDetails(true)}
+                onClick={() => setDetailsRoom(activeRoom)}
                 className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:border-primary/40 hover:text-primary rounded-md transition-colors flex items-center gap-1.5"
               >
                 <svg
@@ -415,10 +441,10 @@ const HomePage: React.FC<HomePageProps> = ({
       )}
 
       {/* Read-only Room Details */}
-      {showRoomDetails && activeRoom && (
+      {detailsRoom && (
         <RoomDetailsModal
-          room={activeRoom}
-          onClose={() => setShowRoomDetails(false)}
+          room={detailsRoom}
+          onClose={() => setDetailsRoom(null)}
         />
       )}
     </div>

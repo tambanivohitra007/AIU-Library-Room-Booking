@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import logo from '../assets/logo.webp';
 import { useSettings } from '../contexts/SettingsContext';
@@ -10,7 +10,7 @@ interface RegisterFormProps {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
-  const { settings } = useSettings();
+  const { settings, loading: settingsLoading } = useSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,6 +41,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
   };
 
   const displayError = error || localError;
+
+  // Self-registration disabled: send visitors back to the SSO login page
+  if (!settingsLoading && settings && !settings.allowSelfRegistration) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">

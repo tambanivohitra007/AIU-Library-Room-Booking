@@ -17,7 +17,7 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
 
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { serviceName, logoUrl, contactEmail, websiteUrl, description, allowedEmailDomains, operatingHours } = req.body;
+        const { serviceName, logoUrl, contactEmail, websiteUrl, description, allowedEmailDomains, operatingHours, allowSelfRegistration } = req.body;
 
         // Reject malformed operating hours instead of silently breaking the schedule
         if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
@@ -33,6 +33,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
             description,
             allowedEmailDomains,
             operatingHours,
+            ...(typeof allowSelfRegistration === 'boolean' ? { allowSelfRegistration } : {}),
         };
 
         const existing = await prisma.serviceSettings.findFirst();

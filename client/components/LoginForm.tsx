@@ -165,20 +165,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
               Sign in with School Account
             </button>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/70 text-slate-500 font-medium">New to {settings?.serviceName || 'Room Booking'}?</span>
-              </div>
-            </div>
-            <Link
-              to="/register"
-              className="mt-4 w-full inline-block text-center py-3 px-4 border-2 border-primary/20 hover:border-primary/40 text-primary font-bold rounded-md hover:bg-primary/5 transition-all-smooth shadow-soft"
-            >
-              Create an Account
-            </Link>
+            {settings?.allowSelfRegistration && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white/70 text-slate-500 font-medium">New to {settings?.serviceName || 'Room Booking'}?</span>
+                  </div>
+                </div>
+                <Link
+                  to="/register"
+                  className="mt-4 w-full inline-block text-center py-3 px-4 border-2 border-primary/20 hover:border-primary/40 text-primary font-bold rounded-md hover:bg-primary/5 transition-all-smooth shadow-soft"
+                >
+                  Create an Account
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

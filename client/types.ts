@@ -91,6 +91,7 @@ export interface ServiceSettings {
   description?: string;
   allowedEmailDomains?: string; // comma-separated; empty = any domain
   operatingHours?: string; // JSON-encoded OperatingHours
+  allowSelfRegistration?: boolean; // false = accounts only via SSO, admin creation, or import
   updatedAt?: string;
 }
 

@@ -17,6 +17,7 @@ const SettingsTab: React.FC = () => {
         logoUrl: settings?.logoUrl || '',
         allowedEmailDomains: settings?.allowedEmailDomains || '',
     });
+    const [allowSelfRegistration, setAllowSelfRegistration] = useState(!!settings?.allowSelfRegistration);
     const [hours, setHours] = useState<OperatingHours>(parseOperatingHours(settings?.operatingHours));
 
     useEffect(() => {
@@ -30,6 +31,7 @@ const SettingsTab: React.FC = () => {
                 allowedEmailDomains: settings.allowedEmailDomains || '',
             });
             setHours(parseOperatingHours(settings.operatingHours));
+            setAllowSelfRegistration(!!settings.allowSelfRegistration);
         }
     }, [settings]);
 
@@ -45,7 +47,7 @@ const SettingsTab: React.FC = () => {
             return;
         }
         try {
-            await updateSettings({ ...formData, operatingHours: JSON.stringify(hours) });
+            await updateSettings({ ...formData, operatingHours: JSON.stringify(hours), allowSelfRegistration });
             toast.success('Settings updated successfully');
         } catch (error) {
             toast.error('Failed to update settings');
@@ -115,6 +117,21 @@ const SettingsTab: React.FC = () => {
                     />
                     <p className="text-xs text-slate-500 mt-1">
                         Comma-separated list. Only emails from these domains can register or sign in. Leave empty to allow any domain.
+                    </p>
+                </div>
+                <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={allowSelfRegistration}
+                            onChange={(e) => setAllowSelfRegistration(e.target.checked)}
+                            className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-sm font-bold text-slate-700">Allow self-registration</span>
+                    </label>
+                    <p className="text-xs text-slate-500 mt-1 ml-6">
+                        When off, the &quot;Create an Account&quot; option is hidden and new users can only join via
+                        Microsoft sign-in, admin creation, or bulk import.
                     </p>
                 </div>
                 <div>

@@ -126,6 +126,7 @@ model ServiceSettings {
   description  String?
   allowedEmailDomains String?  // comma-separated list; null/empty = any domain may sign up
   operatingHours      String?  // JSON array of 7 entries (Sun..Sat): {open, close} in hours, or null = closed; null field = default hours
+  allowSelfRegistration Boolean @default(false) // false = accounts only via SSO, admin creation, or import
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

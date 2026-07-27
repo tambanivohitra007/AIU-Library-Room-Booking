@@ -169,8 +169,16 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
-    // Validate email domain (configurable; empty allowlist = any domain)
     const settings = await getServiceSettings();
+
+    // Self-registration can be disabled entirely (SSO / admin-created accounts only)
+    if (!settings.allowSelfRegistration) {
+      return res.status(403).json({
+        error: 'Self-registration is disabled. Please sign in with your Microsoft account.',
+      });
+    }
+
+    // Validate email domain (configurable; empty allowlist = any domain)
     if (!isEmailAllowed(email, settings)) {
       return res.status(400).json({ error: allowedDomainsMessage(settings) });
     }

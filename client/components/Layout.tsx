@@ -151,34 +151,15 @@ const Layout: React.FC<LayoutProps> = ({
         <div className="w-full p-3 sm:p-4 min-h-full flex flex-col">
           <div className="flex-1">{children}</div>
 
-          {/* Developer Signature */}
-          <div className="mt-12 flex justify-center items-center border-t border-slate-200">
+          {/* Developer signature - intentionally unobtrusive */}
+          <div className="mt-6 py-2 flex justify-center">
             <a
               href="https://rindra.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-primary transition-colors"
+              className="text-[11px] text-slate-300 hover:text-slate-500 transition-colors"
             >
-              <svg
-                className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                />
-              </svg>
-              <span>
-                Developed by{' '}
-                <span className="font-bold group-hover:underline decoration-2 underline-offset-2">
-                  Rindra Razafinjatovo
-                </span>
-                . 2026
-              </span>
+              Developed by Rindra Razafinjatovo · 2026
             </a>
           </div>
         </div>

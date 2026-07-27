@@ -8,6 +8,10 @@ import {
   getEffectiveOperatingHours,
 } from '../utils/operatingHours';
 
+// Fixed height per hour: cells stay comfortable and the grid scrolls
+// vertically instead of compressing to fit the viewport (15-min slot = 14px)
+const HOUR_PX = 56;
+
 interface TimelineProps {
   weekStart: Date;
   bookings: Booking[];
@@ -175,6 +179,18 @@ const Timeline: React.FC<TimelineProps> = ({
     );
   };
 
+  // Start scrolled to the earliest opening hour (the 6:00 grid start is
+  // usually closed time nobody needs to see first)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = Math.max(
+        0,
+        (boundsOpen - gridOpen) * HOUR_PX,
+      );
+    }
+  }, [boundsOpen, gridOpen]);
+
   // Global mouse up to catch drags releasing outside grid
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -185,8 +201,11 @@ const Timeline: React.FC<TimelineProps> = ({
   }, [isDragging, dragStart, dragCurrent]);
 
   return (
-    <div className="flex-1 overflow-auto relative custom-scrollbar select-none">
-      <div className="min-w-[640px] lg:min-w-0 min-h-[500px] h-full flex flex-col relative">
+    <div
+      ref={scrollRef}
+      className="flex-1 overflow-auto relative custom-scrollbar select-none"
+    >
+      <div className="min-w-[640px] lg:min-w-0 flex flex-col relative">
         {/* Header Row: Days */}
         <div className="flex border-b border-slate-200 glass sticky top-0 z-40 ">
           <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 sticky left-0 z-50"></div>{' '}
@@ -215,8 +234,11 @@ const Timeline: React.FC<TimelineProps> = ({
           </div>
         </div>
 
-        {/* Grid Body */}
-        <div className="flex relative flex-1">
+        {/* Grid Body: fixed hour height, scrolls inside the container */}
+        <div
+          className="flex relative"
+          style={{ height: hours.length * HOUR_PX }}
+        >
           {/* Time Sidebar */}
           <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-30 pt-2 sticky left-0">
             {hours.map((h, idx) => (

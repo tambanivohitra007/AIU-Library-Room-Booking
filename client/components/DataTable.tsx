@@ -21,6 +21,7 @@ interface DataTableProps<TData> {
   pageSize?: number;
   emptyMessage?: string;
   emptyIcon?: React.ReactNode;
+  initialFilter?: string; // pre-fills the search box; re-applies when it changes
 }
 
 // Global filter function for searching across all columns
@@ -40,10 +41,18 @@ function DataTable<TData>({
   emptyMessage = 'No data found',
   emptyIcon,
   globalFilter = true,
+  initialFilter,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilterValue, setGlobalFilterValue] = useState('');
+  const [globalFilterValue, setGlobalFilterValue] = useState(
+    initialFilter ?? '',
+  );
+
+  // Apply an externally-provided filter (e.g. from the global search)
+  React.useEffect(() => {
+    if (initialFilter !== undefined) setGlobalFilterValue(initialFilter);
+  }, [initialFilter]);
 
   const table = useReactTable({
     data,

@@ -139,7 +139,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
             group: 'Users',
             label: u.name,
             sub: u.email,
-            action: () => navigate('/admin?tab=users'),
+            action: () =>
+              navigate(`/admin?tab=users&q=${encodeURIComponent(u.email)}`),
           }),
         );
     }

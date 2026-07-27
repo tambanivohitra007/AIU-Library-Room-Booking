@@ -110,6 +110,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showExportModal, setShowExportModal] = useState(false);
   const [showMoreSheet, setShowMoreSheet] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [usersFilter, setUsersFilter] = useState('');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -1093,6 +1094,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             data={users}
             columns={userColumns}
             searchPlaceholder="Search users..."
+            initialFilter={usersFilter}
             emptyMessage="No users found"
             emptyIcon={
               <svg
@@ -1566,11 +1568,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const activeTab = tabs.find((t) => t.id === selectedTab);
 
-  // Global search navigates here with ?tab=<id> to open a specific tab
+  // Global search navigates here with ?tab=<id> (and optionally ?q=<text>
+  // to pre-filter the users table) to open a specific tab
   useEffect(() => {
     const tab = searchParams.get('tab');
+    const q = searchParams.get('q');
     if (tab && tabs.some((t) => t.id === tab)) {
       setSelectedTab(tab as any);
+      if (tab === 'users') setUsersFilter(q || '');
       setSearchParams({}, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

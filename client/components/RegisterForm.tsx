@@ -67,7 +67,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
             </div>
 
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Join {settings?.serviceName || 'AIU Library'}</h1>
+          <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Join {settings?.serviceName || 'Room Booking'}</h1>
           <p className="text-blue-100 text-sm font-medium">Create your account to get started</p>
 
           <div className="absolute bottom-0 left-0 right-0 h-8">
@@ -126,7 +126,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
-                  placeholder="your.email@my.apiu.edu"
+                  placeholder="you@example.com"
                   required
                 />
               </div>

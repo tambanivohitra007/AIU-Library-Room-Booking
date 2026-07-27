@@ -64,7 +64,9 @@ The client polls the API every 5 seconds (`App.tsx`) for rooms and bookings. Sta
 - `features` on `Room` is stored as a **JSON string**, not a DB array — parse/stringify manually
 - `User.provider` defaults to `"LOCAL"`; Microsoft SSO users have a different provider value
 - `Booking` → `Attendee` cascade deletes on booking removal
-- `ServiceSettings` is a singleton row (only one settings record expected)
+- `ServiceSettings` is a singleton row (only one settings record expected). Besides branding, it holds:
+  - `allowedEmailDomains` — comma-separated domain allowlist for registration/SSO; empty = any domain
+  - `operatingHours` — JSON string: array of 7 entries (Sun..Sat), each `{open, close}` in hours or `null` (closed). Enforced server-side on booking creation and rendered by `Timeline`/`DayView`. Parsing helpers: `server/src/services/settings.ts` and `client/utils/operatingHours.ts`
 
 ## Environment Variables
 
@@ -75,6 +77,7 @@ JWT_SECRET=          # Required — strong random string
 PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:3000
+ADMIN_EMAILS=        # Comma-separated emails auto-granted ADMIN on first SSO sign-in
 ```
 
 ## Switching Databases

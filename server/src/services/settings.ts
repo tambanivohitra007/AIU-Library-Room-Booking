@@ -1,0 +1,126 @@
+import { PrismaClient, ServiceSettings } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export const DEFAULT_OPEN_HOUR = 8;
+export const DEFAULT_CLOSE_HOUR = 22;
+
+// One entry per weekday (0 = Sunday .. 6 = Saturday); null = closed all day
+export type DayHours = { open: number; close: number } | null;
+export type OperatingHours = DayHours[];
+
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export const DEFAULT_OPERATING_HOURS: OperatingHours = Array.from({ length: 7 }, () => ({
+  open: DEFAULT_OPEN_HOUR,
+  close: DEFAULT_CLOSE_HOUR,
+}));
+
+// The settings table is a singleton row; create it with defaults on first access
+export const getServiceSettings = async (): Promise<ServiceSettings> => {
+  const existing = await prisma.serviceSettings.findFirst();
+  if (existing) return existing;
+
+  return prisma.serviceSettings.create({
+    data: {
+      serviceName: 'Room Booking',
+      description: 'Room booking system',
+    },
+  });
+};
+
+export const parseAllowedDomains = (settings: ServiceSettings): string[] => {
+  return (settings.allowedEmailDomains || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean);
+};
+
+// Empty domain list = open registration (any domain accepted)
+export const isEmailAllowed = (email: string, settings: ServiceSettings): boolean => {
+  const domains = parseAllowedDomains(settings);
+  if (domains.length === 0) return true;
+  const emailLower = email.toLowerCase();
+  return domains.some((d) => emailLower.endsWith(`@${d}`));
+};
+
+export const allowedDomainsMessage = (settings: ServiceSettings): string => {
+  const domains = parseAllowedDomains(settings);
+  return `Access restricted. Please use an email from: ${domains.map((d) => `@${d}`).join(', ')}`;
+};
+
+const isValidDayHours = (entry: unknown): entry is DayHours => {
+  if (entry === null) return true;
+  if (typeof entry !== 'object') return false;
+  const { open, close } = entry as { open?: unknown; close?: unknown };
+  return (
+    Number.isInteger(open) &&
+    Number.isInteger(close) &&
+    (open as number) >= 0 &&
+    (close as number) <= 24 &&
+    (open as number) < (close as number)
+  );
+};
+
+export const parseOperatingHoursJson = (json: string | null | undefined): OperatingHours | null => {
+  if (!json) return null;
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed) || parsed.length !== 7 || !parsed.every(isValidDayHours)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+export const getOperatingHours = (settings: ServiceSettings): OperatingHours => {
+  return parseOperatingHoursJson(settings.operatingHours) || DEFAULT_OPERATING_HOURS;
+};
+
+const formatHour = (h: number) => `${h}:00`;
+
+// Validates that a booking falls entirely within the operating hours of its day.
+// Times are interpreted in the server's local timezone, consistent with the rest of the API.
+export const checkWithinOperatingHours = (
+  start: Date,
+  end: Date,
+  hours: OperatingHours
+): { ok: true } | { ok: false; error: string } => {
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
+
+  let endMinutes: number;
+  if (sameDay) {
+    endMinutes = end.getHours() * 60 + end.getMinutes();
+  } else {
+    // Allow an end at exactly midnight following the start day (close = 24)
+    const midnight = new Date(start);
+    midnight.setHours(24, 0, 0, 0);
+    if (end.getTime() === midnight.getTime()) {
+      endMinutes = 24 * 60;
+    } else {
+      return { ok: false, error: 'Bookings must start and end on the same day.' };
+    }
+  }
+
+  const day = start.getDay();
+  const dayHours = hours[day];
+
+  if (!dayHours) {
+    return { ok: false, error: `Bookings are not available on ${WEEKDAY_NAMES[day]}s.` };
+  }
+
+  const startMinutes = start.getHours() * 60 + start.getMinutes();
+  if (startMinutes < dayHours.open * 60 || endMinutes > dayHours.close * 60) {
+    return {
+      ok: false,
+      error: `Bookings on ${WEEKDAY_NAMES[day]}s are only available between ${formatHour(dayHours.open)} and ${formatHour(dayHours.close)}.`,
+    };
+  }
+
+  return { ok: true };
+};

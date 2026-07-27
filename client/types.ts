@@ -59,6 +59,10 @@ export interface Booking {
   createdAt: string;
 }
 
+// One entry per weekday (0 = Sunday .. 6 = Saturday); null = closed all day
+export type DayHours = { open: number; close: number } | null;
+export type OperatingHours = DayHours[];
+
 export interface ServiceSettings {
   id: string;
   serviceName: string;
@@ -66,6 +70,8 @@ export interface ServiceSettings {
   contactEmail?: string;
   websiteUrl?: string;
   description?: string;
+  allowedEmailDomains?: string; // comma-separated; empty = any domain
+  operatingHours?: string; // JSON-encoded OperatingHours
   updatedAt?: string;
 }
 

@@ -89,11 +89,13 @@ model Semester {
 
 model ServiceSettings {
   id           String   @id @default(uuid())
-  serviceName  String   @default("AIU Library Room Booking")
+  serviceName  String   @default("Room Booking")
   logoUrl      String?
   contactEmail String?
   websiteUrl   String?
   description  String?
+  allowedEmailDomains String?  // comma-separated list; null/empty = any domain may sign up
+  operatingHours      String?  // JSON array of 7 entries (Sun..Sat): {open, close} in hours, or null = closed; null field = default hours
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

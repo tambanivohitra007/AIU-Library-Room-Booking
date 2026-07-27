@@ -1,10 +1,12 @@
 
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { ServiceSettings } from '../types';
+import React, { createContext, useState, useEffect, useContext, ReactNode, useMemo } from 'react';
+import { ServiceSettings, OperatingHours } from '../types';
 import { api } from '../services/api';
+import { parseOperatingHours } from '../utils/operatingHours';
 
 interface SettingsContextType {
     settings: ServiceSettings | null;
+    operatingHours: OperatingHours;
     updateSettings: (newSettings: Partial<ServiceSettings>) => Promise<void>;
     loading: boolean;
     error: string | null;
@@ -23,7 +25,7 @@ export const useSettings = (): SettingsContextType => {
 // Default settings if API fails or initially
 const DEFAULT_SETTINGS: ServiceSettings = {
     id: 'default',
-    serviceName: 'AIU Library Room Booking',
+    serviceName: 'Room Booking',
     description: 'Room Booking System',
 };
 
@@ -66,8 +68,14 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         fetchSettings();
     }, []);
 
+    const operatingHours = useMemo(
+        () => parseOperatingHours(settings?.operatingHours),
+        [settings?.operatingHours]
+    );
+
     const value = {
         settings,
+        operatingHours,
         updateSettings,
         loading,
         error

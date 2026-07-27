@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Booking, Room, User, UserRole } from '../types';
-import { OPENING_HOUR, CLOSING_HOUR } from '../constants';
+import { useSettings } from '../contexts/SettingsContext';
+import { getGridBounds, getClosedRanges, isRangeClosed } from '../utils/operatingHours';
 
 interface TimelineProps {
   weekStart: Date;
@@ -13,6 +14,8 @@ interface TimelineProps {
 }
 
 const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentUser, onRangeSelect, onBookingClick, selectedRange }) => {
+  const { operatingHours } = useSettings();
+  const { open: gridOpen, close: gridClose } = useMemo(() => getGridBounds(operatingHours), [operatingHours]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ dayIndex: number; minutes: number } | null>(null);
   const [dragCurrent, setDragCurrent] = useState<{ dayIndex: number; minutes: number } | null>(null);
@@ -28,9 +31,9 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
 
   const hours = useMemo(() => {
     const h = [];
-    for (let i = OPENING_HOUR; i < CLOSING_HOUR; i++) h.push(i);
+    for (let i = gridOpen; i < gridClose; i++) h.push(i);
     return h;
-  }, []);
+  }, [gridOpen, gridClose]);
 
   // Filter bookings for this week AND this room (only show CONFIRMED bookings)
   const weekBookings = useMemo(() => {
@@ -47,27 +50,10 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
     });
   }, [bookings, weekStart, room.id]);
 
-  // Check if a time is during library closure (Friday 5 PM - Sunday 8 AM)
-  const isLibraryClosed = (date: Date) => {
-    const day = date.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
-    const hour = date.getHours();
-
-    // Saturday - all day closed
-    if (day === 6) return true;
-
-    // Friday after 5 PM (17:00)
-    if (day === 5 && hour >= 17) return true;
-
-    // Sunday before opening hour (8 AM)
-    if (day === 0 && hour < OPENING_HOUR) return true;
-
-    return false;
-  };
-
-  // Check if a range overlaps with existing bookings OR library closure
+  // Check if a range overlaps with existing bookings OR closed hours
   const checkOverlap = (start: Date, end: Date) => {
-    // Check if time falls during library closure
-    if (isLibraryClosed(start) || isLibraryClosed(end)) {
+    // Check if time falls outside configured operating hours
+    if (isRangeClosed(start, end, operatingHours)) {
       return true;
     }
 
@@ -84,7 +70,7 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
     if (e.button !== 0) return; // Only left click
     // Check if clicking on an existing event (approximated by checking if slot is occupied)
     const slotTime = new Date(days[dayIndex]);
-    slotTime.setHours(OPENING_HOUR + Math.floor(minutes / 60), minutes % 60, 0, 0);
+    slotTime.setHours(gridOpen + Math.floor(minutes / 60), minutes % 60, 0, 0);
     // Slight buffer for check
     const slotEnd = new Date(slotTime);
     slotEnd.setMinutes(slotEnd.getMinutes() + 15);
@@ -113,10 +99,10 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
         // Construct Date objects
         const date = days[dragStart.dayIndex];
         const startTime = new Date(date);
-        startTime.setHours(OPENING_HOUR, startMin, 0, 0);
-        
+        startTime.setHours(gridOpen, startMin, 0, 0);
+
         const endTime = new Date(date);
-        endTime.setHours(OPENING_HOUR, endMin, 0, 0);
+        endTime.setHours(gridOpen, endMin, 0, 0);
 
         // Validate overlap
         if (!checkOverlap(startTime, endTime)) {
@@ -130,9 +116,9 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
 
   // Helper to calculate CSS Position
   const getPositionStyle = (start: Date, end: Date) => {
-    const startMinutes = (start.getHours() - OPENING_HOUR) * 60 + start.getMinutes();
+    const startMinutes = (start.getHours() - gridOpen) * 60 + start.getMinutes();
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
-    const totalDayMinutes = (CLOSING_HOUR - OPENING_HOUR) * 60;
+    const totalDayMinutes = (gridClose - gridOpen) * 60;
 
     const topPercent = (startMinutes / totalDayMinutes) * 100;
     const heightPercent = (durationMinutes / totalDayMinutes) * 100;
@@ -223,8 +209,8 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                     const startMin = Math.min(dragStart.minutes, dragCurrent.minutes - 15);
                     const endMin = Math.max(dragStart.minutes, dragCurrent.minutes - 15) + 15;
                     
-                    const s = new Date(day); s.setHours(OPENING_HOUR, startMin, 0, 0);
-                    const e = new Date(day); e.setHours(OPENING_HOUR, endMin, 0, 0);
+                    const s = new Date(day); s.setHours(gridOpen, startMin, 0, 0);
+                    const e = new Date(day); e.setHours(gridOpen, endMin, 0, 0);
                     
                     dragStyle = getPositionStyle(s, e);
                     isDragValid = !checkOverlap(s, e);
@@ -242,32 +228,12 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                    }
                }
 
-               // Calculate closed hours overlay
-               const dayOfWeek = day.getDay();
-               let closedStyle = null;
-               let closedLabel = '';
-
-               if (dayOfWeek === 6) {
-                   // Saturday - all day closed
-                   closedStyle = { top: '0%', height: '100%' };
-                   closedLabel = 'Library Closed';
-               } else if (dayOfWeek === 5) {
-                   // Friday - closed from 5 PM (17:00) onwards
-                   const closedStart = new Date(day);
-                   closedStart.setHours(17, 0, 0, 0);
-                   const closedEnd = new Date(day);
-                   closedEnd.setHours(CLOSING_HOUR, 0, 0, 0);
-                   closedStyle = getPositionStyle(closedStart, closedEnd);
-                   closedLabel = 'Closed';
-               } else if (dayOfWeek === 0) {
-                   // Sunday - closed until opening hour
-                   const closedStart = new Date(day);
-                   closedStart.setHours(OPENING_HOUR, 0, 0, 0);
-                   const closedEnd = new Date(day);
-                   closedEnd.setHours(OPENING_HOUR, 0, 0, 0);
-                   closedStyle = getPositionStyle(closedStart, closedEnd);
-                   closedLabel = 'Closed';
-               }
+               // Calculate closed hours overlays from configured operating hours
+               const totalGridMinutes = (gridClose - gridOpen) * 60;
+               const closedOverlays = getClosedRanges(day, operatingHours, gridOpen, gridClose).map(r => ({
+                   top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
+                   height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+               }));
 
                return (
                  <div key={dayIndex} className={`relative h-full group ${today ? 'bg-indigo-50/20' : ''}`}>
@@ -362,20 +328,21 @@ const Timeline: React.FC<TimelineProps> = ({ weekStart, bookings, room, currentU
                         )
                     })}
 
-                    {/* Library Closed Overlay */}
-                    {closedStyle && (
+                    {/* Closed Hours Overlays */}
+                    {closedOverlays.map((overlayStyle, oIndex) => (
                         <div
+                            key={oIndex}
                             className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center rounded"
-                            style={{ ...closedStyle, left: '4px', right: '4px' }}
+                            style={{ ...overlayStyle, left: '4px', right: '4px' }}
                         >
                             <div className="text-slate-400 text-[10px] sm:text-xs font-semibold p-2 flex items-center gap-1 flex-col sm:flex-row shadow-sm bg-white/50 rounded px-2 py-1">
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                                <span>{closedLabel}</span>
+                                <span>Closed</span>
                             </div>
                         </div>
-                    )}
+                    ))}
                  </div>
                );
              })}

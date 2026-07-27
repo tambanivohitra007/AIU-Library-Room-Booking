@@ -95,7 +95,7 @@ class MockService {
     const startHour = start.getHours();
     const endHour = end.getHours() + (end.getMinutes() / 60);
     if (startHour < OPENING_HOUR || endHour > CLOSING_HOUR) {
-        return { success: false, error: `Library hours are ${OPENING_HOUR}:00 to ${CLOSING_HOUR}:00.` };
+        return { success: false, error: `Operating hours are ${OPENING_HOUR}:00 to ${CLOSING_HOUR}:00.` };
     }
 
     // 4. Overlap Check

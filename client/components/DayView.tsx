@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Booking, Room, User, UserRole } from '../types';
-import { OPENING_HOUR, CLOSING_HOUR } from '../constants';
+import { useSettings } from '../contexts/SettingsContext';
+import { getGridBounds, getClosedRanges, isRangeClosed } from '../utils/operatingHours';
 
 interface DayViewProps {
   selectedDate: Date;
@@ -21,15 +22,17 @@ const DayView: React.FC<DayViewProps> = ({
   onBookingClick,
   selectedRange,
 }) => {
+  const { operatingHours } = useSettings();
+  const { open: gridOpen, close: gridClose } = useMemo(() => getGridBounds(operatingHours), [operatingHours]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragCurrent, setDragCurrent] = useState<number | null>(null);
 
   const hours = useMemo(() => {
     const h = [];
-    for (let i = OPENING_HOUR; i < CLOSING_HOUR; i++) h.push(i);
+    for (let i = gridOpen; i < gridClose; i++) h.push(i);
     return h;
-  }, []);
+  }, [gridOpen, gridClose]);
 
   // Filter bookings for this day and room (only show CONFIRMED bookings)
   const dayBookings = useMemo(() => {
@@ -45,26 +48,9 @@ const DayView: React.FC<DayViewProps> = ({
     });
   }, [bookings, selectedDate, room.id]);
 
-  // Check if a time is during library closure (Friday 5 PM - Sunday 8 AM)
-  const isLibraryClosed = (date: Date) => {
-    const day = date.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
-    const hour = date.getHours();
-
-    // Saturday - all day closed
-    if (day === 6) return true;
-
-    // Friday after 5 PM (17:00)
-    if (day === 5 && hour >= 17) return true;
-
-    // Sunday before opening hour (8 AM)
-    if (day === 0 && hour < OPENING_HOUR) return true;
-
-    return false;
-  };
-
   const checkOverlap = (start: Date, end: Date) => {
-    // Check if time falls during library closure
-    if (isLibraryClosed(start) || isLibraryClosed(end)) {
+    // Check if time falls outside configured operating hours
+    if (isRangeClosed(start, end, operatingHours)) {
       return true;
     }
 
@@ -77,9 +63,9 @@ const DayView: React.FC<DayViewProps> = ({
   };
 
   const getPositionStyle = (start: Date, end: Date) => {
-    const startMinutes = (start.getHours() - OPENING_HOUR) * 60 + start.getMinutes();
+    const startMinutes = (start.getHours() - gridOpen) * 60 + start.getMinutes();
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
-    const totalDayMinutes = (CLOSING_HOUR - OPENING_HOUR) * 60;
+    const totalDayMinutes = (gridClose - gridOpen) * 60;
 
     const topPercent = (startMinutes / totalDayMinutes) * 100;
     const heightPercent = (durationMinutes / totalDayMinutes) * 100;
@@ -94,7 +80,7 @@ const DayView: React.FC<DayViewProps> = ({
     if (e.button !== 0) return;
 
     const slotTime = new Date(selectedDate);
-    slotTime.setHours(OPENING_HOUR + Math.floor(minutes / 60), minutes % 60, 0, 0);
+    slotTime.setHours(gridOpen + Math.floor(minutes / 60), minutes % 60, 0, 0);
     const slotEnd = new Date(slotTime);
     slotEnd.setMinutes(slotEnd.getMinutes() + 15);
 
@@ -116,10 +102,10 @@ const DayView: React.FC<DayViewProps> = ({
       const endMin = Math.max(dragStart, dragCurrent - 15) + 15;
 
       const startTime = new Date(selectedDate);
-      startTime.setHours(OPENING_HOUR, startMin, 0, 0);
+      startTime.setHours(gridOpen, startMin, 0, 0);
 
       const endTime = new Date(selectedDate);
-      endTime.setHours(OPENING_HOUR, endMin, 0, 0);
+      endTime.setHours(gridOpen, endMin, 0, 0);
 
       if (!checkOverlap(startTime, endTime)) {
         onRangeSelect(startTime, endTime);
@@ -138,9 +124,9 @@ const DayView: React.FC<DayViewProps> = ({
     const endMin = Math.max(dragStart, dragCurrent - 15) + 15;
 
     const s = new Date(selectedDate);
-    s.setHours(OPENING_HOUR, startMin, 0, 0);
+    s.setHours(gridOpen, startMin, 0, 0);
     const e = new Date(selectedDate);
-    e.setHours(OPENING_HOUR, endMin, 0, 0);
+    e.setHours(gridOpen, endMin, 0, 0);
 
     dragStyle = getPositionStyle(s, e);
     isDragValid = !checkOverlap(s, e);
@@ -160,32 +146,12 @@ const DayView: React.FC<DayViewProps> = ({
     }
   }
 
-  // Calculate closed hours overlay
-  const dayOfWeek = selectedDate.getDay();
-  let closedStyle = null;
-  let closedLabel = '';
-
-  if (dayOfWeek === 6) {
-    // Saturday - all day closed
-    closedStyle = { top: '0%', height: '100%' };
-    closedLabel = 'Library Closed';
-  } else if (dayOfWeek === 5) {
-    // Friday - closed from 5 PM (17:00) onwards
-    const closedStart = new Date(selectedDate);
-    closedStart.setHours(17, 0, 0, 0);
-    const closedEnd = new Date(selectedDate);
-    closedEnd.setHours(CLOSING_HOUR, 0, 0, 0);
-    closedStyle = getPositionStyle(closedStart, closedEnd);
-    closedLabel = 'Closed';
-  } else if (dayOfWeek === 0) {
-    // Sunday - closed until opening hour
-    const closedStart = new Date(selectedDate);
-    closedStart.setHours(OPENING_HOUR, 0, 0, 0);
-    const closedEnd = new Date(selectedDate);
-    closedEnd.setHours(OPENING_HOUR, 0, 0, 0);
-    closedStyle = getPositionStyle(closedStart, closedEnd);
-    closedLabel = 'Closed';
-  }
+  // Calculate closed hours overlays from configured operating hours
+  const totalGridMinutes = (gridClose - gridOpen) * 60;
+  const closedOverlays = getClosedRanges(selectedDate, operatingHours, gridOpen, gridClose).map((r) => ({
+    top: `${(((r.startHour - gridOpen) * 60) / totalGridMinutes) * 100}%`,
+    height: `${(((r.endHour - r.startHour) * 60) / totalGridMinutes) * 100}%`,
+  }));
 
   return (
     <div className="flex flex-col h-full select-none">
@@ -228,7 +194,7 @@ const DayView: React.FC<DayViewProps> = ({
             {/* Time Slots */}
             <div className="absolute inset-0 z-10">
               {hours.map((h, hIndex) => (
-                <div key={h} className="h-[calc(100%/14)] flex flex-col">
+                <div key={h} style={{ height: `${100 / hours.length}%` }} className="flex flex-col">
                   {[0, 15, 30, 45].map((m) => (
                     <div
                       key={m}
@@ -304,20 +270,21 @@ const DayView: React.FC<DayViewProps> = ({
               );
             })}
 
-            {/* Library Closed Overlay */}
-            {closedStyle && (
+            {/* Closed Hours Overlays */}
+            {closedOverlays.map((overlayStyle, oIndex) => (
               <div
+                key={oIndex}
                 className="absolute left-0 right-0 z-40 bg-slate-100/90 pointer-events-none flex items-center justify-center"
-                style={{ ...closedStyle, left: '8px', right: '8px' }}
+                style={{ ...overlayStyle, left: '8px', right: '8px' }}
               >
                 <div className="text-slate-400 text-sm font-semibold p-2 flex items-center gap-2 bg-white/50 rounded px-3 py-1.5 shadow-sm">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  {closedLabel}
+                  Closed
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>

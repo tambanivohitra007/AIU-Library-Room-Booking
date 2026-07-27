@@ -33,7 +33,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
-        documentTitle: `AIU_Library_${reportType}_Report`,
+        documentTitle: `${(settings?.serviceName || 'Booking').replace(/\s+/g, '_')}_${reportType}_Report`,
     });
 
     // --- Filtering Logic ---

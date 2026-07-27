@@ -4,6 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail } from '../services/email.js';
+import { getServiceSettings, getOperatingHours, checkWithinOperatingHours } from '../services/settings.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -170,6 +171,13 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({
         error: 'Booking end time cannot be in the past.',
       });
+    }
+
+    // Check configurable operating hours (was previously only enforced client-side)
+    const settings = await getServiceSettings();
+    const hoursCheck = checkWithinOperatingHours(bookingStart, bookingEnd, getOperatingHours(settings));
+    if (!hoursCheck.ok) {
+      return res.status(400).json({ error: hoursCheck.error });
     }
 
     // Check Semester Validity

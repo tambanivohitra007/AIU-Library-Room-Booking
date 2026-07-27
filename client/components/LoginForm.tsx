@@ -55,7 +55,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Welcome Back</h1>
-          <p className="text-blue-100 text-sm font-medium">{settings?.serviceName || 'AIU Library Room Booking'}</p>
+          <p className="text-blue-100 text-sm font-medium">{settings?.serviceName || 'Room Booking'}</p>
 
           {/* Decorative bottom curve */}
           <div className="absolute bottom-0 left-0 right-0 h-8">
@@ -93,7 +93,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth text-slate-900 placeholder-slate-400 font-medium shadow-soft"
-                  placeholder="your.email@my.apiu.edu"
+                  placeholder="you@example.com"
                   required
                 />
               </div>
@@ -170,7 +170,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                 <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white/70 text-slate-500 font-medium">New to {settings?.serviceName || 'AIU Library'}?</span>
+                <span className="px-4 bg-white/70 text-slate-500 font-medium">New to {settings?.serviceName || 'Room Booking'}?</span>
               </div>
             </div>
             <Link

@@ -151,7 +151,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p>
-                      This user signed in with a School Microsoft Account.<br/>
+                      This user signed in with a Microsoft account.<br/>
                       Their password is managed by the university and cannot be changed here.
                     </p>
                 </div>

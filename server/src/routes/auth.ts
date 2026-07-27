@@ -5,14 +5,11 @@ import { generateToken, authenticateToken, AuthRequest } from '../middleware/aut
 import { authLimiter } from '../middleware/security.js';
 import { validateRegister, validateLogin } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
-import { ADMIN_EMAILS } from '../config/admins.js';
+import { getAdminEmails } from '../config/admins.js';
+import { getServiceSettings, isEmailAllowed, allowedDomainsMessage } from '../services/settings.js';
 
 const router = Router();
 const prisma = new PrismaClient();
-
-// Allowed email domains
-const STUDENT_DOMAIN = '@my.apiu.edu';
-const STAFF_DOMAIN = '@apiu.edu';
 
 // --- Microsoft SSO Routes ---
 
@@ -105,14 +102,10 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Could not retrieve email from Microsoft account' });
     }
 
-    const isStudentEmail = email.endsWith(STUDENT_DOMAIN);
-    const isStaffEmail = email.endsWith(STAFF_DOMAIN);
-
-    // Strict Domain Check
-    if (!isStudentEmail && !isStaffEmail) {
-       return res.status(403).json({ 
-         error: `Access restricted. Please use your ${STUDENT_DOMAIN} or ${STAFF_DOMAIN} account.` 
-       });
+    // Domain check (configurable; empty allowlist = any domain)
+    const settings = await getServiceSettings();
+    if (!isEmailAllowed(email, settings)) {
+       return res.status(403).json({ error: allowedDomainsMessage(settings) });
     }
 
     // D. Find or Create User in Database
@@ -122,7 +115,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
 
     if (!user) {
       // Create new user (No password)
-      const isAdmin = ADMIN_EMAILS.includes(email);
+      const isAdmin = getAdminEmails().includes(email);
       
       user = await prisma.user.create({
         data: {
@@ -174,15 +167,10 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
-    // Validate email domain
-    const emailLower = email.toLowerCase();
-    const isStudentEmail = emailLower.endsWith(STUDENT_DOMAIN);
-    const isStaffEmail = emailLower.endsWith(STAFF_DOMAIN);
-
-    if (!isStudentEmail && !isStaffEmail) {
-      return res.status(400).json({ 
-        error: `Only university emails are allowed. Students must use ${STUDENT_DOMAIN} and staff must use ${STAFF_DOMAIN}` 
-      });
+    // Validate email domain (configurable; empty allowlist = any domain)
+    const settings = await getServiceSettings();
+    if (!isEmailAllowed(email, settings)) {
+      return res.status(400).json({ error: allowedDomainsMessage(settings) });
     }
 
     // Check if user already exists
@@ -253,7 +241,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
 
     // Verify password
     if (!user.password) {
-      return res.status(401).json({ error: 'Please sign in using your School Microsoft Account' });
+      return res.status(401).json({ error: 'Please sign in using your Microsoft account' });
     }
     
     const isValidPassword = await bcrypt.compare(password, user.password);

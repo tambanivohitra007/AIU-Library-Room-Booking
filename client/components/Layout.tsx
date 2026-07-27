@@ -35,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
             <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-white/20 rounded-md mix-blend-overlay"></div>
           </div>
           <div>
-            <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">{settings?.serviceName || 'AIU Library'}</h1>
+            <h1 className="font-bold text-lg sm:text-xl text-white tracking-tight">{settings?.serviceName || 'Room Booking'}</h1>
             <p className="text-xs text-blue-200 hidden sm:block font-medium">{settings?.description || 'Room Booking System'}</p>
           </div>
         </div>
@@ -65,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
               <div className="absolute right-0 top-14 glass border border-white/20 rounded-lg shadow-strong py-2 min-w-[220px] z-40 animate-slide-down">
                 <div className="px-4 py-3 border-b border-slate-200/50">
                   <p className="text-sm font-bold text-slate-800">{user.name}</p>
-                  <p className="text-xs text-slate-500 font-medium">{user.email || `${user.role.toLowerCase()}@apiu.edu`}</p>
+                  <p className="text-xs text-slate-500 font-medium">{user.email || user.role.toLowerCase()}</p>
                 </div>
                 {(!user.provider || user.provider === 'LOCAL') && (
                   <button
@@ -117,7 +117,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, onChangePassw
               <svg className="w-3 h-3 text-slate-300 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
-              <span>Developed by <span className="font-bold group-hover:underline decoration-2 underline-offset-2">Rindra Razafinjatovo</span>. AIU 2026</span>
+              <span>Developed by <span className="font-bold group-hover:underline decoration-2 underline-offset-2">Rindra Razafinjatovo</span>. 2026</span>
             </a>
           </div>
         </div>

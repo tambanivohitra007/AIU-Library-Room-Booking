@@ -1,7 +1,7 @@
 {
-  "name": "aiu-library-booking-server",
+  "name": "room-booking-server",
   "version": "1.0.0",
-  "description": "AIU Library Room Booking API Server",
+  "description": "Room Booking API Server",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

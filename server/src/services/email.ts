@@ -1,11 +1,29 @@
 import logger from '../utils/logger.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getServiceSettings } from './settings.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const LOGO_PATH = path.join(__dirname, '../../../client/assets/logo_small.jpg');
+interface Branding {
+  serviceName: string;
+  logoUrl: string;
+  contactEmail: string | null;
+}
+
+const getBranding = async (): Promise<Branding> => {
+  try {
+    const settings = await getServiceSettings();
+    return {
+      serviceName: settings.serviceName,
+      logoUrl: settings.logoUrl || `${process.env.CLIENT_URL || 'http://localhost:3000'}/assets/logo_small.jpg`,
+      contactEmail: settings.contactEmail || null,
+    };
+  } catch (error) {
+    logger.error('Failed to load branding settings for email:', error);
+    return {
+      serviceName: 'Room Booking',
+      logoUrl: `${process.env.CLIENT_URL || 'http://localhost:3000'}/assets/logo_small.jpg`,
+      contactEmail: null,
+    };
+  }
+};
 
 // Graph API Configuration
 const TENANT_ID = process.env.AZURE_TENANT_ID;
@@ -128,12 +146,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 
 
 // HTML Email Template Builder
-const getEmailTemplate = (title: string, content: string) => {
-  // Use a publicly accessible URL for the logo if possible, or embed it if small enough.
-  // Since we can't easily embed local files in email clients, we'll use a placeholder or public URL
-  // For production, this should be hosted (e.g., https://your-domain.com/assets/logo.png)
-  const logoUrl = `${process.env.CLIENT_URL || 'https://booking.apiu.edu'}/assets/logo_small.jpg`;
-
+const getEmailTemplate = (title: string, content: string, branding: Branding) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -168,15 +181,15 @@ const getEmailTemplate = (title: string, content: string) => {
       <div class="container">
         <div class="header">
           <!-- Logo -->
-          <img src="${logoUrl}" alt="AIU Library Logo">
+          <img src="${branding.logoUrl}" alt="${branding.serviceName} logo">
           <h1>${title}</h1>
         </div>
         <div class="content">
           ${content}
         </div>
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} Asia-Pacific International University Library.</p>
-          <p>For assistance, please contact <a href="mailto:libadmin@apiu.edu">libadmin@apiu.edu</a></p>
+          <p>&copy; ${new Date().getFullYear()} ${branding.serviceName}.</p>
+          ${branding.contactEmail ? `<p>For assistance, please contact <a href="mailto:${branding.contactEmail}">${branding.contactEmail}</a></p>` : ''}
         </div>
       </div>
     </body>
@@ -189,8 +202,9 @@ export const sendCancellationEmail = async (
   userName: string, 
   details: { roomName: string; startTime: Date; reason?: string }
 ) => {
-  const subject = 'Booking Cancelled - AIU Library Room Booking';
-  
+  const branding = await getBranding();
+  const subject = `Booking Cancelled - ${branding.serviceName}`;
+
   const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -205,7 +219,7 @@ export const sendCancellationEmail = async (
 
   const message = `
     <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>This email is to inform you that your room reservation at the AIU Library has been cancelled.</p>
+    <p>This email is to inform you that your room reservation with ${branding.serviceName} has been cancelled.</p>
     
     <div class="info-box cancel-warning">
       <div class="info-row">
@@ -227,14 +241,14 @@ export const sendCancellationEmail = async (
       </div>` : ''}
     </div>
 
-    <p>If you believe this cancellation was made in error or if you have any questions, please contact the library administration immediately.</p>
-    
+    <p>If you believe this cancellation was made in error or if you have any questions, please contact the administrators immediately.</p>
+
     <div style="text-align: center;">
-      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}" class="button">Visit Library System</a>
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}" class="button">Visit Booking System</a>
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Cancelled', message));
+  await sendEmail(email, subject, getEmailTemplate('Booking Cancelled', message, branding));
 };
 
 export const sendReminderEmail = async (
@@ -242,8 +256,9 @@ export const sendReminderEmail = async (
   userName: string, 
   details: { roomName: string; startTime: Date; endTime: Date }
 ) => {
+  const branding = await getBranding();
   const subject = 'Reminder: Your Booking Starts Soon';
-  
+
   const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -262,7 +277,7 @@ export const sendReminderEmail = async (
 
   const message = `
     <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>This is a friendly reminder that your upcoming room reservation at the AIU Library is scheduled to begin soon.</p>
+    <p>This is a friendly reminder that your upcoming room reservation with ${branding.serviceName} is scheduled to begin soon.</p>
     
     <div class="info-box">
       <div class="info-row">
@@ -279,12 +294,12 @@ export const sendReminderEmail = async (
       </div>
     </div>
 
-    <p>Please ensure you arrive on time. If you no longer need the room, please cancel your booking to make it available for other students.</p>
+    <p>Please ensure you arrive on time. If you no longer need the room, please cancel your booking to make it available for others.</p>
     
     <div style="text-align: center;">
       <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">View My Bookings</a>
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Reminder', message));
+  await sendEmail(email, subject, getEmailTemplate('Booking Reminder', message, branding));
 };

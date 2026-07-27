@@ -29,6 +29,7 @@ const HomePage: React.FC<HomePageProps> = ({
     rooms.length > 0 ? rooms[0].id : '',
   );
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all');
+  const [roomSearch, setRoomSearch] = useState('');
 
   // Departments derived from the rooms themselves; empty when the feature is unused
   const departments = useMemo(() => {
@@ -41,15 +42,28 @@ const HomePage: React.FC<HomePageProps> = ({
     );
   }, [rooms]);
 
-  const visibleRooms = useMemo(() => {
-    if (selectedDeptId === 'all') return rooms;
-    return rooms.filter((r) => r.departmentId === selectedDeptId);
-  }, [rooms, selectedDeptId]);
+  const matchesSearch = (room: Room, q: string) =>
+    room.name.toLowerCase().includes(q) ||
+    room.description.toLowerCase().includes(q) ||
+    room.features.some((f) => f.toLowerCase().includes(q)) ||
+    (room.department?.name.toLowerCase().includes(q) ?? false);
 
-  // Sidebar room list grouped by department (unassigned last)
+  const visibleRooms = useMemo(() => {
+    const q = roomSearch.trim().toLowerCase();
+    let pool =
+      selectedDeptId === 'all'
+        ? rooms
+        : rooms.filter((r) => r.departmentId === selectedDeptId);
+    if (q) pool = pool.filter((r) => matchesSearch(r, q));
+    return pool;
+  }, [rooms, selectedDeptId, roomSearch]);
+
+  // Sidebar room list grouped by department (unassigned last), search-filtered
   const roomGroups = useMemo(() => {
+    const q = roomSearch.trim().toLowerCase();
+    const pool = q ? rooms.filter((r) => matchesSearch(r, q)) : rooms;
     const groups = new Map<string, { name: string; rooms: Room[] }>();
-    for (const room of rooms) {
+    for (const room of pool) {
       const key = room.departmentId || 'none';
       const name =
         room.department?.name ||
@@ -62,7 +76,7 @@ const HomePage: React.FC<HomePageProps> = ({
       .sort((a, b) =>
         a.key === 'none' ? 1 : b.key === 'none' ? -1 : a.name.localeCompare(b.name),
       );
-  }, [rooms, departments.length]);
+  }, [rooms, departments.length, roomSearch]);
 
   const handleDeptSelect = (deptId: string) => {
     setSelectedDeptId(deptId);
@@ -85,6 +99,15 @@ const HomePage: React.FC<HomePageProps> = ({
   } | null>(null);
   const [detailsRoom, setDetailsRoom] = useState<Room | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Open the booking form pre-filled with the next half-hour slot
+  const handleNewBooking = () => {
+    const start = new Date();
+    start.setMinutes(start.getMinutes() + (30 - (start.getMinutes() % 30)), 0, 0);
+    const end = new Date(start.getTime() + 60 * 60000);
+    setSelectedBooking(null);
+    setSelectedRange({ start, end });
+  };
 
   const handleRangeSelect = (start: Date, end: Date) => {
     setSelectedBooking(null);
@@ -134,7 +157,7 @@ const HomePage: React.FC<HomePageProps> = ({
         });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-100px)] animate-fade-in">
+    <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-96px)] animate-fade-in">
       {/* Outlook-style Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -232,7 +255,29 @@ const HomePage: React.FC<HomePageProps> = ({
       </div>
 
       {/* Mobile-only room browsing (desktop uses the sidebar) */}
-      <div className="lg:hidden">
+      <div className="lg:hidden space-y-2">
+        <div className="relative">
+          <svg
+            className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            value={roomSearch}
+            onChange={(e) => setRoomSearch(e.target.value)}
+            placeholder="Search rooms"
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+          />
+        </div>
         {/* Department Filter (only when departments are in use) */}
         {departments.length > 0 && (
           <div className="flex gap-2 overflow-x-auto px-1 -mx-1 scrollbar-hide snap-x">
@@ -334,13 +379,62 @@ const HomePage: React.FC<HomePageProps> = ({
       <div className="flex-1 bg-white border border-slate-200 rounded-md overflow-hidden flex relative min-h-0">
         {/* Left Sidebar (desktop) */}
         <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-slate-50 border-r border-slate-200 overflow-y-auto custom-scrollbar">
-          <div className="p-3 border-b border-slate-200">
+          <div className="p-3">
+            <button
+              onClick={handleNewBooking}
+              disabled={!activeRoom}
+              className="w-full py-2 px-4 bg-primary hover:bg-primary-light text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New Booking
+            </button>
+          </div>
+          <div className="px-3 pb-3 border-b border-slate-200">
             <MiniCalendar
               selectedDate={currentDate}
               onDateSelect={(date) => setCurrentDate(date)}
             />
           </div>
           <div className="p-3 space-y-4">
+            <div className="relative">
+              <svg
+                className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                value={roomSearch}
+                onChange={(e) => setRoomSearch(e.target.value)}
+                placeholder="Search rooms"
+                className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              />
+            </div>
+            {roomGroups.length === 0 && (
+              <p className="px-2 text-sm text-slate-400 italic">
+                No rooms match your search.
+              </p>
+            )}
             {roomGroups.map((group) => (
               <div key={group.key}>
                 <p className="px-2 mb-1 text-xs font-bold text-primary">
@@ -515,6 +609,28 @@ const HomePage: React.FC<HomePageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Mobile: New Booking FAB */}
+      <button
+        onClick={handleNewBooking}
+        disabled={!activeRoom}
+        className="lg:hidden fixed bottom-24 right-4 z-40 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
+        aria-label="New booking"
+      >
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </button>
 
       {/* Read-only Room Details */}
       {detailsRoom && (

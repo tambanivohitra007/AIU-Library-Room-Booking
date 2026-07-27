@@ -415,7 +415,7 @@ const HomePage: React.FC<HomePageProps> = ({
       {/* Main Area: Sidebar + Calendar (Outlook shell) */}
       <div className="flex-1 bg-white border border-slate-200 rounded-md overflow-hidden flex relative min-h-0">
         {/* Left Sidebar (desktop) */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-slate-50 border-r border-slate-200 overflow-y-auto custom-scrollbar">
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-slate-50 border-r border-slate-200 overflow-y-auto overflow-x-hidden custom-scrollbar">
           <div className="p-3">
             <button
               onClick={handleNewBooking}

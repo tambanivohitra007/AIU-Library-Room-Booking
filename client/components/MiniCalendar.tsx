@@ -68,7 +68,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-3 w-64">
+    <div className="bg-white border border-slate-200 rounded-lg p-3 w-64 max-w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <button

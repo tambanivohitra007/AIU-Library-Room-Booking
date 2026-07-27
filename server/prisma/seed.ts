@@ -4,6 +4,11 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Refusing to seed: NODE_ENV=production (seeding wipes all users, rooms, and bookings).');
+    process.exit(1);
+  }
+
   console.log('Seeding database...');
 
   // Clear existing data

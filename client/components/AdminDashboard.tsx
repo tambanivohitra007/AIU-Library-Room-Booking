@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { User, Room, Booking, UserRole, isGlobalAdminRole } from '../types';
 import { api } from '../services/api';
 import {
@@ -108,6 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showMoreSheet, setShowMoreSheet] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -1563,6 +1565,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
 
   const activeTab = tabs.find((t) => t.id === selectedTab);
+
+  // Global search navigates here with ?tab=<id> to open a specific tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tabs.some((t) => t.id === tab)) {
+      setSelectedTab(tab as any);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div className="space-y-4 sm:space-y-6">

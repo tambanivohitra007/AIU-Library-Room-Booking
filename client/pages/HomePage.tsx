@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Timeline from '../components/Timeline';
 import DayView from '../components/DayView';
 import MonthView from '../components/MonthView';
@@ -105,6 +106,18 @@ const HomePage: React.FC<HomePageProps> = ({
   const [detailsRoom, setDetailsRoom] = useState<Room | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const { operatingHours: globalHours } = useSettings();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Global search navigates here with ?room=<id> to select a room
+  useEffect(() => {
+    const roomParam = searchParams.get('room');
+    if (roomParam && rooms.some((r) => r.id === roomParam)) {
+      setSelectedRoomId(roomParam);
+      setSelectedRange(null);
+      setSelectedBooking(null);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, rooms, setSearchParams]);
 
   // Open the booking form pre-filled with the next FREE one-hour slot:
   // within the room's operating hours and clear of existing bookings.

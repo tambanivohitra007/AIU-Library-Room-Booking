@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { User, Room, Booking } from '../types';
 import { TrashIcon } from '../components/Icons';
 
@@ -21,6 +22,8 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [flashId, setFlashId] = useState<string | null>(null);
 
   const myBookings = bookings.filter((b) => b.userId === user.id);
 
@@ -69,6 +72,34 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     setActiveTab(tab);
     setCurrentPage(1);
   };
+
+  // Global search navigates here with ?highlight=<id>: open the right
+  // tab/page, scroll to the booking and flash it briefly.
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (!highlightId) return;
+    const b = myBookings.find((x) => x.id === highlightId);
+    if (!b) return; // bookings may not be loaded yet; retry on next poll
+
+    const tab: TabType =
+      b.status === 'CANCELLED'
+        ? 'cancelled'
+        : new Date(b.endTime) <= new Date()
+          ? 'past'
+          : 'upcoming';
+    setActiveTab(tab);
+    const idx = categorizedBookings[tab].findIndex((x) => x.id === highlightId);
+    if (idx >= 0) setCurrentPage(Math.floor(idx / ITEMS_PER_PAGE) + 1);
+
+    setFlashId(highlightId);
+    setSearchParams({}, { replace: true });
+    setTimeout(() => {
+      document
+        .getElementById(`booking-${highlightId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    setTimeout(() => setFlashId(null), 2500);
+  }, [searchParams, myBookings, categorizedBookings, setSearchParams]);
 
   const tabs: { key: TabType; label: string; count: number }[] = [
     {
@@ -195,7 +226,12 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
               return (
                 <div
                   key={b.id}
-                  className="glass rounded-lg border border-slate-200 transition-all-smooth overflow-hidden hover-lift animate-slide-up"
+                  id={`booking-${b.id}`}
+                  className={`glass rounded-lg border transition-all-smooth overflow-hidden hover-lift animate-slide-up ${
+                    flashId === b.id
+                      ? 'border-primary ring-2 ring-primary/30'
+                      : 'border-slate-200'
+                  }`}
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <div className="p-5">

@@ -310,6 +310,8 @@ function App() {
               <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
                 <Layout
                   user={user!}
+                  rooms={rooms}
+                  bookings={bookings}
                   onLogout={handleLogout}
                   onChangePassword={() => setShowChangePasswordModal(true)}
                 >
@@ -330,6 +332,8 @@ function App() {
               <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
                 <Layout
                   user={user!}
+                  rooms={rooms}
+                  bookings={bookings}
                   onLogout={handleLogout}
                   onChangePassword={() => setShowChangePasswordModal(true)}
                 >
@@ -353,6 +357,8 @@ function App() {
               >
                 <Layout
                   user={user!}
+                  rooms={rooms}
+                  bookings={bookings}
                   onLogout={handleLogout}
                   onChangePassword={() => setShowChangePasswordModal(true)}
                 >

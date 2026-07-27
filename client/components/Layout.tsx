@@ -7,13 +7,16 @@ import {
   LogOutIcon,
   LockIcon,
 } from './Icons';
-import { User, UserRole, isGlobalAdminRole } from '../types';
+import { User, UserRole, Room, Booking, isGlobalAdminRole } from '../types';
 import logo from '../assets/logo_small.jpg';
 import { useSettings } from '../contexts/SettingsContext';
+import GlobalSearch from './GlobalSearch';
 
 interface LayoutProps {
   children: React.ReactNode;
   user: User;
+  rooms: Room[];
+  bookings: Booking[];
   onLogout: () => void;
   onChangePassword: () => void;
 }
@@ -21,6 +24,8 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({
   children,
   user,
+  rooms,
+  bookings,
   onLogout,
   onChangePassword,
 }) => {
@@ -62,6 +67,12 @@ const Layout: React.FC<LayoutProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Global Search (desktop) */}
+        <div className="flex-1 px-4 sm:px-8 hidden md:flex justify-center">
+          <GlobalSearch user={user} rooms={rooms} bookings={bookings} />
+        </div>
+
         <div className="flex items-center gap-2 sm:gap-4 relative">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-white">{user.name}</p>

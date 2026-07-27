@@ -951,9 +951,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-16 z-10 backdrop-blur-md">
-        <nav className="flex items-stretch sm:justify-start sm:space-x-2" aria-label="Tabs">
+      {/* Menu + Content: vertical sidebar on desktop, horizontal strip on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+      <div className="glass rounded-lg border border-white/20 shadow-medium p-1 sm:p-2 sticky top-16 z-10 backdrop-blur-md sm:w-52 sm:shrink-0">
+        <nav className="flex sm:flex-col items-center sm:items-stretch gap-1 sm:gap-1.5 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x" aria-label="Tabs">
           {[
             { id: 'overview', label: 'Overview', Icon: BarChartIcon },
             { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
@@ -971,23 +972,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
               className={`
-                flex-1 px-1 sm:px-4 py-2 rounded-md font-bold text-[10px] sm:text-sm transition-all-smooth flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2
-                min-w-0
+                shrink-0 snap-start px-3 sm:px-4 py-2 sm:py-2.5 rounded-md font-bold text-xs sm:text-sm transition-all-smooth flex items-center sm:w-full sm:justify-start gap-1.5 sm:gap-3 whitespace-nowrap
                 ${selectedTab === tab.id
-                  ? 'bg-primary text-white shadow-md transform scale-[1.02]'
+                  ? 'bg-primary text-white shadow-md'
                   : 'text-slate-600 hover:bg-primary/5 hover:text-primary'
                 }
               `}
             >
-              <tab.Icon className={`w-5 h-5 sm:w-5 sm:h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform flex-shrink-0`} />
-              <span className="leading-tight truncate w-full text-center sm:w-auto">{tab.label}</span>
+              <tab.Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedTab === tab.id ? 'scale-110' : ''} transition-transform flex-shrink-0`} />
+              <span className="leading-tight">{tab.label}</span>
             </button>
           ))}
         </nav>
       </div>
 
       {/* Tab Content */}
-      <div>
+      <div className="flex-1 min-w-0">
         {selectedTab === 'overview' && renderOverview()}
         {selectedTab === 'bookings' && renderBookings()}
         {selectedTab === 'users' && renderUsers()}
@@ -995,6 +995,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, bookings: 
         {selectedTab === 'departments' && <DepartmentsManager currentUser={currentUser} onRefresh={onRefresh} />}
         {selectedTab === 'semesters' && <SemestersManager />}
         {selectedTab === 'settings' && <SettingsTab />}
+      </div>
       </div>
 
       <ExportReportModal

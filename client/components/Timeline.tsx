@@ -182,7 +182,7 @@ const Timeline: React.FC<TimelineProps> = ({
 
   return (
     <div className="flex-1 overflow-auto relative custom-scrollbar select-none">
-      <div className="min-w-[700px] min-h-[500px] h-full flex flex-col relative">
+      <div className="min-w-[640px] lg:min-w-0 min-h-[500px] h-full flex flex-col relative">
         {/* Header Row: Days */}
         <div className="flex border-b border-slate-200 glass sticky top-0 z-40 ">
           <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 sticky left-0 z-50"></div>{' '}

@@ -74,6 +74,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return allBookings.filter((b) => roomIds.has(b.roomId));
   }, [allBookings, rooms, isDeptAdminOnly]);
 
+  // Rooms grouped by department for the Rooms tab; unassigned rooms last
+  const roomGroups = useMemo(() => {
+    const groups = new Map<string, { name: string; rooms: Room[] }>();
+    for (const room of rooms) {
+      const key = room.departmentId || 'none';
+      const name = room.department?.name || 'No Department';
+      if (!groups.has(key)) groups.set(key, { name, rooms: [] });
+      groups.get(key)!.rooms.push(room);
+    }
+    return Array.from(groups.entries())
+      .map(([key, g]) => ({ key, ...g }))
+      .sort((a, b) =>
+        a.key === 'none' ? 1 : b.key === 'none' ? -1 : a.name.localeCompare(b.name)
+      );
+  }, [rooms]);
+  const hasDepartmentGroups = roomGroups.some((g) => g.key !== 'none');
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedTab, setSelectedTab] = useState<
@@ -1311,6 +1328,110 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     </>
   );
 
+  const renderRoomCard = (room: Room, idx: number) => (
+    <div
+      key={room.id}
+      className="glass rounded-lg border border-white/20 p-4 sm:p-5 transition-all-smooth hover-lift animate-slide-up"
+      style={{ animationDelay: `${idx * 0.05}s` }}
+    >
+      <div className="flex justify-between items-start mb-3 gap-3">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-slate-800 text-base sm:text-lg truncate">
+              {room.name}
+            </h4>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium line-clamp-2">
+              {room.description}
+            </p>
+          </div>
+        </div>
+        <span className="px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-md text-xs font-bold text-primary flex-shrink-0 flex items-center gap-1">
+          <svg
+            className="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          {room.minCapacity}-{room.maxCapacity}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {room.features.map((feature, fIdx) => (
+          <span
+            key={fIdx}
+            className="px-3 py-1 bg-indigo-50 border border-indigo-200/50 text-indigo-700 rounded-md text-xs font-bold"
+          >
+            {feature}
+          </span>
+        ))}
+      </div>
+      {(isAdmin || isDeptAdminOnly) && (
+        <div className="flex gap-2 pt-3 border-t border-slate-200/50">
+          <button
+            onClick={() => setEditingRoom(room)}
+            className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth flex items-center justify-center gap-2 group"
+          >
+            <svg
+              className="w-4 h-4 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            Edit
+          </button>
+          <button
+            onClick={() => setDeletingRoom(room)}
+            className="flex-1 px-4 py-2.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth flex items-center justify-center gap-2 group"
+          >
+            <svg
+              className="w-4 h-4 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const renderRooms = () => (
     <>
       <div className="glass rounded-lg border border-white/20 overflow-hidden animate-fade-in">
@@ -1353,111 +1474,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5">
-          {rooms.map((room, idx) => (
-            <div
-              key={room.id}
-              className="glass rounded-lg border border-white/20 p-4 sm:p-5 transition-all-smooth hover-lift animate-slide-up"
-              style={{ animationDelay: `${idx * 0.05}s` }}
-            >
-              <div className="flex justify-between items-start mb-3 gap-3">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center flex-shrink-0">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-slate-800 text-base sm:text-lg truncate">
-                      {room.name}
-                    </h4>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium line-clamp-2">
-                      {room.description}
-                    </p>
-                  </div>
-                </div>
-                <span className="px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-md text-xs font-bold text-primary flex-shrink-0 flex items-center gap-1">
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                  {room.minCapacity}-{room.maxCapacity}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {room.features.map((feature, idx) => (
-                  <span
-                    key={idx}
-                    className="px-3 py-1 bg-indigo-50 border border-indigo-200/50 text-indigo-700 rounded-md text-xs font-bold"
-                  >
-                    {feature}
+        {hasDepartmentGroups ? (
+          <div className="p-4 sm:p-5 space-y-6">
+            {roomGroups.map((group) => (
+              <div key={group.key}>
+                <div className="flex items-center gap-2 mb-3">
+                  <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                    {group.name}
+                  </h4>
+                  <span className="text-xs font-bold text-slate-400">
+                    {group.rooms.length} room{group.rooms.length === 1 ? '' : 's'}
                   </span>
-                ))}
-              </div>
-              {(isAdmin || isDeptAdminOnly) && (
-                <div className="flex gap-2 pt-3 border-t border-slate-200/50">
-                  <button
-                    onClick={() => setEditingRoom(room)}
-                    className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all-smooth flex items-center justify-center gap-2 group"
-                  >
-                    <svg
-                      className="w-4 h-4 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeletingRoom(room)}
-                    className="flex-1 px-4 py-2.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth flex items-center justify-center gap-2 group"
-                  >
-                    <svg
-                      className="w-4 h-4 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    Delete
-                  </button>
+                  <div className="flex-1 border-t border-slate-200"></div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  {group.rooms.map((room, idx) => renderRoomCard(room, idx))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5">
+            {rooms.map((room, idx) => renderRoomCard(room, idx))}
+          </div>
+        )}
       </div>
 
       {/* Modals */}

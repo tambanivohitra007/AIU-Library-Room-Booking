@@ -114,11 +114,11 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
       <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white">
-          <h3 className="text-lg font-semibold text-slate-900">Add New Room</h3>
+        <div className="p-6 border-b border-white/15 flex items-center justify-between sticky top-0 bg-primary-dark">
+          <h3 className="text-lg font-semibold text-white">Add New Room</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-white/80 hover:text-white transition-colors"
             disabled={isSubmitting}
           >
             <XIcon className="w-5 h-5" />

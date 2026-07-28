@@ -61,18 +61,18 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full">
         {/* Header */}
-        <div className="border-b border-slate-200 p-6 flex justify-between items-center">
+        <div className="border-b border-white/15 bg-primary-dark p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Add New User</h2>
-            <p className="text-sm text-slate-600 mt-1">
+            <h2 className="text-2xl font-bold text-white">Add New User</h2>
+            <p className="text-sm text-white/80 mt-1">
               Create a new user account
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <XIcon className="w-5 h-5 text-slate-600" />
+            <XIcon className="w-5 h-5 text-white/80" />
           </button>
         </div>
 

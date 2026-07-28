@@ -60,22 +60,25 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
         </span>
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-primary-dark border-b border-white/15 px-4 pt-5 pb-4 sm:px-6 sm:py-5">
+            <div className="flex justify-between items-center">
               <h3
-                className="text-lg leading-6 font-medium text-gray-900"
+                className="text-lg leading-6 font-medium text-white"
                 id="modal-title"
               >
                 {isEditing ? 'Edit Semester' : 'Add New Semester'}
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 disabled:opacity-50"
+                className="text-white/80 hover:text-white disabled:opacity-50"
                 disabled={isLoading}
               >
                 <XIcon className="w-6 h-6" />
               </button>
             </div>
+          </div>
+
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
 
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">

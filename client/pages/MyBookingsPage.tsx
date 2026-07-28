@@ -147,29 +147,40 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
 
       {/* Tabs */}
       {myBookings.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all-smooth flex items-center gap-2 ${
-                activeTab === tab.key
-                  ? 'bg-primary text-white '
-                  : 'glass border border-slate-200 text-slate-600 hover:bg-white/50'
-              }`}
-            >
-              {tab.label}
-              <span
-                className={`px-2 py-0.5 rounded-md text-xs ${
-                  activeTab === tab.key
-                    ? 'bg-white/20 text-white'
-                    : 'bg-slate-200 text-slate-600'
-                }`}
-              >
-                {tab.count}
-              </span>
-            </button>
-          ))}
+        <div className="border-b border-slate-200 overflow-x-auto scrollbar-hide">
+          <nav
+            className="flex gap-1 -mb-px min-w-max"
+            role="tablist"
+            aria-label={t('myBookings.title')}
+          >
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
+                    isActive
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  {tab.label}
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
       )}
 

@@ -25,9 +25,28 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
     }
   };
 
+  const tips = [
+    {
+      title: 'Sign in',
+      text: 'Use your school Microsoft account — no separate password needed.',
+    },
+    {
+      title: 'Pick a room',
+      text: 'Browse rooms by department and check capacity, features, and opening hours with the ⓘ button.',
+    },
+    {
+      title: 'Choose a time',
+      text: 'Drag directly on the calendar to select a slot, or press "New Booking" to get the next free hour.',
+    },
+    {
+      title: 'Confirm & go',
+      text: 'Some rooms need approval first — you will be emailed as soon as it is granted, and reminded before you start.',
+    },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-      <div className="bg-white rounded-lg w-full max-w-md overflow-hidden border border-slate-200 animate-slide-up">
+    <div className="min-h-screen flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 p-4 py-10 bg-slate-50">
+      <div className="bg-white rounded-lg w-full max-w-md overflow-hidden border border-slate-200 animate-slide-up shrink-0">
         <div className="relative text-center pt-10 pb-16 px-8 bg-primary">
           <div className="flex items-center justify-center mb-6">
             <img
@@ -235,6 +254,44 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
           </div>
         </div>
       </div>
+
+      {/* How it works - booking tips */}
+      <aside className="w-full max-w-md lg:max-w-sm animate-fade-in">
+        <h2 className="text-lg font-bold text-slate-800 mb-1">
+          How room booking works
+        </h2>
+        <p className="text-sm text-slate-500 mb-6">
+          Four steps from sign-in to a reserved room.
+        </p>
+        <ol className="space-y-5">
+          {tips.map((tip, idx) => (
+            <li key={idx} className="flex gap-3">
+              <span className="w-7 h-7 shrink-0 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center">
+                {idx + 1}
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-slate-700">
+                  {tip.title}
+                </span>
+                <span className="block text-sm text-slate-500 mt-0.5">
+                  {tip.text}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        {settings?.contactEmail && (
+          <p className="mt-6 text-xs text-slate-400">
+            Questions? Contact{' '}
+            <a
+              href={`mailto:${settings.contactEmail.split(/[,;]/)[0]?.trim()}`}
+              className="text-primary hover:underline"
+            >
+              {settings.contactEmail.split(/[,;]/)[0]?.trim()}
+            </a>
+          </p>
+        )}
+      </aside>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import LoadingSpinner from './LoadingSpinner';
 import logo from '../assets/logo.webp';
 import { useSettings } from '../contexts/SettingsContext';
@@ -11,6 +12,7 @@ interface RegisterFormProps {
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
   const { settings, loading: settingsLoading } = useSettings();
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,12 +25,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
     setLocalError(null);
 
     if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+      setLocalError(t('register.passwordsNoMatch'));
       return;
     }
 
     if (password.length < 6) {
-      setLocalError('Password must be at least 6 characters');
+      setLocalError(t('register.passwordMinLength'));
       return;
     }
 
@@ -50,7 +52,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="bg-white rounded-lg w-full max-w-md overflow-hidden border border-slate-200 animate-slide-up">
-        <div className="relative text-center pt-10 pb-16 px-8 bg-primary">
+        <div className="relative text-center pt-10 pb-16 px-8 bg-primary-dark">
           <div className="flex items-center justify-center mb-6">
             <img
               src={settings?.logoUrl || logo}
@@ -59,10 +61,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
             />
           </div>
           <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
-            Join {settings?.serviceName || 'Room Booking'}
+            {t('register.join', {
+              name: settings?.serviceName || t('common.appName'),
+            })}
           </h1>
           <p className="text-blue-100 text-sm font-medium">
-            Create your account to get started
+            {t('register.subtitle')}
           </p>
 
           {/* Decorative bottom wave */}
@@ -112,7 +116,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-slate-700">
-                Full Name
+                {t('register.fullName')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -143,7 +147,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-slate-700">
-                Email Address
+                {t('login.emailAddress')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -175,7 +179,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Password
+                  {t('login.password')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -207,7 +211,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
 
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Confirm Password
+                  {t('register.confirmPassword')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -245,7 +249,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
             >
               <span className="relative flex items-center gap-2">
                 {loading && <LoadingSpinner size="sm" color="white" />}
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading
+                  ? t('register.creatingAccount')
+                  : t('register.createAccount')}
                 {!loading && (
                   <svg
                     className="w-5 h-5 group-hover:translate-x-1 transition-transform"
@@ -272,7 +278,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-4 bg-white/70 text-slate-500 font-medium">
-                  Already have an account?
+                  {t('register.alreadyHaveAccount')}
                 </span>
               </div>
             </div>
@@ -280,7 +286,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
               to="/login"
               className="mt-4 w-full inline-block text-center py-3 px-4 border-2 border-primary/20 hover:border-primary/40 text-primary font-bold rounded-md hover:bg-primary/5 transition-all-smooth "
             >
-              Sign In
+              {t('login.signIn')}
             </Link>
           </div>
         </div>

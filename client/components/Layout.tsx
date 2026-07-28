@@ -11,6 +11,8 @@ import { User, UserRole, Room, Booking, isGlobalAdminRole } from '../types';
 import logo from '../assets/logo_small.jpg';
 import { useSettings } from '../contexts/SettingsContext';
 import GlobalSearch from './GlobalSearch';
+import { useTranslation } from 'react-i18next';
+import { setLanguage } from '../i18n';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,11 +32,12 @@ const Layout: React.FC<LayoutProps> = ({
   onChangePassword,
 }) => {
   const { settings } = useSettings();
+  const { t, i18n } = useTranslation();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navItems = [
-    { path: '/', label: 'Rooms', icon: HomeIcon },
-    { path: '/my-bookings', label: 'My Bookings', icon: CalendarIcon },
+    { path: '/', label: t('nav.rooms'), icon: HomeIcon },
+    { path: '/my-bookings', label: t('nav.myBookings'), icon: CalendarIcon },
   ];
 
   const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
@@ -43,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({
     user.role === UserRole.STUDENT_WORKER ||
     isDeptAdmin
   ) {
-    navItems.push({ path: '/admin', label: 'Admin', icon: SettingsIcon });
+    navItems.push({ path: '/admin', label: t('nav.admin'), icon: SettingsIcon });
   }
 
   return (
@@ -74,6 +77,14 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 relative">
+          {/* Language switcher: shows the language you would switch TO */}
+          <button
+            onClick={() => setLanguage(i18n.language === 'th' ? 'en' : 'th')}
+            className="px-2 py-1 text-xs font-bold text-white/80 hover:text-white border border-white/30 rounded-md hover:bg-white/10 transition-colors"
+            title={i18n.language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+          >
+            {i18n.language === 'th' ? 'EN' : 'ไทย'}
+          </button>
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-white">{user.name}</p>
             <p className="text-xs text-blue-200 font-medium flex items-center gap-1 justify-end">
@@ -125,7 +136,7 @@ const Layout: React.FC<LayoutProps> = ({
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                       <LockIcon className="w-4 h-4 text-primary" />
                     </div>
-                    <span>Change Password</span>
+                    <span>{t('nav.changePassword')}</span>
                   </button>
                 )}
                 <button
@@ -138,7 +149,7 @@ const Layout: React.FC<LayoutProps> = ({
                   <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-100 transition-colors">
                     <LogOutIcon className="w-4 h-4 text-red-600" />
                   </div>
-                  <span>Sign Out</span>
+                  <span>{t('nav.signOut')}</span>
                 </button>
               </div>
             </>

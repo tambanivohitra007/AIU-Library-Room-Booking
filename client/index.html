@@ -11,9 +11,9 @@
         theme: {
           extend: {
             colors: {
-              primary: '#005faa', // Interactive blue (Outlook)
+              primary: '#005faa', // Brand action blue for buttons/links
               'primary-light': '#0078d4',
-              'primary-dark': '#17365f', // Brand navy (logo) — chrome surfaces
+              'primary-dark': '#18355d', // Logo base blue for large surfaces
               secondary: '#64748B',
               accent: '#0078d4',
               'accent-light': '#8fb6ff',
@@ -49,10 +49,10 @@
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 
       * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }
 
       /* Smooth scrolling */
@@ -127,7 +127,7 @@
       }
 
       .glass-dark {
-        background: #17365f; /* brand navy from the logo */
+        background: #18355d; /* base brand blue from logo */
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
 

@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import Timeline from '../components/Timeline';
 import DayView from '../components/DayView';
 import MonthView from '../components/MonthView';
@@ -37,6 +39,7 @@ const HomePage: React.FC<HomePageProps> = ({
   onRefresh,
   onCancelBooking,
 }) => {
+  const { t } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>(
     rooms.length > 0 ? rooms[0].id : '',
@@ -80,7 +83,7 @@ const HomePage: React.FC<HomePageProps> = ({
       const key = room.departmentId || 'none';
       const name =
         room.department?.name ||
-        (departments.length > 0 ? 'Other Rooms' : 'Rooms');
+        (departments.length > 0 ? t('calendar.otherRooms') : t('calendar.rooms'));
       if (!groups.has(key)) groups.set(key, { name, rooms: [] });
       groups.get(key)!.rooms.push(room);
     }
@@ -89,7 +92,7 @@ const HomePage: React.FC<HomePageProps> = ({
       .sort((a, b) =>
         a.key === 'none' ? 1 : b.key === 'none' ? -1 : a.name.localeCompare(b.name),
       );
-  }, [rooms, departments.length, roomSearch]);
+  }, [rooms, departments.length, roomSearch, t]);
 
   const handleDeptSelect = (deptId: string) => {
     setSelectedDeptId(deptId);
@@ -210,18 +213,11 @@ const HomePage: React.FC<HomePageProps> = ({
   const weekStart = getStartOfWeek(currentDate);
   const showSidePanel = selectedRange || selectedBooking;
 
-  const viewLabel =
-    calendarView === 'day' ? 'Day' : calendarView === 'week' ? 'Week' : 'Month';
-  const dateDisplay =
-    calendarView === 'month'
-      ? currentDate.toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric',
-        })
-      : currentDate.toLocaleDateString('en-US', {
-          month: 'long',
-          year: 'numeric',
-        });
+  const viewLabel = t(`calendar.${calendarView}`);
+  const dateDisplay = currentDate.toLocaleDateString(dateLocale(), {
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-96px)] animate-fade-in">
@@ -232,12 +228,12 @@ const HomePage: React.FC<HomePageProps> = ({
             onClick={goToToday}
             className="px-3 py-1.5 bg-white border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
           >
-            Today
+            {t('common.today')}
           </button>
           <button
             onClick={() => navigateWeek('prev')}
             className="p-1.5 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
-            aria-label={`Previous ${viewLabel}`}
+            aria-label={t('calendar.prev', { view: viewLabel })}
           >
             <svg
               className="w-5 h-5"
@@ -256,7 +252,7 @@ const HomePage: React.FC<HomePageProps> = ({
           <button
             onClick={() => navigateWeek('next')}
             className="p-1.5 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
-            aria-label={`Next ${viewLabel}`}
+            aria-label={t('calendar.next', { view: viewLabel })}
           >
             <svg
               className="w-5 h-5"
@@ -280,7 +276,7 @@ const HomePage: React.FC<HomePageProps> = ({
             <button
               onClick={() => setShowMiniCalendar(!showMiniCalendar)}
               className="p-1.5 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"
-              aria-label="Open calendar picker"
+              aria-label={t('calendar.openDatePicker')}
             >
               <svg
                 className="w-5 h-5"
@@ -341,7 +337,7 @@ const HomePage: React.FC<HomePageProps> = ({
             type="text"
             value={roomSearch}
             onChange={(e) => setRoomSearch(e.target.value)}
-            placeholder="Search rooms"
+            placeholder={t('calendar.searchRooms')}
             className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
         </div>
@@ -349,7 +345,7 @@ const HomePage: React.FC<HomePageProps> = ({
         {departments.length > 0 && (
           <div className="flex gap-2 overflow-x-auto px-1 -mx-1 scrollbar-hide snap-x">
             {[
-              { id: 'all', name: 'All Departments' } as Department,
+              { id: 'all', name: t('calendar.allDepartments') } as Department,
               ...departments,
             ].map((dept) => {
               const isSelected = selectedDeptId === dept.id;
@@ -415,7 +411,7 @@ const HomePage: React.FC<HomePageProps> = ({
                     e.stopPropagation();
                     setDetailsRoom(room);
                   }}
-                  title={`About ${room.name}`}
+                  title={t('calendar.aboutRoom', { name: room.name })}
                   className={`ml-1 -mr-1 p-0.5 rounded-full transition-colors ${
                     isSelected
                       ? 'text-white/70 hover:text-white hover:bg-white/20'
@@ -465,7 +461,7 @@ const HomePage: React.FC<HomePageProps> = ({
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              New Booking
+              {t('common.newBooking')}
             </button>
           </div>
           <div className="px-3 pb-3 border-b border-slate-200">
@@ -493,13 +489,13 @@ const HomePage: React.FC<HomePageProps> = ({
                 type="text"
                 value={roomSearch}
                 onChange={(e) => setRoomSearch(e.target.value)}
-                placeholder="Search rooms"
+                placeholder={t('calendar.searchRooms')}
                 className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
             </div>
             {roomGroups.length === 0 && (
               <p className="px-2 text-sm text-slate-400 italic">
-                No rooms match your search.
+                {t('calendar.noRoomsMatch')}
               </p>
             )}
             {roomGroups.map((group) => (
@@ -543,7 +539,7 @@ const HomePage: React.FC<HomePageProps> = ({
                             e.stopPropagation();
                             setDetailsRoom(room);
                           }}
-                          title={`About ${room.name}`}
+                          title={t('calendar.aboutRoom', { name: room.name })}
                           className="opacity-0 group-hover:opacity-100 p-0.5 rounded-full text-slate-400 hover:text-primary hover:bg-primary/10 transition-all"
                         >
                           <svg
@@ -576,8 +572,8 @@ const HomePage: React.FC<HomePageProps> = ({
             <div className="p-3 border-b bg-slate-50 flex justify-between items-center">
               <div className="text-sm font-medium text-slate-600">
                 {calendarView === 'month'
-                  ? 'Click date to book'
-                  : 'Select time for'}{' '}
+                  ? t('calendar.clickDateToBook')
+                  : t('calendar.selectTimeFor')}{' '}
                 <span className="text-slate-900 font-bold">
                   {activeRoom.name}
                 </span>
@@ -599,7 +595,7 @@ const HomePage: React.FC<HomePageProps> = ({
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                Details
+                {t('common.details')}
               </button>
             </div>
             <div className="flex-1 overflow-hidden relative">
@@ -674,7 +670,7 @@ const HomePage: React.FC<HomePageProps> = ({
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
-            No rooms available
+            {t('calendar.noRoomsAvailable')}
           </div>
         )}
       </div>
@@ -684,7 +680,7 @@ const HomePage: React.FC<HomePageProps> = ({
         onClick={handleNewBooking}
         disabled={!activeRoom}
         className="lg:hidden fixed bottom-24 right-4 z-40 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
-        aria-label="New booking"
+        aria-label={t('common.newBooking')}
       >
         <svg
           className="w-6 h-6"

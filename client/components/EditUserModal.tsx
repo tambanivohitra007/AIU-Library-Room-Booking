@@ -239,7 +239,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2 bg-primary hover:bg-primary-light text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && <LoadingSpinner size="sm" color="white" />}
               {loading ? 'Updating...' : 'Update User'}

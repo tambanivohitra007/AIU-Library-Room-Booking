@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type CalendarView = 'day' | 'week' | 'month';
 
@@ -11,10 +12,11 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   currentView,
   onViewChange,
 }) => {
+  const { t } = useTranslation();
   const views: { id: CalendarView; label: string }[] = [
-    { id: 'day', label: 'Day' },
-    { id: 'week', label: 'Week' },
-    { id: 'month', label: 'Month' },
+    { id: 'day', label: t('calendar.day') },
+    { id: 'week', label: t('calendar.week') },
+    { id: 'month', label: t('calendar.month') },
   ];
 
   return (

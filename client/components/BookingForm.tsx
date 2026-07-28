@@ -393,7 +393,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
             checkingConflict ||
             (!!selectedRoom.bookingTerms && !termsAccepted)
           }
-          className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {isSubmitting && <LoadingSpinner size="sm" color="white" />}
           {isSubmitting

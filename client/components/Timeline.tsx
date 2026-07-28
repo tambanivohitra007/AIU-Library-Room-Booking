@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import {
   Booking,
   Room,
@@ -40,6 +42,7 @@ const Timeline: React.FC<TimelineProps> = ({
   onBookingClick,
   selectedRange,
 }) => {
+  const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const operatingHours = useMemo(
     () => getEffectiveOperatingHours(room.department, globalHours),
@@ -232,7 +235,7 @@ const Timeline: React.FC<TimelineProps> = ({
                   <div
                     className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today ? 'text-primary' : 'text-slate-600'}`}
                   >
-                    {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                    {day.toLocaleDateString(dateLocale(), { weekday: 'short' })}
                   </div>
                   <div
                     className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-primary w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto' : 'text-slate-800'}`}
@@ -404,7 +407,7 @@ const Timeline: React.FC<TimelineProps> = ({
                                 d="M12 4v16m8-8H4"
                               />
                             </svg>
-                            New Booking
+                            {t('common.newBooking')}
                           </>
                         ) : (
                           <>
@@ -421,7 +424,7 @@ const Timeline: React.FC<TimelineProps> = ({
                                 d="M6 18L18 6M6 6l12 12"
                               />
                             </svg>
-                            Conflict
+                            {t('common.conflict')}
                           </>
                         )}
                       </div>
@@ -448,7 +451,7 @@ const Timeline: React.FC<TimelineProps> = ({
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        Selected
+                        {t('common.selected')}
                       </div>
                     </div>
                   )}
@@ -485,7 +488,7 @@ const Timeline: React.FC<TimelineProps> = ({
                               }
                             `}
                         style={{ ...style, left: '4px', right: '4px' }}
-                        title={`${canView ? b.userDisplay : 'Reserved'}${isPending ? ' (pending approval)' : ''}`}
+                        title={`${canView ? b.userDisplay : t('common.reserved')}${isPending ? ` (${t('calendar.pendingApproval')})` : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (canView) onBookingClick(b);
@@ -496,7 +499,7 @@ const Timeline: React.FC<TimelineProps> = ({
                         }}
                       >
                         <div className="font-bold truncate text-[11px] sm:text-sm">
-                          {canView ? b.userDisplay : 'Reserved'}
+                          {canView ? b.userDisplay : t('common.reserved')}
                         </div>
                         <div className="truncate opacity-80 font-medium text-[10px] sm:text-xs">
                           {new Date(b.startTime).getHours()}:
@@ -512,7 +515,7 @@ const Timeline: React.FC<TimelineProps> = ({
                         </div>
                         {isPending && (
                           <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">
-                            Pending
+                            {t('common.pending')}
                           </div>
                         )}
                       </div>
@@ -542,8 +545,8 @@ const Timeline: React.FC<TimelineProps> = ({
                         </svg>
                         <span>
                           {overlay.label
-                            ? `Closed — ${overlay.label}`
-                            : 'Closed'}
+                            ? t('common.closedFor', { name: overlay.label })
+                            : t('common.closed')}
                         </span>
                       </div>
                     </div>

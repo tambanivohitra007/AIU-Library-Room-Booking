@@ -1,21 +1,31 @@
 #!/bin/bash
 
 # Room Booking System - Production Deployment Script
-# Run this ON the production server, from the project root:
-#   ./scripts/deploy.sh          (interactive)
-#   ./scripts/deploy.sh --yes    (no confirmation prompt)
+# Run this ON the production server, from the project root, with sudo (as in prod):
+#   sudo ./scripts/deploy.sh          (interactive)
+#   sudo ./scripts/deploy.sh --yes    (no confirmation prompt)
+#
+# Update the code first. Recommended flow (avoids the git stash dance caused by the
+# schema.prisma provider edit - this script re-applies the provider each run):
+#   git fetch --all && git reset --hard origin/main
+#   sudo ./scripts/deploy.sh
 #
 # What it does:
 #   1. Preflight checks (tools, .env, required secrets)
 #   2. Aligns the Prisma provider with DATABASE_URL (sqlite dev / mysql-postgres prod)
 #   3. Installs dependencies and builds the server
 #   4. Backs up the existing database BEFORE any schema change (never loses prod data)
-#   5. Syncs the schema additively (migrate deploy if migrations exist, else db push)
-#   6. Installs dependencies and builds the client
-#   7. Starts or reloads both PM2 apps and saves the process list
-#   8. Verifies the API and web app respond
+#   5. Syncs the schema additively with `prisma db push` (adds new columns in place)
+#   6. Installs dependencies and builds the client into client/dist
+#   7. Hands client/dist to nginx (chown www-data + reload) and (re)starts the API in PM2
+#   8. Verifies the API responds and the built client is in place
 #
-# Safe to run over an existing install: schema changes are additive (e.g. the new
+# Matches the production server layout:
+#   - MySQL database (name from DATABASE_URL), dumped with mysqldump before schema sync
+#   - Node/Express API on PORT (default 5000), run by PM2 as ONE app (apiu-library-api)
+#   - React client built to client/dist and served as static files by nginx (no `serve`)
+#
+# Safe to run over the existing install: schema changes are additive (e.g. the new
 # User.language column defaults to "en"), the DB is snapshotted first, and the seed
 # script is never invoked.
 
@@ -33,6 +43,13 @@ warn()    { echo -e "${YELLOW}WARNING: $1${NC}"; }
 
 AUTO_YES=0
 [ "$1" = "--yes" ] && AUTO_YES=1
+
+# System-level steps (chown for www-data, nginx reload, the root-owned PM2 daemon)
+# need root. If we're not root but sudo exists, prefix those commands with it.
+SUDO=""
+if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+fi
 
 # Refuse to proceed without a backup unless the operator explicitly accepts (or --yes)
 require_backup_ack() {
@@ -54,7 +71,7 @@ echo ""
 command -v node >/dev/null 2>&1 || error "node is not installed"
 command -v npm  >/dev/null 2>&1 || error "npm is not installed"
 command -v pm2  >/dev/null 2>&1 || error "pm2 is not installed (npm install -g pm2)"
-command -v serve >/dev/null 2>&1 || warn "'serve' not found globally (npm install -g serve) - the web app needs it"
+command -v nginx >/dev/null 2>&1 || warn "nginx not found - it serves the built client (client/dist); install/configure it separately"
 
 [ -f "server/.env" ] || error "server/.env not found - create it before deploying"
 
@@ -174,7 +191,10 @@ case "$DATABASE_URL" in
             _host="${_hostport%%:*}"
             _port="${_hostport#*:}"; [ "$_port" = "$_hostport" ] && _port="3306"
             _db="${_dbpart%%\?*}"
-            if MYSQL_PWD="$_pass" mysqldump -h "$_host" -P "$_port" -u "$_user" "$_db" > "$BACKUP_DIR/backup-$STAMP.sql"; then
+            # --single-transaction: consistent snapshot without locking (InnoDB)
+            # --no-tablespaces: avoids the PROCESS privilege the app DB user lacks
+            if MYSQL_PWD="$_pass" mysqldump --single-transaction --no-tablespaces \
+                    -h "$_host" -P "$_port" -u "$_user" "$_db" > "$BACKUP_DIR/backup-$STAMP.sql"; then
                 success "MySQL database dumped to backups/backup-$STAMP.sql"
             else
                 warn "mysqldump failed (check host/credentials) - could not auto-back up"
@@ -188,17 +208,28 @@ case "$DATABASE_URL" in
 esac
 
 # ---------- Database schema ----------
+# This project keeps the schema in schema.prisma and syncs with `db push` (no
+# committed migrations - see CLAUDE.md). db push issues the additive ALTER (e.g.
+# adds User.language) and, without --accept-data-loss, ABORTS rather than dropping
+# data - so existing rows are kept and current users default to language "en".
+#
+# The old server hit Prisma P3018 / MySQL 1064 (`... near '"User" ('`) because
+# migrations generated for SQLite use double-quoted identifiers MySQL rejects.
+# db push sidesteps that. Only set USE_MIGRATIONS=1 if you keep committed
+# migrations regenerated for THIS provider.
 
 echo ""
-if [ -d "prisma/migrations" ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-    info "Applying database migrations (prisma migrate deploy)..."
+if [ "${USE_MIGRATIONS:-0}" = "1" ]; then
+    LOCK="prisma/migrations/migration_lock.toml"
+    [ -f "$LOCK" ] || error "USE_MIGRATIONS=1 but $LOCK is missing - generate migrations first, or unset it to use db push"
+    LOCK_PROVIDER=$(sed -nE 's/.*provider *= *"([a-z]+)".*/\1/p' "$LOCK")
+    [ "$LOCK_PROVIDER" = "$DB_PROVIDER" ] \
+        || error "migrations were generated for '$LOCK_PROVIDER' but DATABASE_URL is '$DB_PROVIDER' - the SQLite-migrations-on-MySQL trap (error 1064). Regenerate them for $DB_PROVIDER or unset USE_MIGRATIONS."
+    info "Applying committed migrations (prisma migrate deploy)..."
     npx prisma migrate deploy
     success "Migrations applied"
 else
-    # db push applies additive changes (new tables/columns) in place. Without
-    # --accept-data-loss it ABORTS instead of dropping data, so existing rows are
-    # safe; the new User.language column defaults to "en" for current users.
-    info "No migrations folder - syncing schema additively with 'prisma db push'"
+    info "Syncing schema additively with 'prisma db push'..."
     npx prisma db push --skip-generate
     success "Database schema synced (no data dropped)"
 fi
@@ -213,21 +244,52 @@ cd ../client
 npm ci || npm install
 success "Client dependencies installed"
 
-info "Building client..."
+info "Building client into client/dist..."
 npm run build
 success "Client built"
 
-# ---------- Start / reload PM2 apps ----------
+# nginx serves client/dist as static files, so it must be able to read them.
+if id www-data >/dev/null 2>&1; then
+    $SUDO chown -R www-data:www-data dist \
+        && success "client/dist owned by www-data (nginx can read it)" \
+        || warn "Could not chown client/dist to www-data - nginx may return 403"
+fi
+if command -v nginx >/dev/null 2>&1; then
+    if $SUDO nginx -t >/dev/null 2>&1; then
+        $SUDO systemctl reload nginx && success "nginx reloaded" || warn "nginx reload failed - reload it manually"
+    else
+        warn "nginx config test failed - not reloading. Check: $SUDO nginx -t"
+    fi
+fi
+
+# ---------- Start / reload the API in PM2 ----------
+# ONE PM2 app runs the API from server/dist/index.js. The client is NOT a PM2 app
+# (nginx serves it). Reuse whatever API app name is already registered so a re-deploy
+# reloads it in place instead of starting a second process on the same port.
 
 echo ""
-info "Starting or reloading PM2 apps..."
+info "Starting or reloading the API in PM2..."
 cd ../server
-pm2 startOrRestart ecosystem.config.cjs --update-env
-cd ../client
-pm2 startOrRestart ecosystem.config.cjs --update-env
-pm2 save
+mkdir -p logs
+
+APP_NAME="${PM2_APP_NAME:-}"
+if [ -z "$APP_NAME" ]; then
+    for candidate in apiu-library-api aiu-library-api; do
+        if $SUDO pm2 describe "$candidate" >/dev/null 2>&1; then APP_NAME="$candidate"; break; fi
+    done
+fi
+
+if [ -n "$APP_NAME" ] && $SUDO pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+    info "Reloading existing PM2 app '$APP_NAME'"
+    $SUDO pm2 restart "$APP_NAME" --update-env
+else
+    info "No API app registered yet - starting from ecosystem.config.cjs (name: aiu-library-api)"
+    $SUDO pm2 startOrRestart ecosystem.config.cjs --update-env
+    APP_NAME="aiu-library-api"
+fi
+$SUDO pm2 save
 cd ..
-success "PM2 apps running (list saved for restart-on-boot)"
+success "API running under PM2 as '$APP_NAME' (process list saved)"
 
 # ---------- Verify ----------
 
@@ -241,13 +303,13 @@ for i in $(seq 1 15); do
     fi
     sleep 1
 done
-[ -n "$API_OK" ] && success "API is healthy" || error "API did not respond on port $PORT within 15s - check: pm2 logs aiu-library-api"
+[ -n "$API_OK" ] && success "API is healthy" || error "API did not respond on port $PORT within 15s - check: $SUDO pm2 logs $APP_NAME"
 
-info "Verifying the web app responds on port 3000..."
-if curl -fsS "http://localhost:3000" >/dev/null 2>&1; then
-    success "Web app is up"
+info "Verifying the built client is in place..."
+if [ -f "client/dist/index.html" ]; then
+    success "client/dist/index.html present (served by nginx)"
 else
-    warn "Web app did not respond on port 3000 - check: pm2 logs aiu-library-web (is 'serve' installed?)"
+    warn "client/dist/index.html not found - the client build may have failed"
 fi
 
 echo ""
@@ -256,8 +318,11 @@ echo -e "${GREEN} Deployment complete${NC}"
 echo "========================================="
 echo ""
 echo "Post-deploy checklist:"
-echo "  - pm2 status                        # both apps online"
+echo "  - $SUDO pm2 status                    # the API app is online"
+echo "  - Open https://booking.apiu.edu and hard-refresh (Ctrl+Shift+R) to pick up new assets"
 echo "  - Sign in and check Admin -> Settings (branding, hours, domains)"
 echo "  - Create/activate a Semester that covers today, or bookings will be rejected"
-echo "  - Ensure your reverse proxy (nginx/IIS) forwards to ports 3000 (web) and $PORT (api)"
+echo "  - nginx serves client/dist and proxies /api -> 127.0.0.1:$PORT (verify: $SUDO nginx -t)"
+echo "  - First time only: '$SUDO pm2 startup' so the API restarts on reboot"
+echo "  - DB dump saved under ./backups/ (keep the cron backup at /usr/local/bin/aiu-mysql-backup.sh too)"
 echo ""

@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
+import { getLang, asLang, tr, statusName, dateLocaleTag } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -180,6 +181,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
   try {
     const { roomId, startTime, endTime, purpose, attendees, termsAccepted } = req.body;
     const userId = req.userId!; // From JWT token
+    const lang = getLang(req);
 
     // Validate booking is not in the past
     const now = new Date();
@@ -187,15 +189,11 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     const bookingEnd = new Date(endTime);
 
     if (bookingStart <= now) {
-      return res.status(400).json({
-        error: 'Cannot book a time slot in the past. Please select a future time.',
-      });
+      return res.status(400).json({ error: tr(lang, 'pastStart') });
     }
 
     if (bookingEnd <= now) {
-      return res.status(400).json({
-        error: 'Booking end time cannot be in the past.',
-      });
+      return res.status(400).json({ error: tr(lang, 'pastEnd') });
     }
 
     // Check operating hours: the room's department schedule wins, else the global one
@@ -205,22 +203,23 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     });
 
     if (!room) {
-      return res.status(404).json({ error: 'Room not found' });
+      return res.status(404).json({ error: tr(lang, 'roomNotFound') });
     }
 
     // Enforce the room's capacity range (attendees list includes the booker)
     const attendeeCount = Array.isArray(attendees) ? attendees.length : 0;
     if (attendeeCount < room.minCapacity || attendeeCount > room.maxCapacity) {
       return res.status(400).json({
-        error: `This room requires between ${room.minCapacity} and ${room.maxCapacity} people (including you).`,
+        error: tr(lang, 'capacityRange', {
+          min: room.minCapacity,
+          max: room.maxCapacity,
+        }),
       });
     }
 
     // Rooms with terms & conditions require explicit acceptance
     if (room.bookingTerms && termsAccepted !== true) {
-      return res.status(400).json({
-        error: "You must accept this room's terms and conditions to book it.",
-      });
+      return res.status(400).json({ error: tr(lang, 'termsRequired') });
     }
 
     const settings = await getServiceSettings();
@@ -245,6 +244,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
       effectiveHours,
       room.departmentId,
       exceptions,
+      lang,
     );
     if (!hoursCheck.ok) {
       return res.status(400).json({ error: hoursCheck.error });
@@ -257,8 +257,13 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
 
     if (activeSemester) {
        if (bookingStart < activeSemester.startDate || bookingEnd > activeSemester.endDate) {
+           const dateTag = dateLocaleTag(lang);
            return res.status(400).json({
-               error: `Bookings are only allowed within the current semester: ${activeSemester.name} (${activeSemester.startDate.toLocaleDateString()} - ${activeSemester.endDate.toLocaleDateString()})`
+               error: tr(lang, 'semesterOnly', {
+                 name: activeSemester.name,
+                 start: activeSemester.startDate.toLocaleDateString(dateTag),
+                 end: activeSemester.endDate.toLocaleDateString(dateTag),
+               }),
            });
        }
     }
@@ -297,7 +302,7 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     if (overlapping) {
       logger.warn(`Booking conflict detected for room ${roomId} at ${startTime}-${endTime}`);
       return res.status(409).json({
-        error: 'This time slot conflicts with an existing booking',
+        error: tr(lang, 'slotConflict'),
         conflict: {
           startTime: overlapping.startTime.toISOString(),
           endTime: overlapping.endTime.toISOString(),
@@ -370,32 +375,33 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Error creating booking:', error);
-    res.status(500).json({ error: 'Failed to create booking' });
+    res.status(500).json({ error: tr(getLang(req), 'createFailed') });
   }
 });
 
 // Approve a pending booking (staff or the room's department admin)
 router.post('/:id/approve', async (req: AuthRequest, res) => {
   try {
+    const lang = getLang(req);
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
       include: { user: true, room: true },
     });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ error: tr(lang, 'bookingNotFound') });
     }
 
     if (!(await canModerateBooking(req, booking.room.departmentId))) {
-      return res.status(403).json({ error: 'Permission denied' });
+      return res.status(403).json({ error: tr(lang, 'permissionDenied') });
     }
 
     if (booking.status !== BookingStatus.PENDING) {
-      return res.status(400).json({ error: 'Only pending bookings can be approved' });
+      return res.status(400).json({ error: tr(lang, 'onlyPendingApprove') });
     }
 
     if (booking.endTime <= new Date()) {
-      return res.status(400).json({ error: 'This booking request has already passed' });
+      return res.status(400).json({ error: tr(lang, 'alreadyPassed') });
     }
 
     const updated = await prisma.booking.update({
@@ -408,7 +414,7 @@ router.post('/:id/approve', async (req: AuthRequest, res) => {
         roomName: booking.room.name,
         startTime: booking.startTime,
         endTime: booking.endTime,
-      });
+      }, asLang(booking.user.language));
     }
 
     logger.info(`Booking ${booking.id} approved by user ${req.userId}`);
@@ -423,24 +429,26 @@ router.post('/:id/approve', async (req: AuthRequest, res) => {
 router.post('/:id/reject', async (req: AuthRequest, res) => {
   try {
     const { reason } = req.body;
+    const lang = getLang(req);
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
       include: { user: true, room: true },
     });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ error: tr(lang, 'bookingNotFound') });
     }
 
     if (!(await canModerateBooking(req, booking.room.departmentId))) {
-      return res.status(403).json({ error: 'Permission denied' });
+      return res.status(403).json({ error: tr(lang, 'permissionDenied') });
     }
 
     if (booking.status !== BookingStatus.PENDING) {
-      return res.status(400).json({ error: 'Only pending bookings can be rejected' });
+      return res.status(400).json({ error: tr(lang, 'onlyPendingReject') });
     }
 
-    const rejectionReason = (reason && String(reason).trim()) || 'Booking request rejected';
+    // The default reason is stored and later shown to the booker — use their language
+    const rejectionReason = (reason && String(reason).trim()) || tr(asLang(booking.user.language), 'rejectedDefault');
     const updated = await prisma.booking.update({
       where: { id: booking.id },
       data: {
@@ -454,7 +462,7 @@ router.post('/:id/reject', async (req: AuthRequest, res) => {
         roomName: booking.room.name,
         startTime: booking.startTime,
         reason: rejectionReason,
-      });
+      }, asLang(booking.user.language));
     }
 
     logger.info(`Booking ${booking.id} rejected by user ${req.userId}. Reason: ${rejectionReason}`);
@@ -500,7 +508,7 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
         roomName: booking.room.name,
         startTime: booking.startTime,
         endTime: booking.endTime,
-      });
+      }, asLang(booking.user.language));
 
       // Update flag
       await prisma.booking.update({
@@ -523,36 +531,37 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
     const { reason } = req.body; // Optional cancellation reason
+    const lang = getLang(req);
     const booking = await prisma.booking.findUnique({
       where: { id: req.params.id },
       include: { room: true },
     });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ error: tr(lang, 'bookingNotFound') });
     }
 
     // Check if user owns the booking, is admin/worker, or manages the room's department
     if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
-        return res.status(403).json({ error: 'You can only cancel your own bookings' });
+        return res.status(403).json({ error: tr(lang, 'cancelOwnOnly') });
       }
     }
 
     // Only confirmed bookings and pending requests can be cancelled/withdrawn
     if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.PENDING) {
       return res.status(400).json({
-        error: `Cannot cancel a ${booking.status.toLowerCase()} booking`,
+        error: tr(lang, 'cannotCancelStatus', {
+          status: statusName(lang, booking.status),
+        }),
       });
     }
 
     // Check if booking has already ended
     const now = new Date();
     if (booking.endTime <= now) {
-      return res.status(400).json({
-        error: 'Cannot cancel a booking that has already ended',
-      });
+      return res.status(400).json({ error: tr(lang, 'alreadyEnded') });
     }
 
     const updated = await prisma.booking.update({
@@ -574,7 +583,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
         roomName: updated.room.name,
         startTime: updated.startTime,
         reason: reason,
-      });
+      }, asLang(updated.user.language));
     }
 
     logger.info(`Booking ${updated.id} cancelled by user ${req.userId}. Reason: ${reason || 'None'}`);

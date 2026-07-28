@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { XIcon } from './Icons';
 
 interface ChangePasswordModalProps {
@@ -12,6 +13,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,22 +28,22 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('All fields are required');
+      setError(t('password.allFieldsRequired'));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters long');
+      setError(t('password.minLength'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setError(t('password.noMatch'));
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError('New password must be different from current password');
+      setError(t('password.mustDiffer'));
       return;
     }
 
@@ -56,7 +58,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to change password',
+        err instanceof Error ? err.message : t('password.changeFailed'),
       );
     } finally {
       setIsSubmitting(false);
@@ -77,7 +79,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">
-            Change Password
+            {t('nav.changePassword')}
           </h3>
           <button
             onClick={handleClose}
@@ -99,7 +101,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Current Password
+                {t('password.current')}
               </label>
               <input
                 type="password"
@@ -113,7 +115,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                New Password
+                {t('password.new')}
               </label>
               <input
                 type="password"
@@ -124,13 +126,13 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 autoComplete="new-password"
               />
               <p className="mt-1 text-xs text-slate-500">
-                Minimum 6 characters
+                {t('password.minHint')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Confirm New Password
+                {t('password.confirmNew')}
               </label>
               <input
                 type="password"
@@ -151,14 +153,14 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Changing...' : 'Change Password'}
+              {isSubmitting ? t('password.changing') : t('nav.changePassword')}
             </button>
           </div>
         </form>

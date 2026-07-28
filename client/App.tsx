@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
@@ -18,6 +19,7 @@ import { useToast } from './contexts/ToastContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 
 function App() {
+  const { t } = useTranslation();
   const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -113,7 +115,7 @@ function App() {
       } catch (error) {
         console.error('Failed to load data:', error);
         // Only show toast error on initial load failure, not on polling failure to avoid spamming the user
-        if (rooms.length === 0) toast.error('Failed to load data');
+        if (rooms.length === 0) toast.error(t('app.loadDataFailed'));
       } finally {
         setIsDataLoading(false);
       }
@@ -138,13 +140,13 @@ function App() {
     try {
       const success = await api.cancelBooking(id, reason);
       if (success) {
-        toast.success('Booking cancelled successfully');
+        toast.success(t('app.bookingCancelled'));
         refresh();
       } else {
-        toast.error('Could not cancel booking');
+        toast.error(t('app.cancelBookingFailed'));
       }
     } catch (error) {
-      toast.error('Failed to cancel booking');
+      toast.error(t('app.cancelBookingError'));
     }
   };
 
@@ -192,7 +194,7 @@ function App() {
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      toast.error('Failed to export CSV');
+      toast.error(t('app.exportCsvFailed'));
     }
   };
 
@@ -202,11 +204,11 @@ function App() {
       const { user: loggedInUser } = await api.login(email, password);
       setUser(loggedInUser);
       setIsAuthenticated(true);
-      toast.success(`Welcome back, ${loggedInUser.name}!`);
+      toast.success(t('app.welcomeBack', { name: loggedInUser.name }));
       refresh();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Login failed';
+        error instanceof Error ? error.message : t('app.loginFailed');
       setAuthError(errorMessage);
       toast.error(errorMessage);
       throw error;
@@ -222,16 +224,14 @@ function App() {
       setAuthError(null);
       const { message } = await api.register(name, email, password);
       // Do not log in immediately. Show success message and redirect to login.
-      toast.success(
-        message || 'Registration successful. Waiting for approval.',
-      );
+      toast.success(message || t('app.registrationSuccess'));
       // Returning true/false or similar might be needed if RegisterForm expects it,
       // but usually throwing error handles failure.
 
       // We need to tell the RegisterForm to switch to Login view
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Registration failed';
+        error instanceof Error ? error.message : t('app.registrationFailed');
       setAuthError(errorMessage);
       toast.error(errorMessage);
       throw error;
@@ -241,8 +241,8 @@ function App() {
   const handleLogout = () => {
     setConfirmModal({
       isOpen: true,
-      title: 'Logout',
-      message: 'Are you sure you want to logout?',
+      title: t('nav.signOut'),
+      message: t('app.logoutConfirm'),
       onConfirm: () => {
         setConfirmModal({ ...confirmModal, isOpen: false });
         api.logout();
@@ -250,7 +250,7 @@ function App() {
         setIsAuthenticated(false);
         setBookings([]);
         setRooms([]);
-        toast.info('You have been logged out');
+        toast.info(t('app.loggedOut'));
       },
     });
   };
@@ -261,10 +261,10 @@ function App() {
   ) => {
     try {
       await api.changePassword(currentPassword, newPassword);
-      toast.success('Password changed successfully');
+      toast.success(t('app.passwordChanged'));
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to change password';
+        error instanceof Error ? error.message : t('password.changeFailed');
       toast.error(errorMessage);
       throw error;
     }
@@ -272,7 +272,7 @@ function App() {
 
   // Show loading overlay during initial auth check
   if (isAuthLoading) {
-    return <LoadingOverlay message="Checking authentication..." />;
+    return <LoadingOverlay message={t('app.checkingAuth')} />;
   }
 
   return (
@@ -389,8 +389,8 @@ function App() {
           isOpen={confirmModal.isOpen}
           title={confirmModal.title}
           message={confirmModal.message}
-          confirmText="Confirm"
-          cancelText="Cancel"
+          confirmText={t('common.confirm')}
+          cancelText={t('common.cancel')}
           confirmVariant="danger"
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}

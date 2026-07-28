@@ -1,4 +1,5 @@
 import { PrismaClient, ServiceSettings } from '@prisma/client';
+import { Lang, tr, weekdayName } from './i18n.js';
 
 const prisma = new PrismaClient();
 
@@ -152,7 +153,8 @@ export const checkBookingSchedule = (
   end: Date,
   weekly: OperatingHours,
   departmentId: string | null | undefined,
-  exceptions: ExceptionLike[]
+  exceptions: ExceptionLike[],
+  lang: Lang = 'en'
 ): { ok: true } | { ok: false; error: string } => {
   const sameDay =
     start.getFullYear() === end.getFullYear() &&
@@ -168,7 +170,7 @@ export const checkBookingSchedule = (
     if (end.getTime() === midnight.getTime()) {
       endMinutes = 24 * 60;
     } else {
-      return { ok: false, error: 'Bookings must start and end on the same day.' };
+      return { ok: false, error: tr(lang, 'sameDay') };
     }
   }
 
@@ -183,19 +185,24 @@ export const checkBookingSchedule = (
     return {
       ok: false,
       error: exceptionName
-        ? `Bookings are not available on this date: closed for ${exceptionName}.`
-        : `Bookings are not available on ${WEEKDAY_NAMES[start.getDay()]}s.`,
+        ? tr(lang, 'closedForException', { name: exceptionName })
+        : tr(lang, 'closedOnWeekday', { weekday: weekdayName(lang, start.getDay()) }),
     };
   }
 
   const startMinutes = start.getHours() * 60 + start.getMinutes();
   if (startMinutes < dayHours.open * 60 || endMinutes > dayHours.close * 60) {
-    const range = `${formatHour(dayHours.open)} and ${formatHour(dayHours.close)}`;
+    const open = formatHour(dayHours.open);
+    const close = formatHour(dayHours.close);
     return {
       ok: false,
       error: exceptionName
-        ? `On this date (${exceptionName}) bookings are only available between ${range}.`
-        : `Bookings on ${WEEKDAY_NAMES[start.getDay()]}s are only available between ${range}.`,
+        ? tr(lang, 'exceptionHours', { name: exceptionName, open, close })
+        : tr(lang, 'weekdayHours', {
+            weekday: weekdayName(lang, start.getDay()),
+            open,
+            close,
+          }),
     };
   }
 

@@ -1,4 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Booking, User, Room } from '../types';
 import { useReactToPrint } from 'react-to-print';
 import { useSettings } from '../contexts/SettingsContext';
@@ -20,6 +22,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
   users,
   rooms,
 }) => {
+  const { t } = useTranslation();
   const { settings } = useSettings();
   const [reportType, setReportType] = useState<ReportType>('bookings');
   const [startDate, setStartDate] = useState<string>(
@@ -82,25 +85,25 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
       const uniqueUsers = new Set(filteredBookings.map((b) => b.userId)).size;
       return [
         {
-          label: 'Total Bookings',
+          label: t('reports.totalBookings'),
           value: total,
           color: 'text-primary',
           bg: 'bg-primary/10',
         },
         {
-          label: 'Confirmed',
+          label: t('reports.confirmed'),
           value: confirmed,
           color: 'text-green-600',
           bg: 'bg-green-50',
         },
         {
-          label: 'Cancelled',
+          label: t('reports.cancelled'),
           value: cancelled,
           color: 'text-red-600',
           bg: 'bg-red-50',
         },
         {
-          label: 'Active Users',
+          label: t('reports.activeUsers'),
           value: uniqueUsers,
           color: 'text-purple-600',
           bg: 'bg-purple-50',
@@ -115,25 +118,25 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
       const admins = filteredUsers.filter((u) => u.role === 'ADMIN').length;
       return [
         {
-          label: 'Total Users',
+          label: t('reports.totalUsers'),
           value: total,
           color: 'text-primary',
           bg: 'bg-primary/10',
         },
         {
-          label: 'Active',
+          label: t('reports.active'),
           value: active,
           color: 'text-green-600',
           bg: 'bg-green-50',
         },
         {
-          label: 'Pending',
+          label: t('reports.pending'),
           value: pending,
           color: 'text-amber-600',
           bg: 'bg-amber-50',
         },
         {
-          label: 'Admins',
+          label: t('reports.admins'),
           value: admins,
           color: 'text-purple-600',
           bg: 'bg-purple-50',
@@ -147,20 +150,20 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
       );
       return [
         {
-          label: 'Total Rooms',
+          label: t('reports.totalRooms'),
           value: total,
           color: 'text-primary',
           bg: 'bg-primary/10',
         },
         {
-          label: 'Total Capacity',
+          label: t('reports.totalCapacity'),
           value: totalCapacity,
           color: 'text-green-600',
           bg: 'bg-green-50',
         },
       ];
     }
-  }, [reportType, filteredBookings, filteredUsers, filteredRooms]);
+  }, [reportType, filteredBookings, filteredUsers, filteredRooms, t]);
 
   if (!isOpen) return null;
 
@@ -188,11 +191,9 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-800">
-                Export Report
+                {t('reports.title')}
               </h2>
-              <p className="text-sm text-slate-500">
-                Generate and print booking reports
-              </p>
+              <p className="text-sm text-slate-500">{t('reports.subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -200,7 +201,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-slate-600 font-semibold hover:bg-slate-100 rounded-lg transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handlePrint}
@@ -219,7 +220,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                   d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                 />
               </svg>
-              Print / Save PDF
+              {t('reports.printSavePdf')}
             </button>
           </div>
         </div>
@@ -229,7 +230,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
           <div className="w-80 bg-white border-r border-slate-200 p-6 space-y-8 overflow-y-auto print:hidden">
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">
-                Report Type
+                {t('reports.reportType')}
               </label>
               <div className="space-y-2">
                 {(['bookings', 'users', 'rooms'] as ReportType[]).map(
@@ -250,7 +251,9 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                           <div className="w-2.5 h-2.5 bg-primary rounded-full" />
                         )}
                       </div>
-                      <span className="font-bold capitalize">{type}</span>
+                      <span className="font-bold capitalize">
+                        {t(`reports.types.${type}`)}
+                      </span>
                     </button>
                   ),
                 )}
@@ -260,12 +263,12 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
             {reportType === 'bookings' && (
               <div className="animate-fade-in">
                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                  Date Range
+                  {t('reports.dateRange')}
                 </label>
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      From
+                      {t('reports.from')}
                     </span>
                     <input
                       type="date"
@@ -276,7 +279,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                   </div>
                   <div>
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      To
+                      {t('reports.to')}
                     </span>
                     <input
                       type="date"
@@ -304,11 +307,10 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                Tips
+                {t('reports.tips')}
               </h4>
               <p className="text-sm text-primary leading-relaxed">
-                Use your browser's print settings to save as PDF. Ensure
-                "Background graphics" is enabled for best results.
+                {t('reports.tipsText')}
               </p>
             </div>
           </div>
@@ -324,24 +326,28 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
               <div className="border-b-2 border-primary/20 pb-6 mb-8 flex justify-between items-end">
                 <div>
                   <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                    {settings?.serviceName || 'Room Booking System'}
+                    {settings?.serviceName || t('reports.defaultServiceName')}
                   </h1>
                   <p className="text-primary font-bold text-lg mt-1">
-                    {settings?.description || 'Export Report'}
+                    {settings?.description || t('reports.title')}
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="px-3 py-1 bg-slate-100 rounded-md inline-block mb-2 print:bg-transparent print:p-0">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Report Type
+                      {t('reports.reportType')}
                     </span>
                     <p className="font-bold text-slate-800 capitalize">
-                      {reportType} Report
+                      {t('reports.reportTitle', {
+                        type: t(`reports.types.${reportType}`),
+                      })}
                     </p>
                   </div>
                   <p className="text-sm text-slate-500 font-medium">
-                    Generated: {new Date().toLocaleDateString()}{' '}
-                    {new Date().toLocaleTimeString()}
+                    {t('reports.generatedAt', {
+                      date: new Date().toLocaleDateString(dateLocale()),
+                      time: new Date().toLocaleTimeString(dateLocale()),
+                    })}
                   </p>
                 </div>
               </div>
@@ -365,15 +371,19 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
               {reportType === 'bookings' && (
                 <div className="mb-6 p-3 bg-slate-50 rounded-lg border border-slate-200 flex gap-6 text-sm print:bg-transparent print:border-0 print:p-0 print:mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-500">From:</span>
+                    <span className="font-bold text-slate-500">
+                      {t('reports.from')}:
+                    </span>
                     <span className="font-bold text-slate-800">
-                      {new Date(startDate).toLocaleDateString()}
+                      {new Date(startDate).toLocaleDateString(dateLocale())}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-500">To:</span>
+                    <span className="font-bold text-slate-500">
+                      {t('reports.to')}:
+                    </span>
                     <span className="font-bold text-slate-800">
-                      {new Date(endDate).toLocaleDateString()}
+                      {new Date(endDate).toLocaleDateString(dateLocale())}
                     </span>
                   </div>
                 </div>
@@ -387,54 +397,54 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                       {reportType === 'bookings' && (
                         <>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Date/Time
+                            {t('reports.colDateTime')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Room
+                            {t('reports.colRoom')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            User
+                            {t('reports.colUser')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700 text-center">
-                            Guests
+                            {t('reports.colGuests')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700 text-right">
-                            Status
+                            {t('reports.colStatus')}
                           </th>
                         </>
                       )}
                       {reportType === 'users' && (
                         <>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Name
+                            {t('reports.colName')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Email
+                            {t('reports.colEmail')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Role
+                            {t('reports.colRole')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Joined
+                            {t('reports.colJoined')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700 text-right">
-                            Status
+                            {t('reports.colStatus')}
                           </th>
                         </>
                       )}
                       {reportType === 'rooms' && (
                         <>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Room Name
+                            {t('reports.colRoomName')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Capacity
+                            {t('reports.colCapacity')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700">
-                            Features
+                            {t('reports.colFeatures')}
                           </th>
                           <th className="px-4 py-3 font-bold text-slate-700 text-right">
-                            Description
+                            {t('reports.colDescription')}
                           </th>
                         </>
                       )}
@@ -453,23 +463,25 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                         >
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-800">
-                              {new Date(booking.startTime).toLocaleDateString()}
+                              {new Date(booking.startTime).toLocaleDateString(
+                                dateLocale(),
+                              )}
                             </div>
                             <div className="text-xs text-slate-500 font-medium">
                               {new Date(booking.startTime).toLocaleTimeString(
-                                [],
+                                dateLocale(),
                                 { hour: '2-digit', minute: '2-digit' },
                               )}{' '}
                               -
                               {new Date(booking.endTime).toLocaleTimeString(
-                                [],
+                                dateLocale(),
                                 { hour: '2-digit', minute: '2-digit' },
                               )}
                             </div>
                           </td>
                           <td className="px-4 py-3 font-medium text-slate-700">
                             {rooms.find((r) => r.id === booking.roomId)?.name ||
-                              'Unknown Room'}
+                              t('myBookings.unknownRoom')}
                           </td>
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-800">
@@ -492,7 +504,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                                     : 'bg-slate-50 text-slate-700 border-slate-200'
                               } print:border-slate-300 print:text-black print:bg-transparent`}
                             >
-                              {booking.status}
+                              {t(`status.${booking.status}`)}
                             </span>
                           </td>
                         </tr>
@@ -522,11 +534,15 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                                   : 'bg-primary/10 text-primary border-primary/20'
                               } print:border-slate-300 print:text-black print:bg-transparent`}
                             >
-                              {user.role}
+                              {t(`reports.userRole.${user.role}`, {
+                                defaultValue: user.role,
+                              })}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-slate-600 tabular-nums">
-                            {new Date(user.createdAt).toLocaleDateString()}
+                            {new Date(user.createdAt).toLocaleDateString(
+                              dateLocale(),
+                            )}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <span
@@ -536,7 +552,9 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                                   : 'bg-amber-50 text-amber-700 border-amber-200'
                               } print:border-slate-300 print:text-black print:bg-transparent`}
                             >
-                              {user.status || 'ACTIVE'}
+                              {t(`reports.userStatus.${user.status || 'ACTIVE'}`, {
+                                defaultValue: user.status || 'ACTIVE',
+                              })}
                             </span>
                           </td>
                         </tr>
@@ -586,8 +604,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
 
               {/* Footer */}
               <div className="mt-8 pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400 font-medium print:hidden">
-                <p>{settings?.serviceName || 'Room Booking System'}</p>
-                <p>Internal Use Only</p>
+                <p>{settings?.serviceName || t('reports.defaultServiceName')}</p>
+                <p>{t('reports.internalUseOnly')}</p>
               </div>
             </div>
           </div>

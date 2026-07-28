@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { XIcon, AlertTriangleIcon } from './Icons';
 import { User, UserRole } from '../types';
 import LoadingSpinner from './LoadingSpinner';
@@ -15,6 +16,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: user.name,
     email: user.email,
@@ -31,19 +33,19 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
     // Validation
     if (!formData.name || !formData.email) {
-      setError('Name and email are required');
+      setError(t('userForm.errorNameEmailRequired'));
       return;
     }
 
     // If password is being changed, validate it
     if (formData.password) {
       if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('userForm.passwordsNoMatch'));
         return;
       }
 
       if (formData.password.length < 8) {
-        setError('Password must be at least 8 characters long');
+        setError(t('userForm.passwordMinLength'));
         return;
       }
     }
@@ -65,7 +67,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update user');
+      setError(err.message || t('userForm.updateFailed'));
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         {/* Header */}
         <div className="border-b border-white/15 bg-primary-dark p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white">Edit User</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {t('userForm.editTitle')}
+            </h2>
             <p className="text-sm text-white/80 mt-1">
-              Update user information
+              {t('userForm.editSubtitle')}
             </p>
           </div>
           <button
@@ -102,7 +106,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Full Name <span className="text-red-500">*</span>
+              {t('userForm.fullName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -111,7 +115,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 setFormData({ ...formData, name: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="John Doe"
+              placeholder={t('userForm.fullNamePlaceholder')}
               required
             />
           </div>
@@ -119,7 +123,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Email Address <span className="text-red-500">*</span>
+              {t('userForm.email')} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -128,7 +132,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 setFormData({ ...formData, email: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="john.doe@example.com"
+              placeholder={t('userForm.emailPlaceholder')}
               required
             />
           </div>
@@ -136,7 +140,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           {/* Role */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Role <span className="text-red-500">*</span>
+              {t('userForm.role')} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.role}
@@ -145,19 +149,23 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
-              <option value="STUDENT">Student</option>
-              <option value="STUDENT_WORKER">Student Worker</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPERADMIN">Super Admin</option>
+              <option value="STUDENT">{t('userForm.roleStudent')}</option>
+              <option value="STUDENT_WORKER">
+                {t('userForm.roleStudentWorker')}
+              </option>
+              <option value="ADMIN">{t('userForm.roleAdmin')}</option>
+              <option value="SUPERADMIN">
+                {t('userForm.roleSuperAdmin')}
+              </option>
             </select>
           </div>
 
           {/* Password Section */}
           <div className="pt-4 border-t border-slate-200">
             <p className="text-sm font-medium text-slate-700 mb-3">
-              Change Password{' '}
+              {t('userForm.changePasswordSection')}{' '}
               {!user.provider || user.provider === 'LOCAL'
-                ? '(leave blank to keep current password)'
+                ? t('userForm.keepCurrentHint')
                 : ''}
             </p>
 
@@ -177,10 +185,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                   />
                 </svg>
                 <p>
-                  This user signed in with a Microsoft account.
+                  {t('userForm.msNotice1')}
                   <br />
-                  Their password is managed by the university and cannot be
-                  changed here.
+                  {t('userForm.msNotice2')}
                 </p>
               </div>
             ) : (
@@ -188,7 +195,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 {/* New Password */}
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    New Password
+                    {t('userForm.newPassword')}
                   </label>
                   <input
                     type="password"
@@ -197,7 +204,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                       setFormData({ ...formData, password: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Minimum 8 characters"
+                    placeholder={t('userForm.passwordPlaceholder')}
                     minLength={8}
                   />
                 </div>
@@ -206,7 +213,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                 {formData.password && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Confirm New Password
+                      {t('userForm.confirmNewPassword')}
                     </label>
                     <input
                       type="password"
@@ -218,7 +225,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
                         })
                       }
                       className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder="Re-enter password"
+                      placeholder={t('userForm.confirmPasswordPlaceholder')}
                       minLength={8}
                     />
                   </div>
@@ -234,7 +241,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               onClick={onClose}
               className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -242,7 +249,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
               className="px-6 py-2 bg-primary hover:bg-primary-light text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && <LoadingSpinner size="sm" color="white" />}
-              {loading ? 'Updating...' : 'Update User'}
+              {loading ? t('userForm.updating') : t('userForm.updateUser')}
             </button>
           </div>
         </form>

@@ -37,6 +37,24 @@ router.get('/', requireAdminOrWorker, async (req, res) => {
   }
 });
 
+// Save the caller's language preference (used for notification emails).
+// Must be registered before /:id so "me" is not treated as a user id.
+router.put('/me/language', async (req: AuthRequest, res) => {
+  try {
+    const { language } = req.body;
+    if (language !== 'en' && language !== 'th') {
+      return res.status(400).json({ error: 'Unsupported language' });
+    }
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { language },
+    });
+    res.json({ language });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save language preference' });
+  }
+});
+
 // Get user by ID
 router.get('/:id', requireAdminOrWorker, async (req, res) => {
   try {

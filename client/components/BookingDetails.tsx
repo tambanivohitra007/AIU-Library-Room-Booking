@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Booking, User, UserRole, Room } from '../types';
 import { ClockIcon, UsersIcon, UserCircleIcon, TrashIcon } from './Icons';
 
@@ -17,6 +19,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
   onCancelBooking,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const isOwner = currentUser.id === booking.userId;
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const canCancel = isOwner || isAdmin;
@@ -36,7 +39,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
       {/* Header */}
       <div className="bg-slate-800 text-white p-4 flex justify-between items-start">
         <div>
-          <h3 className="font-bold text-lg">Booking Details</h3>
+          <h3 className="font-bold text-lg">{t('bookingDetails.title')}</h3>
           <p className="text-slate-300 text-sm">{room.name}</p>
         </div>
         <button
@@ -52,7 +55,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
         <div
           className={`inline-block px-2 py-1 rounded text-xs font-bold ${booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
         >
-          {booking.status}
+          {t(`status.${booking.status}`)}
         </div>
 
         {/* Time */}
@@ -60,7 +63,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
           <ClockIcon className="w-5 h-5 text-slate-400" />
           <div>
             <div className="text-sm font-semibold text-slate-800">
-              {start.toLocaleDateString(undefined, {
+              {start.toLocaleDateString(dateLocale(), {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
@@ -72,7 +75,7 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
               {end.getHours()}:{end.getMinutes().toString().padStart(2, '0')}
             </div>
             <div className="text-sm text-slate-500">
-              Duration: {duration / 60}h
+              {t('bookingDetails.duration', { hours: duration / 60 })}
             </div>
           </div>
         </div>
@@ -81,7 +84,9 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
         <div className="flex gap-3">
           <UserCircleIcon className="w-5 h-5 text-slate-400" />
           <div>
-            <div className="text-sm text-slate-500">Booked by</div>
+            <div className="text-sm text-slate-500">
+              {t('bookingDetails.bookedBy')}
+            </div>
             <div className="font-medium text-slate-900">
               {booking.userDisplay}
             </div>
@@ -100,7 +105,9 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
           <div className="flex items-center gap-2 mb-2">
             <UsersIcon className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-700">
-              Attendees ({booking.attendees.length})
+              {t('bookingDetails.attendees', {
+                total: booking.attendees.length,
+              })}
             </span>
           </div>
           <ul className="text-sm text-slate-600 space-y-1 pl-6 list-disc">
@@ -120,15 +127,17 @@ const BookingDetails: React.FC<BookingDetailsProps> = ({
               className="w-full flex justify-center items-center gap-2 py-2 text-sm font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors"
             >
               <TrashIcon className="w-4 h-4" />
-              Release Booking
+              {t('bookingDetails.releaseBooking')}
             </button>
           ) : hasEnded ? (
             <div className="text-center py-2 text-sm text-slate-500">
-              This booking has ended and cannot be cancelled
+              {t('bookingDetails.endedNoCancel')}
             </div>
           ) : booking.status !== 'CONFIRMED' ? (
             <div className="text-center py-2 text-sm text-slate-500">
-              This booking has already been {booking.status.toLowerCase()}
+              {t('bookingDetails.alreadyStatus', {
+                status: t(`status.${booking.status}`).toLocaleLowerCase(),
+              })}
             </div>
           ) : null}
         </div>

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Booking } from '../types';
 import { XIcon, UsersIcon } from './Icons';
 
@@ -11,6 +13,7 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
   booking,
   onClose,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
       <div className="bg-white rounded-xl max-w-md w-full animate-scale-in">
@@ -18,7 +21,9 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
         <div className="p-6 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UsersIcon className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold text-slate-900">Attendees</h3>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {t('attendees.title')}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -32,23 +37,29 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
         <div className="p-6">
           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
             <p className="text-sm text-slate-600 mb-1">
-              <span className="font-medium text-slate-700">Booking ID:</span>{' '}
+              <span className="font-medium text-slate-700">
+                {t('attendees.bookingId')}
+              </span>{' '}
               {booking.id}
             </p>
             <p className="text-sm text-slate-600 mb-1">
-              <span className="font-medium text-slate-700">Organizer:</span>{' '}
+              <span className="font-medium text-slate-700">
+                {t('attendees.organizer')}
+              </span>{' '}
               {booking.userDisplay}
             </p>
             <p className="text-sm text-slate-600">
-              <span className="font-medium text-slate-700">Time:</span>{' '}
-              {new Date(booking.startTime).toLocaleString([], {
+              <span className="font-medium text-slate-700">
+                {t('attendees.time')}
+              </span>{' '}
+              {new Date(booking.startTime).toLocaleString(dateLocale(), {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
               })}{' '}
               -{' '}
-              {new Date(booking.endTime).toLocaleTimeString([], {
+              {new Date(booking.endTime).toLocaleTimeString(dateLocale(), {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -57,11 +68,13 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
 
           <div className="space-y-2">
             <p className="text-sm font-semibold text-slate-700 mb-3">
-              Attendees ({booking.attendees.length})
+              {t('attendees.countTitle', {
+                count: booking.attendees.length,
+              })}
             </p>
             {booking.attendees.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-4">
-                No attendees listed
+                {t('attendees.noAttendees')}
               </p>
             ) : (
               <div className="max-h-[300px] overflow-y-auto space-y-2">
@@ -77,13 +90,15 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
                         </p>
                         {attendee.studentId && (
                           <p className="text-xs text-slate-500 mt-1">
-                            ID: {attendee.studentId}
+                            {t('attendees.studentId', {
+                              id: attendee.studentId,
+                            })}
                           </p>
                         )}
                       </div>
                       {attendee.isCompanion && (
                         <span className="px-2 py-1 bg-primary/20 text-primary rounded text-xs font-medium">
-                          Companion
+                          {t('attendees.companion')}
                         </span>
                       )}
                     </div>
@@ -100,7 +115,7 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

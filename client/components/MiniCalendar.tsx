@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 
 interface MiniCalendarProps {
   selectedDate: Date;
@@ -9,13 +11,26 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
   selectedDate,
   onDateSelect,
 }) => {
+  const { i18n } = useTranslation();
   const currentMonth = selectedDate.getMonth();
   const currentYear = selectedDate.getFullYear();
 
-  const monthName = selectedDate.toLocaleDateString('en-US', {
+  const monthName = selectedDate.toLocaleDateString(dateLocale(), {
     month: 'long',
     year: 'numeric',
   });
+
+  // Localized narrow weekday names (Sun..Sat). Jan 7, 2024 is a Sunday.
+  const weekdays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) =>
+        new Date(2024, 0, 7 + i).toLocaleDateString(dateLocale(), {
+          weekday: 'narrow',
+        }),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [i18n.language],
+  );
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -114,7 +129,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+        {weekdays.map((day, i) => (
           <div
             key={i}
             className="text-xs font-medium text-slate-500 text-center"

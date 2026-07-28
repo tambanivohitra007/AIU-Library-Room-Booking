@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Semester } from '../types';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -37,6 +39,8 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
   isEditing,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -66,7 +70,9 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
                 className="text-lg leading-6 font-medium text-white"
                 id="modal-title"
               >
-                {isEditing ? 'Edit Semester' : 'Add New Semester'}
+                {isEditing
+                  ? t('semesters.modalEditTitle')
+                  : t('semesters.modalAddTitle')}
               </h3>
               <button
                 onClick={onClose}
@@ -83,7 +89,7 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">
-                  Semester Name
+                  {t('semesters.nameLabel')}
                 </label>
                 <input
                   type="text"
@@ -91,7 +97,7 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="e.g. Fall 2025"
+                  placeholder={t('semesters.namePlaceholder')}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none disabled:bg-slate-50 disabled:text-slate-500"
                   required
                   disabled={isLoading}
@@ -113,14 +119,14 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
                   htmlFor="isActive"
                   className="text-sm font-medium text-slate-700"
                 >
-                  Set as Active Semester
+                  {t('semesters.setActive')}
                 </label>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">
-                    Start Date
+                    {t('semesters.startDate')}
                   </label>
                   <input
                     type="date"
@@ -136,7 +142,7 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">
-                    End Date
+                    {t('semesters.endDate')}
                   </label>
                   <input
                     type="date"
@@ -179,12 +185,14 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      {isEditing ? 'Updating...' : 'Creating...'}
+                      {isEditing
+                        ? t('semesters.updating')
+                        : t('semesters.creating')}
                     </>
                   ) : isEditing ? (
-                    'Update'
+                    t('semesters.update')
                   ) : (
-                    'Create'
+                    t('semesters.create')
                   )}
                 </button>
                 <button
@@ -193,7 +201,7 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:col-start-1 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -205,6 +213,7 @@ const SemesterModal: React.FC<SemesterModalProps> = ({
 };
 
 const SemestersManager: React.FC = () => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [loading, setLoading] = useState(true);
@@ -238,7 +247,7 @@ const SemestersManager: React.FC = () => {
       const data = await api.getSemesters();
       setSemesters(data);
     } catch (error) {
-      toast.error('Failed to load semesters');
+      toast.error(t('semesters.loadFailed'));
     } finally {
       if (isInitial) setLoading(false);
     }
@@ -265,9 +274,7 @@ const SemestersManager: React.FC = () => {
 
   const requestDelete = (semester: Semester) => {
     if (semester.isActive) {
-      toast.error(
-        'Cannot delete the active semester. Please set another semester as active first.',
-      );
+      toast.error(t('semesters.cannotDeleteActiveDetail'));
       return;
     }
     setSemesterToDelete(semester);
@@ -277,7 +284,7 @@ const SemestersManager: React.FC = () => {
     if (!semesterToDelete) return;
 
     if (semesterToDelete.isActive) {
-      toast.error('Cannot delete the active semester.');
+      toast.error(t('semesters.cannotDeleteActive'));
       setSemesterToDelete(null);
       return;
     }
@@ -285,11 +292,11 @@ const SemestersManager: React.FC = () => {
     setIsDeleting(true);
     try {
       await api.deleteSemester(semesterToDelete.id);
-      toast.success('Semester deleted successfully');
+      toast.success(t('semesters.deleted'));
       loadSemesters();
       setSemesterToDelete(null);
     } catch (error) {
-      toast.error('Failed to delete semester');
+      toast.error(t('semesters.deleteFailed'));
     } finally {
       setIsDeleting(false);
     }
@@ -306,7 +313,7 @@ const SemestersManager: React.FC = () => {
     end.setHours(23, 59, 59, 999);
 
     if (end < start) {
-      toast.error('End date must be after start date');
+      toast.error(t('semesters.endAfterStart'));
       return;
     }
 
@@ -324,7 +331,7 @@ const SemestersManager: React.FC = () => {
     });
 
     if (hasOverlap) {
-      toast.error('Date range overlaps with an existing semester');
+      toast.error(t('semesters.overlap'));
       return;
     }
 
@@ -336,19 +343,19 @@ const SemestersManager: React.FC = () => {
           startDate: new Date(formData.startDate).toISOString(),
           endDate: new Date(formData.endDate).toISOString(),
         });
-        toast.success('Semester updated successfully');
+        toast.success(t('semesters.updated'));
       } else {
         await api.createSemester({
           ...formData,
           startDate: new Date(formData.startDate).toISOString(),
           endDate: new Date(formData.endDate).toISOString(),
         });
-        toast.success('Semester created successfully');
+        toast.success(t('semesters.created'));
       }
       setIsModalOpen(false);
       loadSemesters();
     } catch (error) {
-      toast.error('Failed to save semester');
+      toast.error(t('semesters.saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -359,13 +366,15 @@ const SemestersManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h2 className="text-xl font-bold gradient-text">Semester Management</h2>
+        <h2 className="text-xl font-bold gradient-text">
+          {t('semesters.title')}
+        </h2>
         <button
           onClick={openAddModal}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-lg font-bold transition-all"
         >
           <PlusIcon className="w-5 h-5" />
-          Add Semester
+          {t('semesters.add')}
         </button>
       </div>
 
@@ -375,16 +384,16 @@ const SemestersManager: React.FC = () => {
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Name
+                {t('semesters.colName')}
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Dates
+                {t('semesters.colDates')}
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Status
+                {t('semesters.colStatus')}
               </th>
               <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Actions
+                {t('semesters.colActions')}
               </th>
             </tr>
           </thead>
@@ -398,17 +407,20 @@ const SemestersManager: React.FC = () => {
                   {semester.name}
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600">
-                  {new Date(semester.startDate).toLocaleDateString()} -{' '}
-                  {new Date(semester.endDate).toLocaleDateString()}
+                  {new Date(semester.startDate).toLocaleDateString(
+                    dateLocale(),
+                  )}{' '}
+                  -{' '}
+                  {new Date(semester.endDate).toLocaleDateString(dateLocale())}
                 </td>
                 <td className="px-6 py-4">
                   {semester.isActive ? (
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold border border-green-200">
-                      Active
+                      {t('semesters.active')}
                     </span>
                   ) : (
                     <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-md text-xs font-bold border border-slate-200">
-                      Inactive
+                      {t('semesters.inactive')}
                     </span>
                   )}
                 </td>
@@ -417,7 +429,7 @@ const SemestersManager: React.FC = () => {
                     onClick={() => handleEdit(semester)}
                     className="text-primary hover:text-primary-dark font-medium text-sm"
                   >
-                    Edit
+                    {t('semesters.edit')}
                   </button>
                   <button
                     onClick={() => requestDelete(semester)}
@@ -429,11 +441,11 @@ const SemestersManager: React.FC = () => {
                     }`}
                     title={
                       semester.isActive
-                        ? 'Cannot delete active semester'
-                        : 'Delete semester'
+                        ? t('semesters.deleteTooltipActive')
+                        : t('semesters.deleteTooltip')
                     }
                   >
-                    Delete
+                    {t('semesters.delete')}
                   </button>
                 </td>
               </tr>
@@ -445,7 +457,7 @@ const SemestersManager: React.FC = () => {
                   colSpan={4}
                   className="px-6 py-8 text-center text-slate-500 font-medium"
                 >
-                  No semesters configured yet. Add one above.
+                  {t('semesters.noneConfiguredAdd')}
                 </td>
               </tr>
             )}
@@ -458,7 +470,7 @@ const SemestersManager: React.FC = () => {
         {semesters.length === 0 ? (
           <div className="glass rounded-lg border border-slate-200 p-12 text-center ">
             <p className="text-slate-500 font-semibold">
-              No semesters configured yet.
+              {t('semesters.noneConfigured')}
             </p>
           </div>
         ) : (
@@ -473,17 +485,22 @@ const SemestersManager: React.FC = () => {
                     {semester.name}
                   </h3>
                   <p className="text-sm text-slate-600 mt-1">
-                    {new Date(semester.startDate).toLocaleDateString()} -{' '}
-                    {new Date(semester.endDate).toLocaleDateString()}
+                    {new Date(semester.startDate).toLocaleDateString(
+                      dateLocale(),
+                    )}{' '}
+                    -{' '}
+                    {new Date(semester.endDate).toLocaleDateString(
+                      dateLocale(),
+                    )}
                   </p>
                 </div>
                 {semester.isActive ? (
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold border border-green-200">
-                    Active
+                    {t('semesters.active')}
                   </span>
                 ) : (
                   <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-md text-xs font-bold border border-slate-200">
-                    Inactive
+                    {t('semesters.inactive')}
                   </span>
                 )}
               </div>
@@ -493,7 +510,7 @@ const SemestersManager: React.FC = () => {
                   onClick={() => handleEdit(semester)}
                   className="flex-1 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-md font-bold text-sm transition-all"
                 >
-                  Edit
+                  {t('semesters.edit')}
                 </button>
                 <button
                   onClick={() => requestDelete(semester)}
@@ -504,7 +521,7 @@ const SemestersManager: React.FC = () => {
                       : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
                   }`}
                 >
-                  Delete
+                  {t('semesters.delete')}
                 </button>
               </div>
             </div>
@@ -524,8 +541,10 @@ const SemestersManager: React.FC = () => {
 
       {semesterToDelete && (
         <ConfirmDeleteModal
-          title="Delete Semester"
-          message={`Are you sure you want to delete "${semesterToDelete.name}"? This action cannot be undone.`}
+          title={t('semesters.deleteTitle')}
+          message={t('semesters.deleteMessage', {
+            name: semesterToDelete.name,
+          })}
           onConfirm={confirmDelete}
           onCancel={() => setSemesterToDelete(null)}
           isLoading={isDeleting}

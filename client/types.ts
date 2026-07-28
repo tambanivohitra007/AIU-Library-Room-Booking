@@ -15,6 +15,7 @@ export interface User {
   role: UserRole;
   status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
   provider?: 'LOCAL' | 'MICROSOFT';
+  language?: 'en' | 'th'; // notification email preference (UI language is per-device)
   avatarUrl?: string;
   createdAt?: string;
   managedDepartmentIds?: string[]; // departments this user administers (any role)

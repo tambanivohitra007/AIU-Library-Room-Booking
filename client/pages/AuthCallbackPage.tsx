@@ -1,10 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const AuthCallbackPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { addToast: showToast } = useToast();
@@ -21,7 +23,9 @@ const AuthCallbackPage: React.FC = () => {
 
     if (error) {
       showToast(
-        'Microsoft Login Failed: ' + (params.get('error_description') || error),
+        t('authCallback.microsoftLoginFailed', {
+          message: params.get('error_description') || error,
+        }),
         'error',
       );
       navigate('/');
@@ -29,7 +33,7 @@ const AuthCallbackPage: React.FC = () => {
     }
 
     if (!code) {
-      showToast('No authorization code received', 'error');
+      showToast(t('authCallback.noCode'), 'error');
       navigate('/');
       return;
     }
@@ -37,7 +41,7 @@ const AuthCallbackPage: React.FC = () => {
     const processLogin = async () => {
       try {
         await api.loginWithMicrosoft(code);
-        showToast('Successfully logged in with Microsoft', 'success');
+        showToast(t('authCallback.loginSuccess'), 'success');
         navigate('/'); // Go to dashboard
         // Force a page reload or context update if necessary to update user state in App
         // But usually navigate is enough if App checks token on mount/route change.
@@ -46,19 +50,19 @@ const AuthCallbackPage: React.FC = () => {
         window.location.reload();
       } catch (err: any) {
         console.error(err);
-        showToast(err.message || 'Failed to login with Microsoft', 'error');
+        showToast(err.message || t('authCallback.loginError'), 'error');
         navigate('/');
       }
     };
 
     processLogin();
-  }, [location, navigate, showToast]);
+  }, [location, navigate, showToast, t]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-slate-50 flex-col gap-4">
       <LoadingSpinner />
       <p className="text-slate-500 font-medium animate-pulse">
-        Authenticating with Microsoft...
+        {t('authCallback.authenticating')}
       </p>
     </div>
   );

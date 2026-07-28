@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { PrismaClient } from '@prisma/client';
 import logger from '../utils/logger.js';
 import { sendReminderEmail } from './email.js';
+import { asLang } from './i18n.js';
 
 const prisma = new PrismaClient();
 
@@ -74,7 +75,7 @@ export const startBookingScheduler = () => {
             roomName: booking.room.name,
             startTime: booking.startTime,
             endTime: booking.endTime,
-          });
+          }, asLang(booking.user.language));
 
           // Mark as sent
           await prisma.booking.update({

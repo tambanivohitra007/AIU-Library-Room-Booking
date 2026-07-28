@@ -38,6 +38,7 @@ model User {
   provider  String    @default("LOCAL")
   role      UserRole  @default(STUDENT)
   status    UserStatus @default(ACTIVE)
+  language  String    @default("en") // UI/email language preference: "en" | "th"
   avatarUrl String?
   createdAt DateTime  @default(now())
   bookings  Booking[]

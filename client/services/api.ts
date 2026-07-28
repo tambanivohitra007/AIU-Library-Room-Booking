@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import {
   User,
   Room,
@@ -34,6 +35,8 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
+      // Server localizes user-facing error messages from this header
+      'Accept-Language': i18n.language === 'th' ? 'th' : 'en',
       ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options?.headers,
     },
@@ -62,6 +65,14 @@ export const api = {
     return fetchAPI<{ message: string; user: User }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),
+    });
+  },
+
+  // Persist the language preference server-side (drives notification emails)
+  updateMyLanguage: async (language: 'en' | 'th'): Promise<void> => {
+    await fetchAPI('/users/me/language', {
+      method: 'PUT',
+      body: JSON.stringify({ language }),
     });
   },
 

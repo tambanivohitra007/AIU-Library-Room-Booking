@@ -1,5 +1,6 @@
 import logger from '../utils/logger.js';
 import { getServiceSettings } from './settings.js';
+import { Lang, dateLocaleTag } from './i18n.js';
 
 // Contact fields hold one or more addresses, comma/semicolon-separated
 export const parseEmails = (value: string | null | undefined): string[] => {
@@ -153,8 +154,25 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 };
 
 
+const footerAssistText: Record<Lang, string> = {
+  en: 'For assistance, please contact',
+  th: 'หากต้องการความช่วยเหลือ กรุณาติดต่อ',
+};
+
+// Shared field labels used in the info boxes
+const FIELD_LABELS: Record<Lang, { room: string; date: string; time: string; reason: string; requestedBy: string }> = {
+  en: { room: 'Room', date: 'Date', time: 'Time', reason: 'Reason', requestedBy: 'Requested by' },
+  th: { room: 'ห้อง', date: 'วันที่', time: 'เวลา', reason: 'เหตุผล', requestedBy: 'ผู้ขอจอง' },
+};
+
+const formatEmailDate = (date: Date, lang: Lang, opts: Intl.DateTimeFormatOptions) =>
+  new Date(date).toLocaleDateString(dateLocaleTag(lang), opts);
+
+const formatEmailTime = (date: Date, lang: Lang) =>
+  new Date(date).toLocaleTimeString(dateLocaleTag(lang), { hour: '2-digit', minute: '2-digit' });
+
 // HTML Email Template Builder
-const getEmailTemplate = (title: string, content: string, branding: Branding) => {
+const getEmailTemplate = (title: string, content: string, branding: Branding, templateLang: Lang = 'en') => {
   return `
     <!DOCTYPE html>
     <html>
@@ -197,7 +215,7 @@ const getEmailTemplate = (title: string, content: string, branding: Branding) =>
         </div>
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} ${branding.serviceName}.</p>
-          ${branding.contactEmails.length > 0 ? `<p>For assistance, please contact ${branding.contactEmails.map((e) => `<a href="mailto:${e}">${e}</a>`).join(', ')}</p>` : ''}
+          ${branding.contactEmails.length > 0 ? `<p>${footerAssistText[templateLang]} ${branding.contactEmails.map((e) => `<a href="mailto:${e}">${e}</a>`).join(', ')}</p>` : ''}
         </div>
       </div>
     </body>
@@ -206,98 +224,130 @@ const getEmailTemplate = (title: string, content: string, branding: Branding) =>
 };
 
 export const sendCancellationEmail = async (
-  email: string, 
-  userName: string, 
-  details: { roomName: string; startTime: Date; reason?: string }
+  email: string,
+  userName: string,
+  details: { roomName: string; startTime: Date; reason?: string },
+  lang: Lang = 'en'
 ) => {
   const branding = await getBranding();
-  const subject = `Booking Cancelled - ${branding.serviceName}`;
+  const S = {
+    en: {
+      subject: `Booking Cancelled - ${branding.serviceName}`,
+      title: 'Booking Cancelled',
+      greeting: `Dear <strong>${userName}</strong>,`,
+      intro: `This email is to inform you that your room reservation with ${branding.serviceName} has been cancelled.`,
+      outro: 'If you believe this cancellation was made in error or if you have any questions, please contact the administrators immediately.',
+      button: 'Visit Booking System',
+    },
+    th: {
+      subject: `การจองถูกยกเลิก - ${branding.serviceName}`,
+      title: 'การจองถูกยกเลิก',
+      greeting: `เรียน คุณ<strong>${userName}</strong>`,
+      intro: `อีเมลฉบับนี้แจ้งให้ทราบว่าการจองห้องของคุณกับ ${branding.serviceName} ถูกยกเลิกแล้ว`,
+      outro: 'หากคุณคิดว่าการยกเลิกนี้เกิดจากความผิดพลาด หรือมีข้อสงสัยใด ๆ กรุณาติดต่อผู้ดูแลระบบทันที',
+      button: 'ไปที่ระบบจองห้อง',
+    },
+  }[lang];
+  const L = FIELD_LABELS[lang];
 
-  const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
+  const dateStr = formatEmailDate(details.startTime, lang, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric'
   });
-
-  const timeStr = new Date(details.startTime).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const timeStr = formatEmailTime(details.startTime, lang);
 
   const message = `
-    <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>This email is to inform you that your room reservation with ${branding.serviceName} has been cancelled.</p>
-    
+    <p style="font-size: 16px; margin-bottom: 20px;">${S.greeting}</p>
+    <p>${S.intro}</p>
+
     <div class="info-box cancel-warning">
       <div class="info-row">
-        <div class="info-label">Room</div>
+        <div class="info-label">${L.room}</div>
         <div class="info-value">${details.roomName}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Date</div>
+        <div class="info-label">${L.date}</div>
         <div class="info-value">${dateStr}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Time</div>
+        <div class="info-label">${L.time}</div>
         <div class="info-value">${timeStr}</div>
       </div>
       ${details.reason ? `
       <div class="info-row">
-        <div class="info-label">Reason</div>
+        <div class="info-label">${L.reason}</div>
         <div class="info-value">${details.reason}</div>
       </div>` : ''}
     </div>
 
-    <p>If you believe this cancellation was made in error or if you have any questions, please contact the administrators immediately.</p>
+    <p>${S.outro}</p>
 
     <div style="text-align: center;">
-      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}" class="button">Visit Booking System</a>
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}" class="button">${S.button}</a>
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Cancelled', message, branding));
+  await sendEmail(email, S.subject, getEmailTemplate(S.title, message, branding, lang));
 };
 
 export const sendApprovalEmail = async (
   email: string,
   userName: string,
-  details: { roomName: string; startTime: Date; endTime: Date }
+  details: { roomName: string; startTime: Date; endTime: Date },
+  lang: Lang = 'en'
 ) => {
   const branding = await getBranding();
-  const subject = `Booking Approved - ${branding.serviceName}`;
+  const S = {
+    en: {
+      subject: `Booking Approved - ${branding.serviceName}`,
+      title: 'Booking Approved',
+      greeting: `Dear <strong>${userName}</strong>,`,
+      intro: 'Good news — your booking request has been approved.',
+      button: 'View My Bookings',
+    },
+    th: {
+      subject: `การจองได้รับอนุมัติ - ${branding.serviceName}`,
+      title: 'การจองได้รับอนุมัติ',
+      greeting: `เรียน คุณ<strong>${userName}</strong>`,
+      intro: 'ข่าวดี — คำขอจองของคุณได้รับการอนุมัติแล้ว',
+      button: 'ดูการจองของฉัน',
+    },
+  }[lang];
+  const L = FIELD_LABELS[lang];
 
-  const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
+  const dateStr = formatEmailDate(details.startTime, lang, {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   });
-  const startTimeStr = new Date(details.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  const endTimeStr = new Date(details.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const startTimeStr = formatEmailTime(details.startTime, lang);
+  const endTimeStr = formatEmailTime(details.endTime, lang);
 
   const message = `
-    <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>Good news — your booking request has been approved.</p>
+    <p style="font-size: 16px; margin-bottom: 20px;">${S.greeting}</p>
+    <p>${S.intro}</p>
 
     <div class="info-box">
       <div class="info-row">
-        <div class="info-label">Room</div>
+        <div class="info-label">${L.room}</div>
         <div class="info-value">${details.roomName}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Date</div>
+        <div class="info-label">${L.date}</div>
         <div class="info-value">${dateStr}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Time</div>
+        <div class="info-label">${L.time}</div>
         <div class="info-value">${startTimeStr} - ${endTimeStr}</div>
       </div>
     </div>
 
     <div style="text-align: center;">
-      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">View My Bookings</a>
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">${S.button}</a>
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Approved', message, branding));
+  await sendEmail(email, S.subject, getEmailTemplate(S.title, message, branding, lang));
 };
 
 export const sendApprovalRequestEmail = async (
@@ -351,54 +401,65 @@ export const sendApprovalRequestEmail = async (
 };
 
 export const sendReminderEmail = async (
-  email: string, 
-  userName: string, 
-  details: { roomName: string; startTime: Date; endTime: Date }
+  email: string,
+  userName: string,
+  details: { roomName: string; startTime: Date; endTime: Date },
+  lang: Lang = 'en'
 ) => {
   const branding = await getBranding();
-  const subject = 'Reminder: Your Booking Starts Soon';
+  const S = {
+    en: {
+      subject: 'Reminder: Your Booking Starts Soon',
+      title: 'Booking Reminder',
+      greeting: `Dear <strong>${userName}</strong>,`,
+      intro: `This is a friendly reminder that your upcoming room reservation with ${branding.serviceName} is scheduled to begin soon.`,
+      outro: 'Please ensure you arrive on time. If you no longer need the room, please cancel your booking to make it available for others.',
+      button: 'View My Bookings',
+    },
+    th: {
+      subject: 'แจ้งเตือน: การจองของคุณกำลังจะเริ่ม',
+      title: 'แจ้งเตือนการจอง',
+      greeting: `เรียน คุณ<strong>${userName}</strong>`,
+      intro: `ขอแจ้งเตือนว่าการจองห้องของคุณกับ ${branding.serviceName} กำลังจะเริ่มในไม่ช้า`,
+      outro: 'กรุณามาถึงตรงเวลา หากไม่ต้องการใช้ห้องแล้ว กรุณายกเลิกการจองเพื่อเปิดโอกาสให้ผู้อื่นใช้งาน',
+      button: 'ดูการจองของฉัน',
+    },
+  }[lang];
+  const L = FIELD_LABELS[lang];
 
-  const dateStr = new Date(details.startTime).toLocaleDateString('en-US', {
+  const dateStr = formatEmailDate(details.startTime, lang, {
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   });
-
-  const startTimeStr = new Date(details.startTime).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  
-  const endTimeStr = new Date(details.endTime).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const startTimeStr = formatEmailTime(details.startTime, lang);
+  const endTimeStr = formatEmailTime(details.endTime, lang);
 
   const message = `
-    <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>${userName}</strong>,</p>
-    <p>This is a friendly reminder that your upcoming room reservation with ${branding.serviceName} is scheduled to begin soon.</p>
-    
+    <p style="font-size: 16px; margin-bottom: 20px;">${S.greeting}</p>
+    <p>${S.intro}</p>
+
     <div class="info-box">
       <div class="info-row">
-        <div class="info-label">Room</div>
+        <div class="info-label">${L.room}</div>
         <div class="info-value">${details.roomName}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Date</div>
+        <div class="info-label">${L.date}</div>
         <div class="info-value">${dateStr}</div>
       </div>
       <div class="info-row">
-        <div class="info-label">Time</div>
+        <div class="info-label">${L.time}</div>
         <div class="info-value">${startTimeStr} - ${endTimeStr}</div>
       </div>
     </div>
 
-    <p>Please ensure you arrive on time. If you no longer need the room, please cancel your booking to make it available for others.</p>
-    
+    <p>${S.outro}</p>
+
     <div style="text-align: center;">
-      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">View My Bookings</a>
+      <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/my-bookings" class="button">${S.button}</a>
     </div>
   `;
 
-  await sendEmail(email, subject, getEmailTemplate('Booking Reminder', message, branding));
+  await sendEmail(email, S.subject, getEmailTemplate(S.title, message, branding, lang));
 };

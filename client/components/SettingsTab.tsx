@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '../contexts/SettingsContext';
 import { useToast } from '../contexts/ToastContext';
 import { OperatingHours } from '../types';
@@ -8,6 +9,7 @@ import OperatingHoursEditor, {
 } from './OperatingHoursEditor';
 
 const SettingsTab: React.FC = () => {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const toast = useToast();
   const [formData, setFormData] = useState({
@@ -59,9 +61,9 @@ const SettingsTab: React.FC = () => {
         operatingHours: JSON.stringify(hours),
         allowSelfRegistration,
       });
-      toast.success('Settings updated successfully');
+      toast.success(t('settingsTab.updated'));
     } catch (error) {
-      toast.error('Failed to update settings');
+      toast.error(t('settingsTab.updateFailed'));
     }
   };
 
@@ -87,12 +89,12 @@ const SettingsTab: React.FC = () => {
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        Service Configuration
+        {t('settingsTab.title')}
       </h3>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Service Name
+            {t('settingsTab.serviceName')}
           </label>
           <input
             type="text"
@@ -100,12 +102,12 @@ const SettingsTab: React.FC = () => {
             value={formData.serviceName}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="e.g. Campus Room Booking"
+            placeholder={t('settingsTab.serviceNamePlaceholder')}
           />
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Description
+            {t('settingsTab.description')}
           </label>
           <textarea
             name="description"
@@ -113,12 +115,12 @@ const SettingsTab: React.FC = () => {
             onChange={handleChange}
             rows={3}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="Short description of the service"
+            placeholder={t('settingsTab.descriptionPlaceholder')}
           />
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Contact Emails
+            {t('settingsTab.contactEmails')}
           </label>
           <input
             type="text"
@@ -126,16 +128,15 @@ const SettingsTab: React.FC = () => {
             value={formData.contactEmail}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="admin@example.com, help@example.com"
+            placeholder={t('settingsTab.contactEmailsPlaceholder')}
           />
           <p className="text-xs text-slate-500 mt-1">
-            One or more addresses, comma-separated. Shown as the assistance
-            contact in notification emails.
+            {t('settingsTab.contactEmailsHint')}
           </p>
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Website URL (Optional)
+            {t('settingsTab.websiteUrl')}
           </label>
           <input
             type="url"
@@ -143,12 +144,12 @@ const SettingsTab: React.FC = () => {
             value={formData.websiteUrl}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="https://example.com"
+            placeholder={t('settingsTab.websiteUrlPlaceholder')}
           />
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Allowed Email Domains
+            {t('settingsTab.allowedDomains')}
           </label>
           <input
             type="text"
@@ -156,11 +157,10 @@ const SettingsTab: React.FC = () => {
             value={formData.allowedEmailDomains}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            placeholder="e.g. example.edu, staff.example.edu"
+            placeholder={t('settingsTab.allowedDomainsPlaceholder')}
           />
           <p className="text-xs text-slate-500 mt-1">
-            Comma-separated list. Only emails from these domains can register or
-            sign in. Leave empty to allow any domain.
+            {t('settingsTab.allowedDomainsHint')}
           </p>
         </div>
         <div>
@@ -172,23 +172,20 @@ const SettingsTab: React.FC = () => {
               className="rounded border-slate-300 text-primary focus:ring-primary/20"
             />
             <span className="text-sm font-bold text-slate-700">
-              Allow self-registration
+              {t('settingsTab.allowSelfRegistration')}
             </span>
           </label>
           <p className="text-xs text-slate-500 mt-1 ml-6">
-            When off, the &quot;Create an Account&quot; option is hidden and new
-            users can only join via Microsoft sign-in, admin creation, or bulk
-            import.
+            {t('settingsTab.allowSelfRegistrationHint')}
           </p>
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">
-            Operating Hours
+            {t('roomDetails.operatingHours')}
           </label>
           <OperatingHoursEditor value={hours} onChange={setHours} />
           <p className="text-xs text-slate-500 mt-1">
-            Default schedule for all rooms. Departments with custom hours
-            override it. Enforced by the server.
+            {t('settingsTab.operatingHoursHint')}
           </p>
         </div>
         <div className="pt-4">
@@ -209,7 +206,7 @@ const SettingsTab: React.FC = () => {
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            Save Changes
+            {t('settingsTab.saveChanges')}
           </button>
         </div>
       </form>

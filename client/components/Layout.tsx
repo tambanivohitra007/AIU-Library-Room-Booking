@@ -12,7 +12,8 @@ import logo from '../assets/logo_small.jpg';
 import { useSettings } from '../contexts/SettingsContext';
 import GlobalSearch from './GlobalSearch';
 import { useTranslation } from 'react-i18next';
-import { setLanguage } from '../i18n';
+import { setLanguage, AppLanguage } from '../i18n';
+import { api } from '../services/api';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -79,7 +80,12 @@ const Layout: React.FC<LayoutProps> = ({
         <div className="flex items-center gap-2 sm:gap-4 relative">
           {/* Language switcher: shows the language you would switch TO */}
           <button
-            onClick={() => setLanguage(i18n.language === 'th' ? 'en' : 'th')}
+            onClick={() => {
+              const next: AppLanguage = i18n.language === 'th' ? 'en' : 'th';
+              setLanguage(next);
+              // Save server-side so notification emails use this language too
+              api.updateMyLanguage(next).catch(() => {});
+            }}
             className="px-2 py-1 text-xs font-bold text-white/80 hover:text-white border border-white/30 rounded-md hover:bg-white/10 transition-colors"
             title={i18n.language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
           >

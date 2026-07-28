@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { Room, Department } from '../types';
 import { XIcon, PlusIcon } from './Icons';
@@ -17,6 +18,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
   onSuccess,
   allowedDepartmentIds,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const [name, setName] = useState(room.name);
   const [description, setDescription] = useState(room.description);
@@ -62,9 +64,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
     setError(null);
 
     if (!name.trim() || !description.trim() || !minCapacity || !maxCapacity) {
-      setError(
-        'Name, description, minimum capacity, and maximum capacity are required',
-      );
+      setError(t('roomForm.errorRequired'));
       return;
     }
 
@@ -72,17 +72,17 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
     const maxCapacityNum = parseInt(maxCapacity);
 
     if (isNaN(minCapacityNum) || minCapacityNum < 1) {
-      setError('Minimum capacity must be a number greater than 0');
+      setError(t('roomForm.errorMinCapacity'));
       return;
     }
 
     if (isNaN(maxCapacityNum) || maxCapacityNum < 1) {
-      setError('Maximum capacity must be a number greater than 0');
+      setError(t('roomForm.errorMaxCapacity'));
       return;
     }
 
     if (minCapacityNum > maxCapacityNum) {
-      setError('Minimum capacity cannot be greater than maximum capacity');
+      setError(t('roomForm.errorMinMax'));
       return;
     }
 
@@ -98,12 +98,12 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
         bookingTerms: bookingTerms.trim() || null,
         requiresApproval,
       });
-      toast.success('Room updated successfully');
+      toast.success(t('roomForm.updated'));
       onSuccess();
       onClose();
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to update room';
+        err instanceof Error ? err.message : t('roomForm.updateFailed');
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -116,7 +116,9 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
       <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-white/15 flex items-center justify-between sticky top-0 bg-primary-dark">
-          <h3 className="text-lg font-semibold text-white">Edit Room</h3>
+          <h3 className="text-lg font-semibold text-white">
+            {t('roomForm.editTitle')}
+          </h3>
           <button
             onClick={onClose}
             className="text-white/80 hover:text-white transition-colors"
@@ -137,28 +139,29 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Room Name <span className="text-red-500">*</span>
+                {t('roomForm.roomName')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="e.g., Conference Room A"
+                placeholder={t('roomForm.roomNamePlaceholder')}
                 disabled={isSubmitting}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Description <span className="text-red-500">*</span>
+                {t('roomForm.description')}{' '}
+                <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 rows={3}
-                placeholder="Brief description of the room"
+                placeholder={t('roomForm.descriptionPlaceholder')}
                 disabled={isSubmitting}
               />
             </div>
@@ -166,28 +169,30 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Min Capacity <span className="text-red-500">*</span>
+                  {t('roomForm.minCapacity')}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   value={minCapacity}
                   onChange={(e) => setMinCapacity(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Minimum people"
+                  placeholder={t('roomForm.minCapacityPlaceholder')}
                   min="1"
                   disabled={isSubmitting}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Max Capacity <span className="text-red-500">*</span>
+                  {t('roomForm.maxCapacity')}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   value={maxCapacity}
                   onChange={(e) => setMaxCapacity(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Maximum people"
+                  placeholder={t('roomForm.maxCapacityPlaceholder')}
                   min="1"
                   disabled={isSubmitting}
                 />
@@ -197,7 +202,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
             {departments.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Department
+                  {t('roomForm.department')}
                 </label>
                 <select
                   value={departmentId}
@@ -206,7 +211,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
                   disabled={isSubmitting}
                 >
                   {!allowedDepartmentIds && (
-                    <option value="">No department (global hours)</option>
+                    <option value="">{t('roomForm.noDepartmentOption')}</option>
                   )}
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -227,32 +232,31 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
                   disabled={isSubmitting}
                 />
                 <span className="text-sm font-medium text-slate-700">
-                  Require approval for bookings
+                  {t('roomForm.requireApproval')}
                 </span>
               </label>
               <p className="text-xs text-slate-500 mt-1 ml-6">
-                Bookings stay pending (the slot is held) until a department
-                admin or staff member approves them.
+                {t('roomForm.requireApprovalHint')}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Terms &amp; Conditions (Optional)
+                {t('roomForm.terms')}
               </label>
               <textarea
                 value={bookingTerms}
                 onChange={(e) => setBookingTerms(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 rows={4}
-                placeholder="If set, users must read and accept these terms before booking this room (e.g., lab safety rules)."
+                placeholder={t('roomForm.termsPlaceholder')}
                 disabled={isSubmitting}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Features
+                {t('roomDetails.features')}
               </label>
               <div className="flex gap-2 mb-2">
                 <input
@@ -264,7 +268,7 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
                     (e.preventDefault(), handleAddFeature())
                   }
                   className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="e.g., Projector, Whiteboard"
+                  placeholder={t('roomForm.featuresPlaceholder')}
                   disabled={isSubmitting}
                 />
                 <button
@@ -305,14 +309,14 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Updating...' : 'Update Room'}
+              {isSubmitting ? t('roomForm.updating') : t('roomForm.updateRoom')}
             </button>
           </div>
         </form>

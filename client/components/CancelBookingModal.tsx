@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CancelBookingModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
 
   if (!isOpen) return null;
@@ -27,7 +29,7 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
           <h3 className="text-lg font-semibold text-slate-900">
-            Cancel Booking
+            {t('myBookings.cancelBooking')}
           </h3>
         </div>
 
@@ -35,8 +37,7 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-4">
             <p className="text-slate-600">
-              Are you sure you want to cancel this booking? This action cannot
-              be undone.
+              {t('confirmDialog.cancelBookingMessage')}
             </p>
 
             <div>
@@ -44,13 +45,13 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
                 htmlFor="reason"
                 className="block text-sm font-medium text-slate-700 mb-1"
               >
-                Reason (Optional)
+                {t('confirmDialog.reasonOptional')}
               </label>
               <textarea
                 id="reason"
                 className="w-full rounded-md border-slate-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm p-2 border"
                 rows={3}
-                placeholder="e.g. Room maintenance, Policy violation..."
+                placeholder={t('confirmDialog.reasonPlaceholder')}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
               />
@@ -64,13 +65,13 @@ const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
               onClick={onCancel}
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
             >
-              Back
+              {t('confirmDialog.back')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
-              Cancel Booking
+              {t('myBookings.cancelBooking')}
             </button>
           </div>
         </form>

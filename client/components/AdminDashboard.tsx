@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { User, Room, Booking, UserRole, isGlobalAdminRole } from '../types';
 import { api } from '../services/api';
 import {
@@ -53,6 +55,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onRefresh,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
   const isAdmin = isGlobalAdminRole(currentUser.role);
   const isSuperAdmin = currentUser.role === UserRole.SUPERADMIN;
   const managedDeptIds = currentUser.managedDepartmentIds || [];
@@ -96,7 +99,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const groups = new Map<string, { name: string; rooms: Room[] }>();
     for (const room of filteredAdminRooms) {
       const key = room.departmentId || 'none';
-      const name = room.department?.name || 'No Department';
+      const name = room.department?.name || t('roomDetails.noDepartment');
       if (!groups.has(key)) groups.set(key, { name, rooms: [] });
       groups.get(key)!.rooms.push(room);
     }
@@ -105,7 +108,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       .sort((a, b) =>
         a.key === 'none' ? 1 : b.key === 'none' ? -1 : a.name.localeCompare(b.name)
       );
-  }, [filteredAdminRooms]);
+  }, [filteredAdminRooms, t]);
   const hasDepartmentGroups = roomGroups.some((g) => g.key !== 'none');
 
   const [stats, setStats] = useState<Stats | null>(null);
@@ -145,10 +148,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleRemind = async (bookingId: string) => {
     try {
       await api.remindBooking(bookingId);
-      toast.success('Reminder sent successfully');
+      toast.success(t('admin.toasts.reminderSent'));
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to send reminder';
+        error instanceof Error
+          ? error.message
+          : t('admin.toasts.reminderFailed');
       toast.error(errorMessage);
     }
   };
@@ -156,25 +161,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleApprove = async (bookingId: string) => {
     try {
       await api.approveBooking(bookingId);
-      toast.success('Booking approved');
+      toast.success(t('admin.toasts.bookingApproved'));
       onRefresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to approve booking',
+        error instanceof Error
+          ? error.message
+          : t('admin.toasts.approveFailed'),
       );
     }
   };
 
   const handleReject = async (bookingId: string) => {
-    const reason = window.prompt('Reason for rejection (optional):');
+    const reason = window.prompt(t('admin.rejectReasonPrompt'));
     if (reason === null) return; // user cancelled the prompt
     try {
       await api.rejectBooking(bookingId, reason.trim() || undefined);
-      toast.success('Booking rejected');
+      toast.success(t('admin.toasts.bookingRejected'));
       onRefresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to reject booking',
+        error instanceof Error ? error.message : t('admin.toasts.rejectFailed'),
       );
     }
   };
@@ -210,7 +217,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     () => [
       {
         accessorKey: 'roomId',
-        header: 'Room',
+        header: t('admin.columns.room'),
         cell: ({ row }) => (
           <span className="font-semibold text-slate-800">
             {rooms.find((r) => r.id === row.original.roomId)?.name}
@@ -219,7 +226,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'userDisplay',
-        header: 'User',
+        header: t('admin.columns.user'),
         cell: ({ row }) => (
           <div>
             <div className="font-semibold text-slate-800">
@@ -233,23 +240,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'startTime',
-        header: 'Date & Time',
+        header: t('admin.columns.dateTime'),
         cell: ({ row }) => (
           <div>
             <div className="font-medium text-slate-800">
-              {new Date(row.original.startTime).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {new Date(row.original.startTime).toLocaleDateString(
+                dateLocale(),
+                {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                },
+              )}
             </div>
             <div className="text-xs text-slate-500 font-medium">
-              {new Date(row.original.startTime).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}{' '}
+              {new Date(row.original.startTime).toLocaleTimeString(
+                dateLocale(),
+                {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                },
+              )}{' '}
               -
-              {new Date(row.original.endTime).toLocaleTimeString([], {
+              {new Date(row.original.endTime).toLocaleTimeString(dateLocale(), {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -259,13 +272,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'attendees',
-        header: 'Attendees',
+        header: t('admin.columns.attendees'),
         enableSorting: false,
         cell: ({ row }) => (
           <button
             onClick={() => setViewingAttendeesBooking(row.original)}
             className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-md transition-colors cursor-pointer group "
-            title="Click to view attendees"
+            title={t('admin.viewAttendees')}
           >
             <svg
               className="w-4 h-4 text-primary transition-transform"
@@ -288,7 +301,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: t('admin.columns.status'),
         cell: ({ row }) => (
           <span
             className={`px-3 py-1 rounded-lg text-xs font-bold  ${
@@ -301,13 +314,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     : 'bg-slate-50 border border-slate-200 text-slate-700'
             }`}
           >
-            {row.original.status}
+            {t(`status.${row.original.status}`)}
           </span>
         ),
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: t('admin.columns.actions'),
         enableSorting: false,
         cell: ({ row }) => {
           if (row.original.status === 'PENDING') {
@@ -317,13 +330,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   onClick={() => handleApprove(row.original.id)}
                   className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
                 >
-                  Approve
+                  {t('admin.approve')}
                 </button>
                 <button
                   onClick={() => handleReject(row.original.id)}
                   className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
                 >
-                  Reject
+                  {t('admin.reject')}
                 </button>
               </div>
             );
@@ -334,15 +347,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <button
                   onClick={() => handleRemind(row.original.id)}
                   className="px-3 py-1.5 bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
-                  title="Send Reminder Email"
+                  title={t('admin.remindTooltip')}
                 >
-                  Remind
+                  {t('admin.remind')}
                 </button>
                 <button
                   onClick={() => onCancelBooking(row.original.id)}
                   className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             );
@@ -351,7 +364,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         },
       },
     ],
-    [rooms, onCancelBooking, handleRemind, handleApprove, handleReject],
+    [rooms, onCancelBooking, handleRemind, handleApprove, handleReject, t],
   );
 
   // Column definitions for users table
@@ -359,7 +372,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     () => [
       {
         accessorKey: 'name',
-        header: 'Name',
+        header: t('admin.columns.name'),
         cell: ({ row }) => (
           <span className="font-semibold text-slate-800">
             {row.original.name}
@@ -368,7 +381,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'email',
-        header: 'Email',
+        header: t('admin.columns.email'),
         cell: ({ row }) => (
           <span className="text-slate-600 font-medium">
             {row.original.email}
@@ -377,7 +390,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         accessorKey: 'role',
-        header: 'Role',
+        header: t('admin.columns.role'),
         cell: ({ row }) => (
           <span
             className={`px-3 py-1 rounded-lg text-xs font-bold  ${
@@ -386,13 +399,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 : 'bg-primary/10 border border-primary/20 text-primary'
             }`}
           >
-            {row.original.role}
+            {t(`admin.roles.${row.original.role}`)}
           </span>
         ),
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: t('admin.columns.status'),
         cell: ({ row }) => (
           <span
             className={`px-3 py-1 rounded-lg text-xs font-bold  ${
@@ -403,16 +416,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   : 'bg-slate-50 border border-slate-200 text-slate-700'
             }`}
           >
-            {row.original.status || 'ACTIVE'}
+            {t(`admin.userStatus.${row.original.status || 'ACTIVE'}`)}
           </span>
         ),
       },
       {
         accessorKey: 'createdAt',
-        header: 'Joined',
+        header: t('admin.columns.joined'),
         cell: ({ row }) => (
           <span className="text-slate-600 font-medium">
-            {new Date(row.original.createdAt).toLocaleDateString('en-US', {
+            {new Date(row.original.createdAt).toLocaleDateString(dateLocale(), {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
@@ -422,7 +435,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: t('admin.columns.actions'),
         enableSorting: false,
         cell: ({ row }) =>
           isAdmin ? (
@@ -432,26 +445,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   onClick={() => handleApproveUser(row.original)}
                   className="px-3 py-1.5 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
                 >
-                  Approve
+                  {t('admin.approve')}
                 </button>
               )}
               <button
                 onClick={() => setEditingUser(row.original)}
                 className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded-lg font-bold text-sm transition-all-smooth "
               >
-                Edit
+                {t('admin.edit')}
               </button>
               <button
                 onClick={() => setDeletingUser(row.original)}
                 className="px-3 py-1.5 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
               >
-                Delete
+                {t('admin.delete')}
               </button>
             </div>
           ) : null,
       },
     ],
-    [isAdmin],
+    [isAdmin, t],
   );
 
   const handleDeleteUser = async () => {
@@ -465,7 +478,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       onRefresh();
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user. Please try again.');
+      alert(t('admin.toasts.deleteUserFailed'));
     } finally {
       setIsDeleting(false);
     }
@@ -474,11 +487,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleApproveUser = async (user: User) => {
     try {
       await api.updateUser(user.id, { status: 'ACTIVE' });
-      toast.success(`User ${user.name} approved successfully`);
+      toast.success(t('admin.toasts.userApproved', { name: user.name }));
       loadUsers();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to approve user';
+        error instanceof Error
+          ? error.message
+          : t('admin.toasts.approveUserFailed');
       toast.error(errorMessage);
     }
   };
@@ -489,12 +504,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsDeleting(true);
     try {
       await api.deleteRoom(deletingRoom.id);
-      toast.success('Room deleted successfully');
+      toast.success(t('admin.toasts.roomDeleted'));
       setDeletingRoom(null);
       onRefresh();
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to delete room';
+        error instanceof Error
+          ? error.message
+          : t('admin.toasts.deleteRoomFailed');
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -560,7 +577,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                Total Bookings
+                {t('admin.stats.totalBookings')}
               </p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">
                 {stats?.totalBookings || 0}
@@ -589,7 +606,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                Active Now
+                {t('admin.stats.activeNow')}
               </p>
               <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2 flex items-center gap-2">
                 {stats?.activeBookings || 0}
@@ -621,7 +638,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                Total Users
+                {t('admin.stats.totalUsers')}
               </p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">
                 {stats?.totalUsers || 0}
@@ -650,7 +667,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs sm:text-sm font-semibold text-slate-500">
-                Total Rooms
+                {t('admin.stats.totalRooms')}
               </p>
               <p className="text-2xl sm:text-3xl font-bold gradient-text mt-2">
                 {rooms.length}
@@ -689,7 +706,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             />
           </svg>
-          Room Utilization
+          {t('admin.roomUtilization')}
         </h3>
         <div className="space-y-3 sm:space-y-4">
           {rooms.map((room) => {
@@ -702,7 +719,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {room.name}
                   </span>
                   <span className="px-2 py-0.5 bg-primary/10 rounded-lg text-primary text-xs font-bold">
-                    {utilization} bookings
+                    {t('admin.bookingsCount', { count: utilization })}
                   </span>
                 </div>
                 <div className="w-full bg-slate-200/50 rounded-full h-2.5 overflow-hidden shadow-inner">
@@ -733,7 +750,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          Recent Bookings
+          {t('admin.recentBookings')}
         </h3>
         <div className="space-y-2 sm:space-y-3">
           {bookings.slice(0, 5).map((booking, idx) => (
@@ -778,10 +795,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    {new Date(booking.startTime).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {new Date(booking.startTime).toLocaleDateString(
+                      dateLocale(),
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                      },
+                    )}
                   </span>
                 </p>
               </div>
@@ -792,7 +812,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     : 'bg-red-50 border border-red-200 text-red-700'
                 }`}
               >
-                {booking.status}
+                {t(`status.${booking.status}`)}
               </span>
             </div>
           ))}
@@ -812,17 +832,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium "
             >
-              <option value="all">All Status</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="CANCELLED">Cancelled</option>
-              <option value="COMPLETED">Completed</option>
+              <option value="all">{t('admin.filters.allStatus')}</option>
+              <option value="CONFIRMED">{t('status.CONFIRMED')}</option>
+              <option value="CANCELLED">{t('status.CANCELLED')}</option>
+              <option value="COMPLETED">{t('status.COMPLETED')}</option>
             </select>
             <select
               value={filterRoom}
               onChange={(e) => setFilterRoom(e.target.value)}
               className="px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium "
             >
-              <option value="all">All Rooms</option>
+              <option value="all">{t('admin.filters.allRooms')}</option>
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>
                   {room.name}
@@ -847,7 +867,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            Export CSV
+            {t('admin.exportCSV')}
           </button>
         </div>
       </div>
@@ -857,8 +877,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <DataTable
           data={filteredBookings}
           columns={bookingColumns}
-          searchPlaceholder="Search bookings..."
-          emptyMessage="No bookings found matching your filters"
+          searchPlaceholder={t('admin.searchBookings')}
+          emptyMessage={t('admin.noBookingsFound')}
           emptyIcon={
             <svg
               className="w-8 h-8 text-primary"
@@ -895,7 +915,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               />
             </svg>
             <p className="text-slate-500 font-semibold">
-              No bookings found matching your filters
+              {t('admin.noBookingsFound')}
             </p>
           </div>
         ) : (
@@ -940,7 +960,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         : 'bg-slate-50 border border-slate-200 text-slate-700'
                   }`}
                 >
-                  {booking.status}
+                  {t(`status.${booking.status}`)}
                 </span>
               </div>
 
@@ -960,7 +980,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </svg>
                   <span className="font-semibold text-slate-700">
-                    {new Date(booking.startTime).toLocaleDateString()}
+                    {new Date(booking.startTime).toLocaleDateString(
+                      dateLocale(),
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
@@ -978,15 +1000,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </svg>
                   <span className="text-slate-600 font-medium">
-                    {new Date(booking.startTime).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}{' '}
+                    {new Date(booking.startTime).toLocaleTimeString(
+                      dateLocale(),
+                      {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      },
+                    )}{' '}
                     -
-                    {new Date(booking.endTime).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {new Date(booking.endTime).toLocaleTimeString(
+                      dateLocale(),
+                      {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      },
+                    )}
                   </span>
                 </div>
               </div>
@@ -1010,7 +1038,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </svg>
                   <span className="text-sm font-bold text-primary">
-                    {booking.attendees.length} Attendees
+                    {t('admin.attendeesCount', {
+                      count: booking.attendees.length,
+                    })}
                   </span>
                 </button>
                 {booking.status === 'CONFIRMED' && (
@@ -1018,7 +1048,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onClick={() => onCancelBooking(booking.id)}
                     className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm "
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 )}
               </div>
@@ -1057,7 +1087,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                 />
               </svg>
-              User Management
+              {t('admin.userManagement')}
             </h3>
             {isAdmin && (
               <div className="flex gap-2 w-full sm:w-auto">
@@ -1078,7 +1108,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                     />
                   </svg>
-                  <span className="hidden sm:inline">Import</span>
+                  <span className="hidden sm:inline">{t('admin.import')}</span>
                 </button>
                 <button
                   onClick={() => setShowAddUserModal(true)}
@@ -1097,7 +1127,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       d="M12 4v16m8-8H4"
                     />
                   </svg>
-                  Add User
+                  {t('admin.addUser')}
                 </button>
               </div>
             )}
@@ -1109,9 +1139,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <DataTable
             data={users}
             columns={userColumns}
-            searchPlaceholder="Search users..."
+            searchPlaceholder={t('admin.searchUsers')}
             initialFilter={usersFilter}
-            emptyMessage="No users found"
+            emptyMessage={t('admin.noUsersFound')}
             emptyIcon={
               <svg
                 className="w-8 h-8 text-primary"
@@ -1147,7 +1177,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                 />
               </svg>
-              <p className="text-slate-500 font-semibold">No users found</p>
+              <p className="text-slate-500 font-semibold">
+                {t('admin.noUsersFound')}
+              </p>
             </div>
           ) : (
             users.map((user, idx) => (
@@ -1188,7 +1220,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           : 'bg-primary/10 border border-primary/20 text-primary'
                       }`}
                     >
-                      {user.role}
+                      {t(`admin.roles.${user.role}`)}
                     </span>
                     <span
                       className={`px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0 ${
@@ -1199,7 +1231,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             : 'bg-slate-50 border border-slate-200 text-slate-700'
                       }`}
                     >
-                      {user.status || 'ACTIVE'}
+                      {t(`admin.userStatus.${user.status || 'ACTIVE'}`)}
                     </span>
                   </div>
                 </div>
@@ -1219,7 +1251,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </svg>
                   <span className="text-slate-600 font-semibold">
-                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                    {t('admin.joinedOn', {
+                      date: new Date(user.createdAt).toLocaleDateString(
+                        dateLocale(),
+                      ),
+                    })}
                   </span>
                 </div>
 
@@ -1243,7 +1279,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        Approve
+                        {t('admin.approve')}
                       </button>
                     )}
                     <button
@@ -1263,7 +1299,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      Edit
+                      {t('admin.edit')}
                     </button>
                     <button
                       onClick={() => setDeletingUser(user)}
@@ -1282,7 +1318,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                       </svg>
-                      Delete
+                      {t('admin.delete')}
                     </button>
                   </div>
                 )}
@@ -1323,9 +1359,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
       {deletingUser && (
         <ConfirmDeleteModal
-          title="Delete User"
-          message={`Are you sure you want to delete ${deletingUser.name}? This action cannot be undone and will also delete all their bookings.`}
-          confirmText="Delete"
+          title={t('admin.deleteUser')}
+          message={t('admin.deleteUserConfirm', { name: deletingUser.name })}
+          confirmText={t('admin.delete')}
           onConfirm={handleDeleteUser}
           onCancel={() => setDeletingUser(null)}
           isLoading={isDeleting}
@@ -1415,7 +1451,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
             />
           </svg>
-          View
+          {t('admin.view')}
         </button>
         {(isAdmin || isDeptAdminOnly) && (
           <>
@@ -1436,7 +1472,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
               />
             </svg>
-            Edit
+            {t('admin.edit')}
           </button>
           <button
             onClick={() => setDeletingRoom(room)}
@@ -1455,7 +1491,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            Delete
+            {t('admin.delete')}
           </button>
           </>
         )}
@@ -1481,14 +1517,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-            Room Management
+            {t('admin.roomManagement')}
           </h3>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
           <input
             type="text"
             value={roomsFilter}
             onChange={(e) => setRoomsFilter(e.target.value)}
-            placeholder="Search rooms..."
+            placeholder={t('calendar.searchRooms')}
             className="w-full sm:w-56 px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
           />
           {(isAdmin || isDeptAdminOnly) && (
@@ -1509,7 +1545,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add Room
+              {t('admin.addRoom')}
             </button>
           )}
           </div>
@@ -1523,7 +1559,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {group.name}
                   </h4>
                   <span className="text-xs font-bold text-slate-400">
-                    {group.rooms.length} room{group.rooms.length === 1 ? '' : 's'}
+                    {t('admin.roomCount', { count: group.rooms.length })}
                   </span>
                   <div className="flex-1 border-t border-slate-200"></div>
                 </div>
@@ -1535,7 +1571,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         ) : filteredAdminRooms.length === 0 ? (
           <p className="p-8 text-center text-sm text-slate-400">
-            No rooms match your search.
+            {t('calendar.noRoomsMatch')}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 p-4 sm:p-5">
@@ -1568,9 +1604,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
       {deletingRoom && (
         <ConfirmDeleteModal
-          title="Delete Room"
-          message={`Are you sure you want to delete "${deletingRoom.name}"? This action cannot be undone. Rooms with existing bookings cannot be deleted.`}
-          confirmText="Delete"
+          title={t('admin.deleteRoom')}
+          message={t('admin.deleteRoomConfirm', { name: deletingRoom.name })}
+          confirmText={t('admin.delete')}
           onConfirm={handleDeleteRoom}
           onCancel={() => setDeletingRoom(null)}
           isLoading={isDeleting}
@@ -1580,14 +1616,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   const tabs = [
-    { id: 'overview', label: 'Overview', Icon: BarChartIcon },
-    { id: 'bookings', label: 'Bookings', Icon: CalendarIcon },
-    { id: 'users', label: 'Users', Icon: UsersIcon },
-    { id: 'rooms', label: 'Rooms', Icon: BuildingIcon },
-    { id: 'departments', label: 'Departments', Icon: BuildingIcon },
-    { id: 'semesters', label: 'Semesters', Icon: CalendarIcon },
-    { id: 'closures', label: 'Closures', Icon: CalendarIcon },
-    { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+    { id: 'overview', label: t('admin.tabs.overview'), Icon: BarChartIcon },
+    { id: 'bookings', label: t('admin.tabs.bookings'), Icon: CalendarIcon },
+    { id: 'users', label: t('admin.tabs.users'), Icon: UsersIcon },
+    { id: 'rooms', label: t('admin.tabs.rooms'), Icon: BuildingIcon },
+    {
+      id: 'departments',
+      label: t('admin.tabs.departments'),
+      Icon: BuildingIcon,
+    },
+    { id: 'semesters', label: t('admin.tabs.semesters'), Icon: CalendarIcon },
+    { id: 'closures', label: t('admin.tabs.closures'), Icon: CalendarIcon },
+    { id: 'settings', label: t('admin.tabs.settings'), Icon: SettingsIcon },
   ].filter((tab) => {
     if (tab.id === 'settings') return isSuperAdmin; // platform config is super admin only
     if (isAdmin) return true;
@@ -1616,10 +1656,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold gradient-text">
-            Admin Dashboard
+            {t('admin.title')}
           </h2>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            Manage bookings, users, and rooms
+            {t('admin.subtitle')}
           </p>
         </div>
         <button
@@ -1639,7 +1679,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
             />
           </svg>
-          Export Report
+          {t('admin.exportReport')}
         </button>
       </div>
 
@@ -1648,7 +1688,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="hidden sm:block glass rounded-lg border border-slate-200 p-2 sticky top-16 z-10 backdrop-blur-md w-52 shrink-0">
           <nav
             className="flex flex-col items-stretch gap-1.5"
-            aria-label="Tabs"
+            aria-label={t('admin.tabsAria')}
           >
             {tabs.map((tab) => (
               <button
@@ -1696,10 +1736,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <button
         onClick={() => setShowMoreSheet(true)}
         className="sm:hidden fixed bottom-24 right-4 z-40 px-4 py-3 rounded-lg bg-primary text-white font-bold text-sm flex items-center gap-2 transition-transform"
-        aria-label="Open admin menu"
+        aria-label={t('admin.openMenu')}
       >
         {activeTab && <activeTab.Icon className="w-5 h-5" />}
-        <span>{activeTab?.label || 'Menu'}</span>
+        <span>{activeTab?.label || t('admin.menu')}</span>
         <svg
           className="w-4 h-4 opacity-80"
           fill="none"
@@ -1724,7 +1764,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           />
           <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-2xl p-4 pb-8 animate-slide-up ">
             <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
-            <nav className="flex flex-col gap-1" aria-label="Admin sections">
+            <nav
+              className="flex flex-col gap-1"
+              aria-label={t('admin.sectionsAria')}
+            >
               {tabs.map((tab) => (
                 <button
                   key={tab.id}

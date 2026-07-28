@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -36,13 +37,14 @@ const globalFilterFn: FilterFn<any> = (row, columnId, filterValue) => {
 function DataTable<TData>({
   data,
   columns,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder,
   pageSize = 10,
-  emptyMessage = 'No data found',
+  emptyMessage,
   emptyIcon,
   globalFilter = true,
   initialFilter,
 }: DataTableProps<TData>) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilterValue, setGlobalFilterValue] = useState(
@@ -87,14 +89,16 @@ function DataTable<TData>({
         {globalFilter && (
           <input
             type="text"
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder ?? t('table.searchPlaceholder')}
             value={globalFilterValue}
             onChange={(e) => setGlobalFilterValue(e.target.value)}
             className="w-full sm:w-64 px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium "
           />
         )}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600 font-medium">Show:</span>
+          <span className="text-sm text-slate-600 font-medium">
+            {t('table.show')}
+          </span>
           <select
             value={table.getState().pagination.pageSize}
             onChange={(e) => table.setPageSize(Number(e.target.value))}
@@ -129,7 +133,9 @@ function DataTable<TData>({
               </svg>
             )}
           </div>
-          <p className="text-slate-500 font-semibold">{emptyMessage}</p>
+          <p className="text-slate-500 font-semibold">
+            {emptyMessage ?? t('table.noData')}
+          </p>
         </div>
       ) : (
         <div className="glass rounded-lg border border-slate-200 overflow-hidden">
@@ -239,25 +245,26 @@ function DataTable<TData>({
       {table.getRowModel().rows.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
           <div className="text-sm text-slate-600 font-medium">
-            Showing{' '}
-            <span className="font-bold text-slate-800">
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}
-            </span>{' '}
-            to{' '}
-            <span className="font-bold text-slate-800">
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length,
-              )}
-            </span>{' '}
-            of{' '}
-            <span className="font-bold text-slate-800">
-              {table.getFilteredRowModel().rows.length}
-            </span>{' '}
-            entries
+            <Trans
+              i18nKey="table.showing"
+              values={{
+                from:
+                  table.getState().pagination.pageIndex *
+                    table.getState().pagination.pageSize +
+                  1,
+                to: Math.min(
+                  (table.getState().pagination.pageIndex + 1) *
+                    table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length,
+                ),
+                total: table.getFilteredRowModel().rows.length,
+              }}
+              components={{
+                1: <span className="font-bold text-slate-800" />,
+                2: <span className="font-bold text-slate-800" />,
+                3: <span className="font-bold text-slate-800" />,
+              }}
+            />
           </div>
 
           <div className="flex items-center gap-1">
@@ -265,7 +272,7 @@ function DataTable<TData>({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
               className="p-2 rounded-md border border-slate-200 hover:bg-primary/10 hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all-smooth"
-              title="First page"
+              title={t('myBookings.firstPage')}
             >
               <svg
                 className="w-4 h-4 text-slate-600"
@@ -285,7 +292,7 @@ function DataTable<TData>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               className="p-2 rounded-md border border-slate-200 hover:bg-primary/10 hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all-smooth"
-              title="Previous page"
+              title={t('myBookings.prevPage')}
             >
               <svg
                 className="w-4 h-4 text-slate-600"
@@ -328,7 +335,7 @@ function DataTable<TData>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               className="p-2 rounded-md border border-slate-200 hover:bg-primary/10 hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all-smooth"
-              title="Next page"
+              title={t('myBookings.nextPage')}
             >
               <svg
                 className="w-4 h-4 text-slate-600"
@@ -348,7 +355,7 @@ function DataTable<TData>({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
               className="p-2 rounded-md border border-slate-200 hover:bg-primary/10 hover:border-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all-smooth"
-              title="Last page"
+              title={t('myBookings.lastPage')}
             >
               <svg
                 className="w-4 h-4 text-slate-600"

@@ -160,6 +160,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
         name: user.name,
         role: user.role,
         provider: user.provider,
+        language: user.language,
         managedDepartmentIds: await getManagedDepartmentIds(user.id),
       },
     });
@@ -282,6 +283,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
         role: user.role,
         avatarUrl: user.avatarUrl,
         provider: user.provider,
+        language: user.language,
         managedDepartmentIds: await getManagedDepartmentIds(user.id),
       },
     });
@@ -304,6 +306,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
         avatarUrl: true,
         createdAt: true,
         provider: true,
+        language: true,
       },
     });
 

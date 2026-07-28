@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Department } from '../types';
 import { XIcon } from './Icons';
 import { api } from '../services/api';
@@ -17,6 +18,7 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
   canViewManagers,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const customHours = parseOperatingHoursOrNull(department.operatingHours);
   const [managers, setManagers] = useState<
@@ -46,8 +48,9 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
               {department.name}
             </h3>
             <p className="text-sm text-slate-500">
-              {department.roomCount ?? 0} room
-              {(department.roomCount ?? 0) === 1 ? '' : 's'}
+              {t('deptDetails.roomCount', {
+                count: department.roomCount ?? 0,
+              })}
             </p>
           </div>
           <button
@@ -61,7 +64,7 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
         <div className="p-6 space-y-5">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-              Contact Emails
+              {t('deptDetails.contactEmails')}
             </p>
             {contactEmails.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -76,14 +79,16 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic">None set</p>
+              <p className="text-sm text-slate-400 italic">
+                {t('deptDetails.noneSet')}
+              </p>
             )}
           </div>
 
           {canViewManagers && (
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-                Managers
+                {t('deptDetails.managers')}
               </p>
               {managers.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -99,7 +104,7 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
                 </div>
               ) : (
                 <p className="text-sm text-slate-400 italic">
-                  No managers assigned
+                  {t('deptDetails.noManagers')}
                 </p>
               )}
             </div>
@@ -107,9 +112,13 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
 
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-              Operating Hours
+              {t('roomDetails.operatingHours')}
               <span className="normal-case font-medium text-slate-400 ml-2">
-                ({customHours ? 'custom schedule' : 'follows global schedule'})
+                (
+                {customHours
+                  ? t('deptDetails.customSchedule')
+                  : t('deptDetails.followsGlobal')}
+                )
               </span>
             </p>
             <OperatingHoursView value={customHours || globalHours} />
@@ -121,7 +130,7 @@ const DepartmentDetailsModal: React.FC<DepartmentDetailsModalProps> = ({
             onClick={onClose}
             className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

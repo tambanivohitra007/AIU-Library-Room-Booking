@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Booking, Room, User, UserRole } from '../types';
 
 interface MonthViewProps {
@@ -18,8 +20,23 @@ const MonthView: React.FC<MonthViewProps> = ({
   onDateSelect,
   onBookingClick,
 }) => {
+  const { t, i18n } = useTranslation();
   const currentMonth = selectedDate.getMonth();
   const currentYear = selectedDate.getFullYear();
+
+  // Localized weekday names (Sun..Sat). Jan 7, 2024 is a Sunday.
+  const weekdays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(2024, 0, 7 + i);
+        return {
+          long: d.toLocaleDateString(dateLocale(), { weekday: 'long' }),
+          narrow: d.toLocaleDateString(dateLocale(), { weekday: 'narrow' }),
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [i18n.language],
+  );
 
   const daysInMonth = useMemo(() => {
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -78,23 +95,13 @@ const MonthView: React.FC<MonthViewProps> = ({
     <div className="flex flex-col h-full bg-white">
       {/* Weekday headers */}
       <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
-        {[
-          'Sunday',
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday',
-        ].map((day, i) => (
+        {weekdays.map((day, i) => (
           <div
-            key={day}
+            key={i}
             className="text-center py-2 sm:py-3 text-xs sm:text-sm font-semibold text-slate-600 border-r last:border-r-0 border-slate-200"
           >
-            <span className="hidden sm:inline">{day}</span>
-            <span className="sm:hidden">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'][i]}
-            </span>
+            <span className="hidden sm:inline">{day.long}</span>
+            <span className="sm:hidden">{day.narrow}</span>
           </div>
         ))}
       </div>
@@ -158,7 +165,7 @@ const MonthView: React.FC<MonthViewProps> = ({
                             .padStart(
                               2,
                               '0',
-                            )} - ${canView ? booking.userDisplay : 'Reserved'}`}
+                            )} - ${canView ? booking.userDisplay : t('common.reserved')}`}
                         >
                           <span className="font-semibold">
                             {startTime.getHours()}:
@@ -166,7 +173,9 @@ const MonthView: React.FC<MonthViewProps> = ({
                           </span>
                           <span className="hidden sm:inline">
                             {' '}
-                            {canView ? booking.userDisplay : 'Reserved'}
+                            {canView
+                              ? booking.userDisplay
+                              : t('common.reserved')}
                           </span>
                         </div>
                       );
@@ -176,7 +185,7 @@ const MonthView: React.FC<MonthViewProps> = ({
                         className="text-[10px] sm:text-xs text-slate-500 pl-1 sm:pl-2 cursor-pointer hover:text-primary touch-manipulation"
                         onClick={() => onDateSelect(date)}
                       >
-                        +{dayBookings.length - 2} more
+                        {t('monthView.more', { n: dayBookings.length - 2 })}
                       </div>
                     )}
                   </div>

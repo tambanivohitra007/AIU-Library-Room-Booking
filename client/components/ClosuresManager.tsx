@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { api } from '../services/api';
 import {
   ScheduleException,
@@ -40,6 +42,7 @@ interface ClosuresManagerProps {
 
 // Manage date-specific closures (holidays, maintenance) and special hours
 const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const isAdmin = isGlobalAdminRole(currentUser.role);
   const managedIds = currentUser.managedDepartmentIds || [];
@@ -80,7 +83,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       setDepartments(depts);
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to load closures');
+      toast.error(t('closures.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -125,13 +128,13 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return toast.error('Name is required');
+    if (!form.name.trim()) return toast.error(t('closures.nameRequired'));
     if (!form.startDate || !form.endDate)
-      return toast.error('Start and end dates are required');
+      return toast.error(t('closures.datesRequired'));
     if (form.endDate < form.startDate)
-      return toast.error('End date must not be before the start date');
+      return toast.error(t('closures.endBeforeStart'));
     if (!form.closed && form.openHour >= form.closeHour)
-      return toast.error('Opening time must be before closing time');
+      return toast.error(t('closures.openBeforeClose'));
 
     const payload = {
       name: form.name.trim(),
@@ -147,15 +150,15 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     try {
       if (editing === 'new') {
         await api.createScheduleException(payload);
-        toast.success('Closure created');
+        toast.success(t('closures.created'));
       } else if (editing) {
         await api.updateScheduleException(editing.id, payload);
-        toast.success('Closure updated');
+        toast.success(t('closures.updated'));
       }
       setEditing(null);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save');
+      toast.error(err instanceof Error ? err.message : t('closures.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -166,11 +169,11 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     setIsSubmitting(true);
     try {
       await api.deleteScheduleException(deleting.id);
-      toast.success('Closure deleted');
+      toast.success(t('closures.deleted'));
       setDeleting(null);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete');
+      toast.error(err instanceof Error ? err.message : t('closures.deleteFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -202,7 +205,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
         events.length === 0 &&
         parsed.skippedRecurring + parsed.skippedInvalid + skippedPast === 0
       ) {
-        toast.error('No events found in that file');
+        toast.error(t('closures.noEventsInFile'));
         return;
       }
 
@@ -214,7 +217,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
         departmentId: isAdmin ? '' : managedIds[0] || '',
       });
     } catch {
-      toast.error('Could not read that file as an iCalendar (.ics)');
+      toast.error(t('closures.notIcsFile'));
     }
   };
 
@@ -222,7 +225,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     if (!importState) return;
     const selected = importState.events.filter((e) => e.selected);
     if (selected.length === 0) {
-      toast.error('Nothing selected to import');
+      toast.error(t('closures.nothingSelected'));
       return;
     }
     setIsSubmitting(true);
@@ -248,7 +251,12 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     setImportState(null);
     setLastImportIds(createdIds.length > 0 ? createdIds : null);
     toast.success(
-      `Imported ${createdIds.length} closure${createdIds.length === 1 ? '' : 's'}${failed ? ` (${failed} failed)` : ''}`,
+      failed
+        ? t('closures.importedWithFailures', {
+            count: createdIds.length,
+            failed,
+          })
+        : t('closures.imported', { count: createdIds.length }),
     );
     await load();
   };
@@ -267,7 +275,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     }
     setIsSubmitting(false);
     setLastImportIds(null);
-    toast.success(`Import undone (${removed} closure${removed === 1 ? '' : 's'} removed)`);
+    toast.success(t('closures.undoneToast', { count: removed }));
     await load();
   };
 
@@ -284,7 +292,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     }
     setIsSubmitting(false);
     setConfirmBulkDelete(false);
-    toast.success(`Deleted ${removed} closure${removed === 1 ? '' : 's'}`);
+    toast.success(t('closures.deletedToast', { count: removed }));
     await load();
   };
 
@@ -303,8 +311,8 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       day: 'numeric',
       year: 'numeric',
     };
-    const s = new Date(ex.startDate).toLocaleDateString('en-US', opts);
-    const e = new Date(ex.endDate).toLocaleDateString('en-US', opts);
+    const s = new Date(ex.startDate).toLocaleDateString(dateLocale(), opts);
+    const e = new Date(ex.endDate).toLocaleDateString(dateLocale(), opts);
     return s === e ? s : `${s} – ${e}`;
   };
 
@@ -318,12 +326,9 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold gradient-text">
-            Closures &amp; Special Hours
+            {t('closures.title')}
           </h3>
-          <p className="text-sm text-slate-500 mt-1">
-            Holidays, maintenance days, and date-specific opening hours.
-            These override the weekly schedule.
-          </p>
+          <p className="text-sm text-slate-500 mt-1">{t('closures.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <input
@@ -341,14 +346,14 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
             onClick={() => fileInputRef.current?.click()}
             className="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-bold rounded-lg transition-colors"
           >
-            Import .ics
+            {t('closures.importIcs')}
           </button>
           <button
             onClick={() => openEditor('new')}
             className="px-4 py-2 bg-primary-dark hover:bg-primary text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
-            Add Closure
+            {t('closures.addClosure')}
           </button>
         </div>
       </div>
@@ -356,22 +361,19 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       {/* Undo banner for the most recent import */}
       {lastImportIds && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary-dark">
-          <span>
-            Imported {lastImportIds.length} closure
-            {lastImportIds.length === 1 ? '' : 's'}. Not what you expected?
-          </span>
+          <span>{t('closures.undoBanner', { count: lastImportIds.length })}</span>
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleUndoImport}
               disabled={isSubmitting}
               className="px-3 py-1 text-sm font-bold text-primary bg-white border border-primary/30 rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50"
             >
-              Undo import
+              {t('closures.undoImport')}
             </button>
             <button
               onClick={() => setLastImportIds(null)}
               className="p-1 text-primary/70 hover:text-primary transition-colors"
-              aria-label="Dismiss"
+              aria-label={t('closures.dismiss')}
             >
               <XIcon className="w-4 h-4" />
             </button>
@@ -382,22 +384,19 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       {/* Bulk delete action */}
       {selectedIds.size > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          <span>
-            {selectedIds.size} closure{selectedIds.size === 1 ? '' : 's'}{' '}
-            selected
-          </span>
+          <span>{t('closures.selectedCount', { count: selectedIds.size })}</span>
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setConfirmBulkDelete(true)}
               className="px-3 py-1 text-sm font-bold text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-100 transition-colors"
             >
-              Delete selected
+              {t('closures.deleteSelected')}
             </button>
             <button
               onClick={() => setSelectedIds(new Set())}
               className="px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-100 transition-colors"
             >
-              Clear
+              {t('closures.clearSelection')}
             </button>
           </div>
         </div>
@@ -405,11 +404,11 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
 
       {loading ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          Loading…
+          {t('common.loading')}
         </div>
       ) : closures.length === 0 ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          No closures yet. The weekly operating hours apply on every date.
+          {t('closures.empty')}
         </div>
       ) : (
         <div className="glass rounded-xl border border-slate-200 divide-y divide-slate-100">
@@ -432,12 +431,17 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 <p className="font-bold text-slate-800 truncate">{ex.name}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {formatRange(ex)} ·{' '}
-                  {ex.department?.name || 'Service-wide'} ·{' '}
+                  {ex.department?.name || t('closures.serviceWide')} ·{' '}
                   {ex.closed ? (
-                    <span className="text-red-600 font-semibold">Closed</span>
+                    <span className="text-red-600 font-semibold">
+                      {t('common.closed')}
+                    </span>
                   ) : (
                     <span className="text-green-700 font-semibold">
-                      Open {ex.openHour}:00–{ex.closeHour}:00
+                      {t('closures.openRange', {
+                        open: ex.openHour,
+                        close: ex.closeHour,
+                      })}
                     </span>
                   )}
                 </p>
@@ -448,13 +452,13 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                     onClick={() => openEditor(ex)}
                     className="px-3 py-1.5 text-sm font-medium text-primary bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
                   >
-                    Edit
+                    {t('closures.edit')}
                   </button>
                   <button
                     onClick={() => setDeleting(ex)}
                     className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                   >
-                    Delete
+                    {t('closures.delete')}
                   </button>
                 </div>
               )}
@@ -469,7 +473,9 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
           <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto border border-slate-200">
             <div className="p-6 border-b border-white/15 flex items-center justify-between sticky top-0 bg-primary-dark z-10">
               <h3 className="text-lg font-semibold text-white">
-                {editing === 'new' ? 'Add Closure' : 'Edit Closure'}
+                {editing === 'new'
+                  ? t('closures.addClosure')
+                  : t('closures.editClosure')}
               </h3>
               <button
                 onClick={() => setEditing(null)}
@@ -483,21 +489,21 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    {t('closures.name')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., Christmas Day, Exam Week Extended Hours"
+                    placeholder={t('closures.namePlaceholder')}
                     disabled={isSubmitting}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      From <span className="text-red-500">*</span>
+                      {t('closures.from')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
@@ -511,7 +517,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      To <span className="text-red-500">*</span>
+                      {t('closures.to')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
@@ -526,7 +532,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Applies To
+                    {t('closures.appliesTo')}
                   </label>
                   <select
                     value={form.departmentId}
@@ -537,7 +543,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                     disabled={isSubmitting}
                   >
                     {isAdmin && (
-                      <option value="">Service-wide (all rooms)</option>
+                      <option value="">{t('closures.serviceWideOption')}</option>
                     )}
                     {scopeOptions.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -558,12 +564,12 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                       disabled={isSubmitting}
                     />
                     <span className="text-sm font-medium text-slate-700">
-                      Closed all day
+                      {t('closures.closedAllDay')}
                     </span>
                   </label>
                   {!form.closed && (
                     <div className="flex items-center gap-2 text-sm text-slate-600 mt-2 ml-6">
-                      <span>Special hours:</span>
+                      <span>{t('closures.specialHours')}</span>
                       <input
                         type="number"
                         min={0}
@@ -578,7 +584,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                         className="w-16 px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         disabled={isSubmitting}
                       />
-                      <span>:00 to</span>
+                      <span>{t('closures.hoursTo')}</span>
                       <input
                         type="number"
                         min={1}
@@ -593,7 +599,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                         className="w-16 px-2 py-1 border border-slate-200 rounded focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         disabled={isSubmitting}
                       />
-                      <span>:00</span>
+                      <span>{t('closures.hoursSuffix')}</span>
                     </div>
                   )}
                 </div>
@@ -605,7 +611,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -613,10 +619,10 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                   disabled={isSubmitting}
                 >
                   {isSubmitting
-                    ? 'Saving…'
+                    ? t('closures.saving')
                     : editing === 'new'
-                      ? 'Create Closure'
-                      : 'Save Changes'}
+                      ? t('closures.createClosure')
+                      : t('closures.saveChanges')}
                 </button>
               </div>
             </form>
@@ -631,10 +637,10 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
             <div className="p-6 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Import Calendar Events
+                  {t('closures.importTitle')}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Selected events become all-day closures.
+                  {t('closures.importSubtitle')}
                 </p>
               </div>
               <button
@@ -649,7 +655,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
             <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Applies To
+                  {t('closures.appliesTo')}
                 </label>
                 <select
                   value={importState.departmentId}
@@ -663,7 +669,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                   disabled={isSubmitting}
                 >
                   {isAdmin && (
-                    <option value="">Service-wide (all rooms)</option>
+                    <option value="">{t('closures.serviceWideOption')}</option>
                   )}
                   {scopeOptions.map((d) => (
                     <option key={d.id} value={d.id}>
@@ -677,19 +683,19 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 importState.skippedInvalid > 0 ||
                 importState.skippedPast > 0) && (
                 <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-2">
-                  Not shown:
+                  {t('closures.notShown')}
                   {importState.skippedPast > 0 &&
-                    ` ${importState.skippedPast} past event${importState.skippedPast === 1 ? '' : 's'}`}
+                    ` ${t('closures.skippedPast', { count: importState.skippedPast })}`}
                   {importState.skippedRecurring > 0 &&
-                    ` · ${importState.skippedRecurring} recurring`}
+                    ` · ${t('closures.skippedRecurring', { count: importState.skippedRecurring })}`}
                   {importState.skippedInvalid > 0 &&
-                    ` · ${importState.skippedInvalid} unreadable`}
+                    ` · ${t('closures.skippedInvalid', { count: importState.skippedInvalid })}`}
                 </p>
               )}
 
               {importState.events.length === 0 ? (
                 <p className="text-sm text-slate-400 italic">
-                  No upcoming events to import.
+                  {t('closures.noUpcomingEvents')}
                 </p>
               ) : (
                 <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
@@ -722,7 +728,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                           {ev.startDate === ev.endDate
                             ? ev.startDate
                             : `${ev.startDate} – ${ev.endDate}`}
-                          {ev.duplicate && ' · already exists'}
+                          {ev.duplicate && ` · ${t('closures.alreadyExists')}`}
                         </span>
                       </span>
                     </label>
@@ -738,7 +744,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                 disabled={isSubmitting}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleImport}
@@ -749,8 +755,11 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 }
               >
                 {isSubmitting
-                  ? 'Importing…'
-                  : `Import ${importState.events.filter((e) => e.selected).length} Closure${importState.events.filter((e) => e.selected).length === 1 ? '' : 's'}`}
+                  ? t('closures.importing')
+                  : t('closures.importButton', {
+                      count: importState.events.filter((e) => e.selected)
+                        .length,
+                    })}
               </button>
             </div>
           </div>
@@ -760,8 +769,8 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       {/* Delete Confirmation */}
       {deleting && (
         <ConfirmDeleteModal
-          title="Delete Closure"
-          message={`Delete "${deleting.name}"? The weekly operating hours will apply on those dates again.`}
+          title={t('closures.deleteTitle')}
+          message={t('closures.deleteMessage', { name: deleting.name })}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
           isLoading={isSubmitting}
@@ -771,8 +780,8 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       {/* Bulk Delete Confirmation */}
       {confirmBulkDelete && (
         <ConfirmDeleteModal
-          title="Delete Selected Closures"
-          message={`Delete ${selectedIds.size} closure${selectedIds.size === 1 ? '' : 's'}? The weekly operating hours will apply on those dates again.`}
+          title={t('closures.bulkDeleteTitle')}
+          message={t('closures.bulkDeleteMessage', { count: selectedIds.size })}
           onConfirm={handleBulkDelete}
           onCancel={() => setConfirmBulkDelete(false)}
           isLoading={isSubmitting}

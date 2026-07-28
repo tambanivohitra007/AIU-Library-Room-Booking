@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { XIcon, AlertTriangleIcon } from './Icons';
 import { UserRole } from '../types';
 import LoadingSpinner from './LoadingSpinner';
@@ -10,6 +11,7 @@ interface AddUserModalProps {
 }
 
 const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,17 +28,17 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
 
     // Validation
     if (!formData.name || !formData.email || !formData.password) {
-      setError('Please fill in all required fields');
+      setError(t('userForm.errorRequiredFields'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('userForm.passwordsNoMatch'));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(t('userForm.passwordMinLength'));
       return;
     }
 
@@ -51,7 +53,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      setError(err.message || t('userForm.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -63,9 +65,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
         {/* Header */}
         <div className="border-b border-white/15 bg-primary-dark p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white">Add New User</h2>
+            <h2 className="text-2xl font-bold text-white">
+              {t('userForm.addTitle')}
+            </h2>
             <p className="text-sm text-white/80 mt-1">
-              Create a new user account
+              {t('userForm.addSubtitle')}
             </p>
           </div>
           <button
@@ -88,7 +92,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Full Name <span className="text-red-500">*</span>
+              {t('userForm.fullName')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -97,7 +101,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
                 setFormData({ ...formData, name: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="John Doe"
+              placeholder={t('userForm.fullNamePlaceholder')}
               required
             />
           </div>
@@ -105,7 +109,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Email Address <span className="text-red-500">*</span>
+              {t('userForm.email')} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -114,7 +118,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
                 setFormData({ ...formData, email: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="john.doe@example.com"
+              placeholder={t('userForm.emailPlaceholder')}
               required
             />
           </div>
@@ -122,7 +126,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Password <span className="text-red-500">*</span>
+              {t('userForm.password')} <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -131,7 +135,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
                 setFormData({ ...formData, password: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="Minimum 8 characters"
+              placeholder={t('userForm.passwordPlaceholder')}
               required
               minLength={8}
             />
@@ -140,7 +144,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
           {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Confirm Password <span className="text-red-500">*</span>
+              {t('userForm.confirmPassword')}{' '}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -149,7 +154,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
                 setFormData({ ...formData, confirmPassword: e.target.value })
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder="Re-enter password"
+              placeholder={t('userForm.confirmPasswordPlaceholder')}
               required
               minLength={8}
             />
@@ -158,7 +163,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
           {/* Role */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Role <span className="text-red-500">*</span>
+              {t('userForm.role')} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.role}
@@ -167,10 +172,14 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
-              <option value="STUDENT">Student</option>
-              <option value="STUDENT_WORKER">Student Worker</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPERADMIN">Super Admin</option>
+              <option value="STUDENT">{t('userForm.roleStudent')}</option>
+              <option value="STUDENT_WORKER">
+                {t('userForm.roleStudentWorker')}
+              </option>
+              <option value="ADMIN">{t('userForm.roleAdmin')}</option>
+              <option value="SUPERADMIN">
+                {t('userForm.roleSuperAdmin')}
+              </option>
             </select>
           </div>
 
@@ -181,7 +190,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               onClick={onClose}
               className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -189,7 +198,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               className="px-6 py-2 bg-primary-dark hover:bg-primary text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading && <LoadingSpinner size="sm" color="white" />}
-              {loading ? 'Creating...' : 'Create User'}
+              {loading ? t('userForm.creating') : t('userForm.createUser')}
             </button>
           </div>
         </form>

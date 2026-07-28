@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { Department, OperatingHours, User, isGlobalAdminRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
@@ -27,6 +28,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
   currentUser,
   onRefresh,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   const { operatingHours: globalHours } = useSettings();
   const isAdmin = isGlobalAdminRole(currentUser.role);
@@ -71,7 +73,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
       setLoading(true);
       setDepartments(await api.getDepartments());
     } catch {
-      toast.error('Failed to load departments');
+      toast.error(t('departments.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -110,7 +112,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
         setManagerIds(admins.map((a) => a.id));
         setAllUsers(users);
       } catch {
-        toast.error('Failed to load department managers');
+        toast.error(t('departments.loadManagersFailed'));
       }
     }
   };
@@ -118,7 +120,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error('Department name is required');
+      toast.error(t('departments.nameRequired'));
       return;
     }
     if (form.useCustomHours) {
@@ -140,17 +142,17 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
     try {
       if (editing === 'new') {
         await api.createDepartment(payload);
-        toast.success('Department created');
+        toast.success(t('departments.created'));
       } else if (editing) {
         await api.updateDepartment(editing.id, payload);
-        toast.success('Department updated');
+        toast.success(t('departments.updated'));
       }
       setEditing(null);
       await loadDepartments();
       onRefresh?.();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Failed to save department',
+        err instanceof Error ? err.message : t('departments.saveFailed'),
       );
     } finally {
       setIsSubmitting(false);
@@ -162,13 +164,13 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
     setIsSubmitting(true);
     try {
       await api.deleteDepartment(deleting.id);
-      toast.success('Department deleted. Its rooms are now unassigned.');
+      toast.success(t('departments.deleted'));
       setDeleting(null);
       await loadDepartments();
       onRefresh?.();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Failed to delete department',
+        err instanceof Error ? err.message : t('departments.deleteFailed'),
       );
     } finally {
       setIsSubmitting(false);
@@ -177,8 +179,8 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
 
   const hoursSummary = (dept: Department) => {
     return parseOperatingHoursOrNull(dept.operatingHours)
-      ? 'Custom schedule'
-      : 'Default schedule';
+      ? t('departments.customSchedule')
+      : t('departments.defaultSchedule');
   };
 
   const [deptSearch, setDeptSearch] = useState('');
@@ -199,11 +201,13 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
     <div className="max-w-3xl mx-auto animate-slide-up space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold gradient-text">Departments</h3>
+          <h3 className="text-xl font-bold gradient-text">
+            {t('departments.title')}
+          </h3>
           <p className="text-sm text-slate-500 mt-1">
             {isAdmin
-              ? 'Group rooms by department, each with its own contact, operating hours, and managers.'
-              : 'Departments you manage.'}
+              ? t('departments.subtitleAdmin')
+              : t('departments.subtitleManager')}
           </p>
         </div>
         {isAdmin && (
@@ -212,7 +216,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
             className="px-4 py-2 bg-primary-dark hover:bg-primary text-white text-sm font-bold rounded-lg shadow-sm transition-all-smooth flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
-            Add Department
+            {t('departments.add')}
           </button>
         )}
       </div>
@@ -222,20 +226,20 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
           type="text"
           value={deptSearch}
           onChange={(e) => setDeptSearch(e.target.value)}
-          placeholder="Search departments..."
+          placeholder={t('departments.searchPlaceholder')}
           className="w-full sm:w-72 px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
         />
       )}
 
       {loading ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          Loading…
+          {t('common.loading')}
         </div>
       ) : visibleDepartments.length === 0 ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
           {deptSearch.trim()
-            ? 'No departments match your search.'
-            : 'No departments yet. Rooms without a department follow the global operating hours.'}
+            ? t('departments.noSearchMatch')
+            : t('departments.noDepartments')}
         </div>
       ) : (
         <div className="glass rounded-xl border border-slate-200 divide-y divide-slate-100 ">
@@ -247,9 +251,8 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
               <div className="min-w-0">
                 <p className="font-bold text-slate-800 truncate">{dept.name}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {dept.roomCount ?? 0} room
-                  {(dept.roomCount ?? 0) === 1 ? '' : 's'} ·{' '}
-                  {hoursSummary(dept)}
+                  {t('departments.roomCount', { count: dept.roomCount ?? 0 })}{' '}
+                  · {hoursSummary(dept)}
                   {dept.contactEmail ? ` · ${dept.contactEmail}` : ''}
                 </p>
               </div>
@@ -258,20 +261,20 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                   onClick={() => setViewing(dept)}
                   className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  View
+                  {t('departments.view')}
                 </button>
                 <button
                   onClick={() => openEditor(dept)}
                   className="px-3 py-1.5 text-sm font-medium text-primary bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
                 >
-                  Edit
+                  {t('departments.edit')}
                 </button>
                 {isAdmin && (
                   <button
                     onClick={() => setDeleting(dept)}
                     className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                   >
-                    Delete
+                    {t('departments.delete')}
                   </button>
                 )}
               </div>
@@ -286,7 +289,9 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
           <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-white/15 flex items-center justify-between sticky top-0 bg-primary-dark z-10">
               <h3 className="text-lg font-semibold text-white">
-                {editing === 'new' ? 'Add Department' : 'Edit Department'}
+                {editing === 'new'
+                  ? t('departments.modalAddTitle')
+                  : t('departments.modalEditTitle')}
               </h3>
               <button
                 onClick={() => setEditing(null)}
@@ -300,20 +305,21 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    {t('departments.nameLabel')}{' '}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="e.g., Library, Music Department"
+                    placeholder={t('departments.namePlaceholder')}
                     disabled={isSubmitting}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Contact Emails
+                    {t('departments.contactEmailsLabel')}
                   </label>
                   <input
                     type="text"
@@ -322,12 +328,11 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                       setForm({ ...form, contactEmail: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="dept@example.com, head@example.com"
+                    placeholder={t('departments.contactEmailsPlaceholder')}
                     disabled={isSubmitting}
                   />
                   <p className="text-xs text-slate-500 mt-1">
-                    Comma-separated. These addresses — plus all assigned
-                    department managers — receive booking approval requests.
+                    {t('departments.contactEmailsHint')}
                   </p>
                 </div>
                 <div>
@@ -342,7 +347,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                       disabled={isSubmitting}
                     />
                     <span className="text-sm font-medium text-slate-700">
-                      Use custom operating hours
+                      {t('departments.useCustomHours')}
                     </span>
                   </label>
                   {form.useCustomHours ? (
@@ -352,18 +357,17 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                     />
                   ) : (
                     <p className="text-xs text-slate-500">
-                      This department follows the global schedule from Settings.
+                      {t('departments.followsGlobalSchedule')}
                     </p>
                   )}
                 </div>
                 {isAdmin && editing !== 'new' && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Department Managers
+                      {t('departments.managersLabel')}
                     </label>
                     <p className="text-xs text-slate-500 mb-2">
-                      Managers can edit this department, its rooms, and its
-                      bookings without being global admins.
+                      {t('departments.managersHint')}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {managerIds.map((id) => {
@@ -391,7 +395,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                       })}
                       {managerIds.length === 0 && (
                         <span className="text-xs text-slate-400 italic">
-                          No managers assigned
+                          {t('departments.noManagers')}
                         </span>
                       )}
                     </div>
@@ -410,14 +414,14 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                           if (e.key === 'Escape') setManagerSearch('');
                         }}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="Search users by name or email…"
+                        placeholder={t('departments.searchUsersPlaceholder')}
                         disabled={isSubmitting}
                       />
                       {managerSearch.trim() && (
                         <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg max-h-56 overflow-y-auto">
                           {managerSearchResults.length === 0 ? (
                             <div className="px-3 py-2 text-sm text-slate-400">
-                              No matching users
+                              {t('departments.noMatchingUsers')}
                             </div>
                           ) : (
                             managerSearchResults.map((u) => (
@@ -449,7 +453,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -457,10 +461,10 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
                   disabled={isSubmitting}
                 >
                   {isSubmitting
-                    ? 'Saving…'
+                    ? t('departments.saving')
                     : editing === 'new'
-                      ? 'Create Department'
-                      : 'Save Changes'}
+                      ? t('departments.createDepartment')
+                      : t('departments.saveChanges')}
                 </button>
               </div>
             </form>
@@ -480,8 +484,11 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
       {/* Delete Confirmation */}
       {deleting && (
         <ConfirmDeleteModal
-          title="Delete Department"
-          message={`Delete "${deleting.name}"? Its ${deleting.roomCount ?? 0} room(s) will be kept but unassigned, and will follow the global operating hours.`}
+          title={t('departments.deleteTitle')}
+          message={t('departments.deleteMessage', {
+            name: deleting.name,
+            count: deleting.roomCount ?? 0,
+          })}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
           isLoading={isSubmitting}

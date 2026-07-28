@@ -209,7 +209,7 @@ const DepartmentsManager: React.FC<DepartmentsManagerProps> = ({
         {isAdmin && (
           <button
             onClick={() => openEditor('new')}
-            className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-lg shadow-sm transition-all-smooth flex items-center gap-2"
+            className="px-4 py-2 bg-primary-dark hover:bg-primary text-white text-sm font-bold rounded-lg shadow-sm transition-all-smooth flex items-center gap-2"
           >
             <PlusIcon className="w-4 h-4" />
             Add Department

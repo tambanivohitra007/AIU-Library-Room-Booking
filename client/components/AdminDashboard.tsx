@@ -1082,7 +1082,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
                 <button
                   onClick={() => setShowAddUserModal(true)}
-                  className="flex-1 sm:flex-none px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm flex items-center justify-center gap-2 group"
+                  className="flex-1 sm:flex-none px-3 py-2 bg-primary-dark hover:bg-primary text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm flex items-center justify-center gap-2 group"
                 >
                   <svg
                     className="w-4 h-4 transition-transform"
@@ -1494,7 +1494,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {(isAdmin || isDeptAdminOnly) && (
             <button
               onClick={() => setShowAddRoomModal(true)}
-              className="w-full sm:w-auto px-3 py-2 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-3 py-2 bg-primary-dark hover:bg-primary text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm flex items-center justify-center gap-2 group"
             >
               <svg
                 className="w-4 h-4 transition-transform"

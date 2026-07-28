@@ -362,7 +362,7 @@ const SemestersManager: React.FC = () => {
         <h2 className="text-xl font-bold gradient-text">Semester Management</h2>
         <button
           onClick={openAddModal}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary-light text-white rounded-lg font-bold transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-lg font-bold transition-all"
         >
           <PlusIcon className="w-5 h-5" />
           Add Semester

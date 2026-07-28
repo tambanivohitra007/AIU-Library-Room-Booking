@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import {
   ScheduleException,
@@ -6,9 +6,23 @@ import {
   User,
   isGlobalAdminRole,
 } from '../types';
+import { parseIcs, ParsedIcsEvent } from '../utils/ics';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
 import { useToast } from '../contexts/ToastContext';
 import { XIcon, PlusIcon } from './Icons';
+
+interface ImportEvent extends ParsedIcsEvent {
+  duplicate: boolean;
+  selected: boolean;
+}
+
+interface ImportState {
+  events: ImportEvent[];
+  skippedRecurring: number;
+  skippedInvalid: number;
+  skippedPast: number;
+  departmentId: string; // '' = service-wide
+}
 
 interface ClosureFormState {
   name: string;
@@ -38,6 +52,8 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
   );
   const [deleting, setDeleting] = useState<ScheduleException | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [importState, setImportState] = useState<ImportState | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<ClosureFormState>({
     name: '',
     startDate: '',
@@ -154,6 +170,82 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
     }
   };
 
+  // ---- .ics import ----
+
+  const handleIcsFile = async (file: File) => {
+    try {
+      const parsed = parseIcs(await file.text());
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      let skippedPast = 0;
+      const events: ImportEvent[] = [];
+      for (const ev of parsed.events) {
+        if (ev.endDate < todayStr) {
+          skippedPast++;
+          continue;
+        }
+        const duplicate = closures.some(
+          (c) => c.name === ev.name && toDateInput(c.startDate) === ev.startDate,
+        );
+        events.push({ ...ev, duplicate, selected: !duplicate });
+      }
+
+      if (
+        events.length === 0 &&
+        parsed.skippedRecurring + parsed.skippedInvalid + skippedPast === 0
+      ) {
+        toast.error('No events found in that file');
+        return;
+      }
+
+      setImportState({
+        events,
+        skippedRecurring: parsed.skippedRecurring,
+        skippedInvalid: parsed.skippedInvalid,
+        skippedPast,
+        departmentId: isAdmin ? '' : managedIds[0] || '',
+      });
+    } catch {
+      toast.error('Could not read that file as an iCalendar (.ics)');
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importState) return;
+    const selected = importState.events.filter((e) => e.selected);
+    if (selected.length === 0) {
+      toast.error('Nothing selected to import');
+      return;
+    }
+    setIsSubmitting(true);
+    let created = 0;
+    let failed = 0;
+    for (const ev of selected) {
+      try {
+        await api.createScheduleException({
+          name: ev.name,
+          startDate: ev.startDate,
+          endDate: ev.endDate,
+          departmentId: importState.departmentId || null,
+          closed: true,
+          openHour: null,
+          closeHour: null,
+        });
+        created++;
+      } catch {
+        failed++;
+      }
+    }
+    setIsSubmitting(false);
+    setImportState(null);
+    toast.success(
+      `Imported ${created} closure${created === 1 ? '' : 's'}${failed ? ` (${failed} failed)` : ''}`,
+    );
+    await load();
+  };
+
   const formatRange = (ex: ScheduleException) => {
     const opts: Intl.DateTimeFormatOptions = {
       month: 'short',
@@ -182,13 +274,32 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
             These override the weekly schedule.
           </p>
         </div>
-        <button
-          onClick={() => openEditor('new')}
-          className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add Closure
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".ics,text/calendar"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleIcsFile(file);
+              e.target.value = ''; // allow re-selecting the same file
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-bold rounded-lg transition-colors"
+          >
+            Import .ics
+          </button>
+          <button
+            onClick={() => openEditor('new')}
+            className="px-4 py-2 bg-primary hover:bg-primary-light text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add Closure
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -398,6 +509,139 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* .ics Import Preview */}
+      {importState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
+          <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] flex flex-col border border-slate-200">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Import Calendar Events
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Selected events become all-day closures.
+                </p>
+              </div>
+              <button
+                onClick={() => setImportState(null)}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={isSubmitting}
+              >
+                <XIcon className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Applies To
+                </label>
+                <select
+                  value={importState.departmentId}
+                  onChange={(e) =>
+                    setImportState({
+                      ...importState,
+                      departmentId: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  disabled={isSubmitting}
+                >
+                  {isAdmin && (
+                    <option value="">Service-wide (all rooms)</option>
+                  )}
+                  {scopeOptions.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {(importState.skippedRecurring > 0 ||
+                importState.skippedInvalid > 0 ||
+                importState.skippedPast > 0) && (
+                <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-3 py-2">
+                  Not shown:
+                  {importState.skippedPast > 0 &&
+                    ` ${importState.skippedPast} past event${importState.skippedPast === 1 ? '' : 's'}`}
+                  {importState.skippedRecurring > 0 &&
+                    ` · ${importState.skippedRecurring} recurring`}
+                  {importState.skippedInvalid > 0 &&
+                    ` · ${importState.skippedInvalid} unreadable`}
+                </p>
+              )}
+
+              {importState.events.length === 0 ? (
+                <p className="text-sm text-slate-400 italic">
+                  No upcoming events to import.
+                </p>
+              ) : (
+                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
+                  {importState.events.map((ev, idx) => (
+                    <label
+                      key={idx}
+                      className={`flex items-center gap-3 px-3 py-2 cursor-pointer ${ev.duplicate ? 'opacity-60' : 'hover:bg-slate-50'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={ev.selected}
+                        onChange={(e) =>
+                          setImportState({
+                            ...importState,
+                            events: importState.events.map((x, i) =>
+                              i === idx
+                                ? { ...x, selected: e.target.checked }
+                                : x,
+                            ),
+                          })
+                        }
+                        className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                        disabled={isSubmitting}
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-medium text-slate-800 truncate">
+                          {ev.name}
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          {ev.startDate === ev.endDate
+                            ? ev.startDate
+                            : `${ev.startDate} – ${ev.endDate}`}
+                          {ev.duplicate && ' · already exists'}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setImportState(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg transition-colors disabled:opacity-50"
+                disabled={
+                  isSubmitting ||
+                  importState.events.filter((e) => e.selected).length === 0
+                }
+              >
+                {isSubmitting
+                  ? 'Importing…'
+                  : `Import ${importState.events.filter((e) => e.selected).length} Closure${importState.events.filter((e) => e.selected).length === 1 ? '' : 's'}`}
+              </button>
+            </div>
           </div>
         </div>
       )}

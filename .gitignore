@@ -38,6 +38,9 @@ dev.db
 prisma/*.db
 prisma/*.db-journal
 
+# Deploy database backups (deploy.sh writes here before schema changes)
+backups/
+
 # OS files
 .DS_Store
 Thumbs.db

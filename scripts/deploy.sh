@@ -8,10 +8,16 @@
 # What it does:
 #   1. Preflight checks (tools, .env, required secrets)
 #   2. Aligns the Prisma provider with DATABASE_URL (sqlite dev / mysql-postgres prod)
-#   3. Installs dependencies and builds server + client
-#   4. Syncs the database schema (migrate deploy if migrations exist, else db push)
-#   5. Starts or reloads both PM2 apps and saves the process list
-#   6. Verifies the API and web app respond
+#   3. Installs dependencies and builds the server
+#   4. Backs up the existing database BEFORE any schema change (never loses prod data)
+#   5. Syncs the schema additively (migrate deploy if migrations exist, else db push)
+#   6. Installs dependencies and builds the client
+#   7. Starts or reloads both PM2 apps and saves the process list
+#   8. Verifies the API and web app respond
+#
+# Safe to run over an existing install: schema changes are additive (e.g. the new
+# User.language column defaults to "en"), the DB is snapshotted first, and the seed
+# script is never invoked.
 
 set -e
 
@@ -24,6 +30,16 @@ error()   { echo -e "${RED}ERROR: $1${NC}"; exit 1; }
 success() { echo -e "${GREEN}[OK] $1${NC}"; }
 info()    { echo -e "${YELLOW}-> $1${NC}"; }
 warn()    { echo -e "${YELLOW}WARNING: $1${NC}"; }
+
+AUTO_YES=0
+[ "$1" = "--yes" ] && AUTO_YES=1
+
+# Refuse to proceed without a backup unless the operator explicitly accepts (or --yes)
+require_backup_ack() {
+    [ "$AUTO_YES" = "1" ] && return 0
+    read -p "Continue WITHOUT a database backup? (yes/no): " REPLY_ACK
+    [ "$REPLY_ACK" = "yes" ] || error "Aborted - back up the database first, then re-run"
+}
 
 echo "========================================="
 echo " Room Booking - Production Deployment"
@@ -111,6 +127,66 @@ info "Building server (tsc + prisma generate)..."
 npm run build
 success "Server built"
 
+# ---------- Back up the database (before ANY schema change) ----------
+# The existing production data must survive the deploy. Snapshot it now, while the
+# schema on disk still matches what created the current DB. (cwd is server/ here.)
+
+echo ""
+BACKUP_DIR="../backups"
+mkdir -p "$BACKUP_DIR"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+case "$DATABASE_URL" in
+    file:*)
+        # SQLite path is resolved relative to server/prisma/ (schema location)
+        DB_FILE="${DATABASE_URL#file:}"
+        case "$DB_FILE" in
+            /*) DB_PATH="$DB_FILE" ;;               # absolute
+            *)  DB_PATH="prisma/${DB_FILE#./}" ;;   # relative to server/prisma
+        esac
+        if [ -f "$DB_PATH" ]; then
+            cp "$DB_PATH" "$BACKUP_DIR/backup-$STAMP.db"
+            success "SQLite database backed up to backups/backup-$STAMP.db"
+        else
+            warn "No SQLite file at $DB_PATH - treating as a fresh database (nothing to back up)"
+        fi
+        ;;
+    postgres://*|postgresql://*)
+        if command -v pg_dump >/dev/null 2>&1; then
+            if pg_dump "$DATABASE_URL" > "$BACKUP_DIR/backup-$STAMP.sql"; then
+                success "PostgreSQL database dumped to backups/backup-$STAMP.sql"
+            else
+                error "pg_dump failed - aborting before the schema change (data left untouched)"
+            fi
+        else
+            warn "pg_dump not found - cannot auto-back up this PostgreSQL database"
+            require_backup_ack
+        fi
+        ;;
+    mysql://*)
+        if command -v mysqldump >/dev/null 2>&1; then
+            # Parse mysql://user:pass@host:port/db?params
+            _u="${DATABASE_URL#mysql://}"
+            _creds="${_u%%@*}"; _rest="${_u#*@}"
+            _user="${_creds%%:*}"
+            _pass="${_creds#*:}"; [ "$_pass" = "$_creds" ] && _pass=""
+            _hostport="${_rest%%/*}"; _dbpart="${_rest#*/}"
+            _host="${_hostport%%:*}"
+            _port="${_hostport#*:}"; [ "$_port" = "$_hostport" ] && _port="3306"
+            _db="${_dbpart%%\?*}"
+            if MYSQL_PWD="$_pass" mysqldump -h "$_host" -P "$_port" -u "$_user" "$_db" > "$BACKUP_DIR/backup-$STAMP.sql"; then
+                success "MySQL database dumped to backups/backup-$STAMP.sql"
+            else
+                warn "mysqldump failed (check host/credentials) - could not auto-back up"
+                require_backup_ack
+            fi
+        else
+            warn "mysqldump not found - cannot auto-back up this MySQL database"
+            require_backup_ack
+        fi
+        ;;
+esac
+
 # ---------- Database schema ----------
 
 echo ""
@@ -119,9 +195,12 @@ if [ -d "prisma/migrations" ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]
     npx prisma migrate deploy
     success "Migrations applied"
 else
-    warn "No migrations folder - syncing schema with 'prisma db push' instead"
+    # db push applies additive changes (new tables/columns) in place. Without
+    # --accept-data-loss it ABORTS instead of dropping data, so existing rows are
+    # safe; the new User.language column defaults to "en" for current users.
+    info "No migrations folder - syncing schema additively with 'prisma db push'"
     npx prisma db push --skip-generate
-    success "Database schema synced"
+    success "Database schema synced (no data dropped)"
 fi
 # Note: seeding is intentionally NOT run - the seed script wipes all data
 # and refuses to run when NODE_ENV=production anyway.

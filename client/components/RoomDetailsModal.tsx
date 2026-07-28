@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Room } from '../types';
 import { XIcon } from './Icons';
 import { useSettings } from '../contexts/SettingsContext';
@@ -17,6 +18,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   room,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const hours = getEffectiveOperatingHours(room.department, globalHours);
   const usesDepartmentSchedule =
@@ -31,7 +33,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               {room.name}
             </h3>
             <p className="text-sm text-slate-500">
-              {room.department?.name || 'No department'}
+              {room.department?.name || t('roomDetails.noDepartment')}
             </p>
           </div>
           <button
@@ -50,18 +52,23 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Capacity
+                {t('roomDetails.capacity')}
               </p>
               <p className="text-sm font-semibold text-slate-800 mt-1">
-                {room.minCapacity}–{room.maxCapacity} people
+                {t('roomDetails.capacityValue', {
+                  min: room.minCapacity,
+                  max: room.maxCapacity,
+                })}
               </p>
             </div>
             <div className="border border-slate-200 rounded-lg px-4 py-3">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                Approval
+                {t('roomDetails.approval')}
               </p>
               <p className="text-sm font-semibold text-slate-800 mt-1">
-                {room.requiresApproval ? 'Required before booking' : 'Not required'}
+                {room.requiresApproval
+                  ? t('roomDetails.approvalRequired')
+                  : t('roomDetails.approvalNotRequired')}
               </p>
             </div>
           </div>
@@ -69,7 +76,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           {room.features.length > 0 && (
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-                Features
+                {t('roomDetails.features')}
               </p>
               <div className="flex flex-wrap gap-2">
                 {room.features.map((feature, idx) => (
@@ -86,12 +93,14 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-              Operating Hours
+              {t('roomDetails.operatingHours')}
               <span className="normal-case font-medium text-slate-400 ml-2">
                 (
                 {usesDepartmentSchedule
-                  ? `${room.department?.name} schedule`
-                  : 'global schedule'}
+                  ? t('roomDetails.departmentSchedule', {
+                      name: room.department?.name,
+                    })
+                  : t('roomDetails.globalSchedule')}
                 )
               </span>
             </p>
@@ -101,7 +110,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
           {room.bookingTerms && (
             <div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">
-                Terms &amp; Conditions
+                {t('roomDetails.terms')}
               </p>
               <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-40 overflow-y-auto custom-scrollbar bg-amber-50 rounded-lg p-3 border border-amber-200">
                 {room.bookingTerms}
@@ -115,7 +124,7 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
             onClick={onClose}
             className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

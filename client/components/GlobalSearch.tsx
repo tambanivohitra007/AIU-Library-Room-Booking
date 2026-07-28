@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { User, Room, Booking, UserRole, isGlobalAdminRole } from '../types';
 import { api } from '../services/api';
 
@@ -24,6 +26,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
   rooms,
   bookings,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,9 +91,9 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       .forEach((r) =>
         out.push({
           key: `room-${r.id}`,
-          group: 'Rooms',
+          group: t('search.groupRooms'),
           label: r.name,
-          sub: `${r.department?.name || 'No department'} · ${r.minCapacity}–${r.maxCapacity} people`,
+          sub: `${r.department?.name || t('search.noDepartment')} · ${t('roomDetails.capacityValue', { min: r.minCapacity, max: r.maxCapacity })}`,
           action: () => navigate(`/?room=${r.id}`),
         }),
       );
@@ -100,7 +103,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
       .filter((b) => {
         const room = rooms.find((r) => r.id === b.roomId);
         const dateStr = new Date(b.startTime)
-          .toLocaleDateString('en-US', {
+          .toLocaleDateString(dateLocale(), {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
@@ -118,9 +121,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
         const start = new Date(b.startTime);
         out.push({
           key: `booking-${b.id}`,
-          group: 'My Bookings',
-          label: `${room?.name || 'Room'} — ${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-          sub: b.status === 'PENDING' ? 'Pending approval' : b.purpose || undefined,
+          group: t('search.groupMyBookings'),
+          label: `${room?.name || t('myBookings.unknownRoom')} — ${start.toLocaleDateString(dateLocale(), { month: 'short', day: 'numeric' })} ${start.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })}`,
+          sub:
+            b.status === 'PENDING'
+              ? t('calendar.pendingApproval')
+              : b.purpose || undefined,
           action: () => navigate(`/my-bookings?highlight=${b.id}`),
         });
       });
@@ -136,7 +142,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
         .forEach((u) =>
           out.push({
             key: `user-${u.id}`,
-            group: 'Users',
+            group: t('search.groupUsers'),
             label: u.name,
             sub: u.email,
             action: () =>
@@ -156,7 +162,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
           seen.add(r.department.id);
           out.push({
             key: `dept-${r.department.id}`,
-            group: 'Departments',
+            group: t('search.groupDepartments'),
             label: r.department.name,
             action: () => navigate('/admin?tab=departments'),
           });
@@ -165,7 +171,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
     }
 
     return out;
-  }, [query, rooms, bookings, allUsers, isStaff, user.id, navigate]);
+  }, [query, rooms, bookings, allUsers, isStaff, user.id, navigate, t]);
 
   useEffect(() => setActiveIndex(0), [query]);
 
@@ -226,13 +232,15 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onInputKeyDown}
-        placeholder="Search rooms, bookings…  (Ctrl+K)"
+        placeholder={t('search.placeholder')}
         className="w-full h-8 bg-white/10 border border-white/20 rounded-lg pl-9 pr-3 text-sm text-white placeholder:text-white/60 focus:outline-none focus:ring-1 focus:ring-white/70 focus:bg-white/15 transition-all"
       />
       {open && query.trim() && (
         <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg max-h-96 overflow-y-auto custom-scrollbar z-50 text-left">
           {results.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-slate-400">No results</div>
+            <div className="px-4 py-3 text-sm text-slate-400">
+              {t('search.noResults')}
+            </div>
           ) : (
             groups.map((g) => (
               <div key={g.name}>

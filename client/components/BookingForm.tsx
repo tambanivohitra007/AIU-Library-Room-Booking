@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation, Trans } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { Room, Attendee } from '../types';
 import { api } from '../services/api';
 import { UsersIcon, ClockIcon, AlertTriangleIcon, XIcon } from './Icons';
@@ -21,6 +23,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const toast = useToast();
   // Local state for time selection (allows editing in form)
   const [bookingStart, setBookingStart] = useState(initialStartTime);
@@ -73,7 +76,17 @@ const BookingForm: React.FC<BookingFormProps> = ({
         const conflictEnd = new Date(conflict.endTime);
         setHasConflict(true);
         setConflictDetails(
-          `Conflicts with booking by ${conflict.userDisplay} (${conflictStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${conflictEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+          t('booking.conflictsWith', {
+            name: conflict.userDisplay,
+            start: conflictStart.toLocaleTimeString(dateLocale(), {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            end: conflictEnd.toLocaleTimeString(dateLocale(), {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          }),
         );
       }
     } catch (err) {
@@ -124,19 +137,17 @@ const BookingForm: React.FC<BookingFormProps> = ({
     // Validate booking is not in the past
     const now = new Date();
     if (bookingStart <= now) {
-      setError(
-        'Cannot book a time slot in the past. Please select a future time.',
-      );
+      setError(t('booking.pastStart'));
       return;
     }
 
     if (bookingEnd <= now) {
-      setError('Booking end time cannot be in the past.');
+      setError(t('booking.pastEnd'));
       return;
     }
 
     if (bookingStart >= bookingEnd) {
-      setError('End time must be after start time.');
+      setError(t('booking.endAfterStart'));
       return;
     }
 
@@ -151,17 +162,17 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
     if (uniqueRaw.length + 1 < minAttendees) {
       setError(
-        `Minimum ${minAttendees} people required (You + ${minAttendees - 1} others).`,
+        t('booking.minPeople', { min: minAttendees, others: minAttendees - 1 }),
       );
       return;
     }
     if (uniqueRaw.length + 1 > maxAttendees) {
-      setError(`Maximum capacity is ${maxAttendees} people.`);
+      setError(t('booking.maxPeople', { max: maxAttendees }));
       return;
     }
 
     if (selectedRoom.bookingTerms && !termsAccepted) {
-      setError('Please accept the terms and conditions to book this room.');
+      setError(t('booking.termsRequired'));
       return;
     }
 
@@ -184,16 +195,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
       if (booking.status === 'PENDING') {
         toast.success(
-          `Request submitted for ${selectedRoom.name} — awaiting approval.`,
+          t('booking.requestSubmitted', { room: selectedRoom.name }),
         );
       } else {
-        toast.success(`Booking confirmed for ${selectedRoom.name}!`);
+        toast.success(t('booking.bookingConfirmed', { room: selectedRoom.name }));
       }
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      toast.error(`Failed to create booking: ${errorMessage}`);
+      toast.error(t('booking.createFailed', { message: errorMessage }));
     } finally {
       setIsSubmitting(false);
     }
@@ -216,7 +227,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
     >
       <div className="bg-slate-800 text-white p-4 flex items-center justify-between shrink-0">
         <div>
-          <h3 className="font-bold text-lg">New Booking</h3>
+          <h3 className="font-bold text-lg">{t('booking.title')}</h3>
           <p className="text-slate-300 text-sm">{selectedRoom.name}</p>
         </div>
         {isMobile && (
@@ -236,7 +247,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
         {checkingConflict && (
           <div className="bg-primary/10 p-3 text-sm text-primary rounded border border-primary/20 flex items-center gap-2">
             <LoadingSpinner size="sm" color="primary" />
-            Checking availability...
+            {t('booking.checkingAvailability')}
           </div>
         )}
 
@@ -244,11 +255,11 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="bg-red-50 p-3 text-sm text-red-700 rounded border border-red-300">
             <div className="font-semibold mb-1 flex items-center gap-2">
               <AlertTriangleIcon className="w-4 h-4" />
-              Time Conflict Detected
+              {t('booking.timeConflict')}
             </div>
             <div className="text-xs">{conflictDetails}</div>
             <div className="text-xs mt-2 text-red-600">
-              Please select a different time slot.
+              {t('booking.selectDifferentTime')}
             </div>
           </div>
         )}
@@ -261,9 +272,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
         {selectedRoom.requiresApproval && (
           <div className="bg-amber-50 p-3 text-xs text-amber-800 rounded border border-amber-200">
-            This room requires approval. Your booking will be{' '}
-            <strong>pending</strong> (the time slot is reserved for you) until a
-            department admin approves it.
+            <Trans
+              i18nKey="booking.approvalNotice"
+              components={{ 1: <strong /> }}
+            />
           </div>
         )}
 
@@ -271,7 +283,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 border-b border-indigo-100 pb-2">
             <ClockIcon className="w-5 h-5 text-primary" />
             <span>
-              {bookingStart.toLocaleDateString(undefined, {
+              {bookingStart.toLocaleDateString(dateLocale(), {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
@@ -282,7 +294,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Start Time
+                {t('booking.startTime')}
               </label>
               <input
                 type="time"
@@ -293,7 +305,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">
-                End Time
+                {t('booking.endTime')}
               </label>
               <input
                 type="time"
@@ -306,14 +318,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           <div className="text-xs text-slate-500 text-right font-medium">
-            Duration: {Math.floor(durationMinutes / 60)}h {durationMinutes % 60}
-            m
+            {t('booking.duration', {
+              hours: Math.floor(durationMinutes / 60),
+              minutes: durationMinutes % 60,
+            })}
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Other Attendees
+            {t('booking.otherAttendees')}
           </label>
           <div className="relative">
             <textarea
@@ -321,7 +335,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
               rows={3}
               value={attendeeInput}
               onChange={(e) => setAttendeeInput(e.target.value)}
-              placeholder="Enter names..."
+              placeholder={t('booking.enterNames')}
               className={`w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary ${!isCountValid && attendeeInput.length > 0 ? 'border-orange-300' : 'border-slate-300'}`}
             />
             <UsersIcon className="w-4 h-4 absolute right-2 top-2 text-slate-300" />
@@ -330,23 +344,26 @@ const BookingForm: React.FC<BookingFormProps> = ({
             <span
               className={isCountValid ? 'text-green-600' : 'text-orange-500'}
             >
-              Count: {attendeeCount} (+ You)
+              {t('booking.count', { count: attendeeCount })}
             </span>
             <span className="text-slate-400">
-              Min {selectedRoom.minCapacity}, Max {selectedRoom.maxCapacity}
+              {t('booking.minMax', {
+                min: selectedRoom.minCapacity,
+                max: selectedRoom.maxCapacity,
+              })}
             </span>
           </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Purpose
+            {t('booking.purpose')}
           </label>
           <input
             type="text"
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
-            placeholder="Brief description..."
+            placeholder={t('booking.purposePlaceholder')}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -355,7 +372,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
               <AlertTriangleIcon className="w-4 h-4" />
-              Terms &amp; Conditions
+              {t('booking.terms')}
             </div>
             <div className="text-xs text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar bg-white/60 rounded p-2 border border-amber-100">
               {selectedRoom.bookingTerms}
@@ -367,10 +384,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 onChange={(e) => setTermsAccepted(e.target.checked)}
                 className="mt-0.5 rounded border-slate-300 text-primary focus:ring-primary/20"
               />
-              <span>
-                I have read and accept the terms and conditions for booking this
-                room.
-              </span>
+              <span>{t('booking.termsAccept')}</span>
             </label>
           </div>
         )}
@@ -382,7 +396,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           onClick={onCancel}
           className="flex-1 py-2 text-sm font-medium text-slate-600 hover:bg-white border border-transparent hover:border-slate-300 rounded-lg transition-colors"
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           onClick={handleSubmit}
@@ -397,10 +411,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
         >
           {isSubmitting && <LoadingSpinner size="sm" color="white" />}
           {isSubmitting
-            ? 'Booking...'
+            ? t('booking.booking')
             : hasConflict
-              ? 'Time Unavailable'
-              : 'Confirm'}
+              ? t('booking.timeUnavailable')
+              : t('common.confirm')}
         </button>
       </div>
     </div>

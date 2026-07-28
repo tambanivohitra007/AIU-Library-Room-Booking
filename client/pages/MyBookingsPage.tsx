@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import { User, Room, Booking } from '../types';
 import { TrashIcon } from '../components/Icons';
 
@@ -20,6 +22,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
   bookings,
   onCancelBooking,
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -104,13 +107,17 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
   const tabs: { key: TabType; label: string; count: number }[] = [
     {
       key: 'upcoming',
-      label: 'Upcoming',
+      label: t('myBookings.tabUpcoming'),
       count: categorizedBookings.upcoming.length,
     },
-    { key: 'past', label: 'Past', count: categorizedBookings.past.length },
+    {
+      key: 'past',
+      label: t('myBookings.tabPast'),
+      count: categorizedBookings.past.length,
+    },
     {
       key: 'cancelled',
-      label: 'Cancelled',
+      label: t('myBookings.tabCancelled'),
       count: categorizedBookings.cancelled.length,
     },
   ];
@@ -119,16 +126,20 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold gradient-text">My Bookings</h2>
+          <h2 className="text-3xl font-bold gradient-text">
+            {t('myBookings.title')}
+          </h2>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            Manage your room reservations
+            {t('myBookings.subtitle')}
           </p>
         </div>
         {myBookings.length > 0 && (
           <div className="glass px-4 py-2 rounded-md border border-slate-200 ">
             <span className="text-sm font-bold text-slate-700">
               {myBookings.length}{' '}
-              {myBookings.length === 1 ? 'Booking' : 'Bookings'}
+              {myBookings.length === 1
+                ? t('myBookings.booking')
+                : t('myBookings.bookings')}
             </span>
           </div>
         )}
@@ -180,10 +191,10 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             </svg>
           </div>
           <h3 className="text-xl font-bold text-slate-700 mb-2">
-            No Bookings Yet
+            {t('myBookings.noBookingsYet')}
           </h3>
           <p className="text-slate-500 font-medium">
-            Start by booking a room from the home page
+            {t('myBookings.startBooking')}
           </p>
         </div>
       ) : filteredBookings.length === 0 ? (
@@ -204,13 +215,14 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
             </svg>
           </div>
           <h3 className="text-lg font-bold text-slate-700 mb-1">
-            No {activeTab} bookings
+            {t('myBookings.noTabBookings', {
+              tab: t(`myBookings.${activeTab}`),
+            })}
           </h3>
           <p className="text-slate-500 text-sm font-medium">
-            {activeTab === 'upcoming' &&
-              'Book a room to see your upcoming reservations'}
-            {activeTab === 'past' && 'Your completed bookings will appear here'}
-            {activeTab === 'cancelled' && 'No cancelled bookings'}
+            {activeTab === 'upcoming' && t('myBookings.emptyUpcoming')}
+            {activeTab === 'past' && t('myBookings.emptyPast')}
+            {activeTab === 'cancelled' && t('myBookings.emptyCancelled')}
           </p>
         </div>
       ) : (
@@ -255,7 +267,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                           </div>
                           <div className="flex-1">
                             <h3 className="text-lg font-bold text-slate-800">
-                              {room?.name || 'Unknown Room'}
+                              {room?.name || t('myBookings.unknownRoom')}
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
                               <span
@@ -269,14 +281,14 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                                         : 'bg-slate-50 border border-slate-200 text-slate-700'
                                 }`}
                               >
-                                {b.status}
+                                {t(`status.${b.status}`)}
                               </span>
                               {!hasEnded &&
                                 (b.status === 'CONFIRMED' ||
                                   b.status === 'PENDING') && (
                                   <span className="px-2 py-1 bg-accent/10 border border-accent/20 rounded-lg text-xs font-bold text-accent flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></div>
-                                    Active
+                                    {t('myBookings.active')}
                                   </span>
                                 )}
                             </div>
@@ -300,7 +312,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                             </svg>
                             <span className="font-semibold text-slate-700">
                               {new Date(b.startTime).toLocaleDateString(
-                                'en-US',
+                                dateLocale(),
                                 {
                                   weekday: 'short',
                                   month: 'short',
@@ -311,14 +323,17 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                             <span className="text-slate-500">•</span>
                             <span className="text-slate-600 font-medium">
                               {new Date(b.startTime).toLocaleTimeString(
-                                'en-US',
+                                dateLocale(),
                                 { hour: '2-digit', minute: '2-digit' },
                               )}
                               {' - '}
-                              {new Date(b.endTime).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {new Date(b.endTime).toLocaleTimeString(
+                                dateLocale(),
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                },
+                              )}
                             </span>
                           </div>
                           {b.purpose && (
@@ -360,7 +375,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                               </div>
                               <div>
                                 <span className="font-bold text-red-700 block mb-1">
-                                  Reason for Cancellation:
+                                  {t('myBookings.cancellationReason')}
                                 </span>
                                 <span className="text-slate-700">
                                   {b.cancellationReason}
@@ -375,10 +390,12 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                         <button
                           onClick={() => onCancelBooking(b.id)}
                           className="group px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm flex items-center gap-2"
-                          title="Cancel Booking"
+                          title={t('myBookings.cancelBooking')}
                         >
                           <TrashIcon className="w-4 h-4 transition-transform" />
-                          <span className="hidden sm:inline">Cancel</span>
+                          <span className="hidden sm:inline">
+                            {t('common.cancel')}
+                          </span>
                         </button>
                       )}
                     </div>
@@ -392,19 +409,21 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
           {totalPages > 1 && (
             <div className="flex items-center justify-between glass rounded-lg border border-slate-200 px-4 py-3">
               <p className="text-sm text-slate-600 font-medium">
-                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
-                {Math.min(
-                  currentPage * ITEMS_PER_PAGE,
-                  filteredBookings.length,
-                )}{' '}
-                of {filteredBookings.length}
+                {t('myBookings.showing', {
+                  from: (currentPage - 1) * ITEMS_PER_PAGE + 1,
+                  to: Math.min(
+                    currentPage * ITEMS_PER_PAGE,
+                    filteredBookings.length,
+                  ),
+                  total: filteredBookings.length,
+                })}
               </p>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
                   className="p-2 rounded-md hover:bg-white/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="First page"
+                  title={t('myBookings.firstPage')}
                 >
                   <svg
                     className="w-4 h-4 text-slate-600"
@@ -424,7 +443,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="p-2 rounded-md hover:bg-white/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="Previous page"
+                  title={t('myBookings.prevPage')}
                 >
                   <svg
                     className="w-4 h-4 text-slate-600"
@@ -474,7 +493,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                   }
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-md hover:bg-white/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="Next page"
+                  title={t('myBookings.nextPage')}
                 >
                   <svg
                     className="w-4 h-4 text-slate-600"
@@ -494,7 +513,7 @@ const MyBookingsPage: React.FC<MyBookingsPageProps> = ({
                   onClick={() => setCurrentPage(totalPages)}
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-md hover:bg-white/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  title="Last page"
+                  title={t('myBookings.lastPage')}
                 >
                   <svg
                     className="w-4 h-4 text-slate-600"

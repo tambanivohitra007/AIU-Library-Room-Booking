@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '../i18n';
 import {
   Booking,
   Room,
@@ -36,6 +38,7 @@ const DayView: React.FC<DayViewProps> = ({
   onBookingClick,
   selectedRange,
 }) => {
+  const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const operatingHours = useMemo(
     () => getEffectiveOperatingHours(room.department, globalHours),
@@ -193,13 +196,13 @@ const DayView: React.FC<DayViewProps> = ({
       <div className="flex border-b border-slate-200 bg-slate-50 py-3 px-4">
         <div className="text-center">
           <div className="text-xs font-semibold uppercase mb-1 text-slate-500">
-            {selectedDate.toLocaleDateString('en-US', { weekday: 'long' })}
+            {selectedDate.toLocaleDateString(dateLocale(), { weekday: 'long' })}
           </div>
           <div className="text-2xl font-light text-slate-700">
             {selectedDate.getDate()}
           </div>
           <div className="text-xs text-slate-500">
-            {selectedDate.toLocaleDateString('en-US', {
+            {selectedDate.toLocaleDateString(dateLocale(), {
               month: 'long',
               year: 'numeric',
             })}
@@ -270,7 +273,7 @@ const DayView: React.FC<DayViewProps> = ({
                 style={{ ...dragStyle, left: '8px', right: '8px' }}
               >
                 <div className="text-white text-xs font-bold p-2">
-                  {isDragValid ? 'New Booking' : 'Conflict'}
+                  {isDragValid ? t('common.newBooking') : t('common.conflict')}
                 </div>
               </div>
             )}
@@ -282,7 +285,7 @@ const DayView: React.FC<DayViewProps> = ({
                 style={{ ...selectionStyle, left: '8px', right: '8px' }}
               >
                 <div className="text-indigo-600 text-xs font-bold p-2">
-                  Selected
+                  {t('common.selected')}
                 </div>
               </div>
             )}
@@ -319,14 +322,14 @@ const DayView: React.FC<DayViewProps> = ({
                     }
                   `}
                   style={{ ...style, left: '8px', right: '8px' }}
-                  title={`${canView ? b.userDisplay : 'Reserved'}${isPending ? ' (pending approval)' : ''}`}
+                  title={`${canView ? b.userDisplay : t('common.reserved')}${isPending ? ` (${t('calendar.pendingApproval')})` : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (canView) onBookingClick(b);
                   }}
                 >
                   <div className="font-bold truncate">
-                    {canView ? b.userDisplay : 'Reserved'}
+                    {canView ? b.userDisplay : t('common.reserved')}
                   </div>
                   <div className="truncate opacity-75">
                     {new Date(b.startTime).getHours()}:
@@ -345,7 +348,7 @@ const DayView: React.FC<DayViewProps> = ({
                   )}
                   {isPending && (
                     <div className="text-[9px] font-bold uppercase tracking-wide opacity-90">
-                      Pending
+                      {t('common.pending')}
                     </div>
                   )}
                 </div>
@@ -373,7 +376,9 @@ const DayView: React.FC<DayViewProps> = ({
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                     />
                   </svg>
-                  {overlay.label ? `Closed — ${overlay.label}` : 'Closed'}
+                  {overlay.label
+                    ? t('common.closedFor', { name: overlay.label })
+                    : t('common.closed')}
                 </div>
               </div>
             ))}

@@ -57,6 +57,7 @@ The client polls the API every 5 seconds (`App.tsx`) for rooms and bookings. Sta
 - `client/services/api.ts` — All HTTP calls via `fetchAPI()` helper; JWT stored in `localStorage`
 - `client/contexts/SettingsContext.tsx` — Provides branding settings (service name, logo) app-wide
 - `client/contexts/ToastContext.tsx` — Global toast notifications
+- `client/i18n.ts` + `client/locales/{en,th}.json` — react-i18next EN/Thai translations (user-facing screens only; admin screens still English). Language persisted in `localStorage['lang']`, switcher in the `Layout` header. Format dates with `dateLocale()` from `client/i18n.ts` (returns `th-TH-u-ca-gregory` for Thai to keep Gregorian years), never hardcode `'en-US'` in user-facing components
 - `client/pages/` — `HomePage` (room timeline/booking), `MyBookingsPage`, `AdminPage`, `AuthCallbackPage` (Microsoft SSO)
 - `client/components/` — Feature components; `Timeline.tsx` is the main booking UI
 

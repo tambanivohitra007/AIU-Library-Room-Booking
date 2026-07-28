@@ -33,7 +33,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
     text: t(`login.tips.step${n}Text`),
   }));
 
-  const serviceName = settings?.serviceName || 'Room Booking';
+  const serviceName = settings?.serviceName || t('common.appName');
   const supportEmail = settings?.contactEmail?.split(/[,;]/)[0]?.trim();
 
   return (
@@ -138,14 +138,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute inset-y-0 right-0 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 transition-colors hover:text-primary"
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? t('login.hide') : t('login.show')}
                   </button>
                 </div>
               </div>
 
               <label className="flex items-center gap-2 text-sm text-slate-500">
                 <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary" />
-                Remember me for 30 days
+                {t('login.rememberMe')}
               </label>
 
               <button
@@ -178,7 +178,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
             <div className="space-y-4 text-center">
               <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 <span className="h-px flex-1 bg-slate-200" />
-                <span>or continue with</span>
+                <span>{t('login.orContinueWith')}</span>
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
 

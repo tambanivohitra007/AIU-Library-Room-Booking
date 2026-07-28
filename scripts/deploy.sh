@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Room Booking System - Production Deployment Script
-# Run this ON the production server, from the project root, with sudo (as in prod):
-#   sudo ./scripts/deploy.sh          (interactive)
-#   sudo ./scripts/deploy.sh --yes    (no confirmation prompt)
+# Run this ON the production server with sudo (as in prod). It cd's to the repo
+# root itself, so it works from either location:
+#   sudo ./scripts/deploy.sh     (from the repo root)
+#   sudo ./deploy.sh             (from inside scripts/)
+#   ...add --yes to skip the confirmation prompt
 #
 # Update the code first. Recommended flow (avoids the git stash dance caused by the
 # schema.prisma provider edit - this script re-applies the provider each run):
@@ -63,10 +65,15 @@ echo " Room Booking - Production Deployment"
 echo "========================================="
 echo ""
 
+# Work from the project root no matter where this was invoked from (repo root or
+# inside scripts/). Resolve the root relative to this script's own location.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.." || error "Could not change to the project root"
+
 # ---------- Preflight ----------
 
 [ -f "package.json" ] && [ -d "server" ] && [ -d "client" ] \
-    || error "Run this script from the project root directory"
+    || error "Project root not found at $SCRIPT_DIR/.. - is deploy.sh still inside <repo>/scripts/?"
 
 command -v node >/dev/null 2>&1 || error "node is not installed"
 command -v npm  >/dev/null 2>&1 || error "npm is not installed"

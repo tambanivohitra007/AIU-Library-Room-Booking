@@ -28,7 +28,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
       <div className="bg-white rounded-lg w-full max-w-md overflow-hidden border border-slate-200 animate-slide-up">
-        <div className="text-center py-10 px-8 bg-primary">
+        <div className="relative text-center pt-10 pb-16 px-8 bg-primary">
           <div className="flex items-center justify-center mb-6">
             <img
               src={settings?.logoUrl || logo}
@@ -42,6 +42,30 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
           <p className="text-blue-100 text-sm font-medium">
             {settings?.serviceName || 'Room Booking'}
           </p>
+
+          {/* Decorative bottom wave */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-10"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 1440 320"
+              preserveAspectRatio="none"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full block"
+            >
+              <path
+                d="M0,192L60,197.3C120,203,240,213,360,229.3C480,245,600,267,720,266.7C840,267,960,245,1080,224C1200,203,1320,181,1380,170.7L1440,160L1440,320L0,320Z"
+                fill="#ffffff"
+                fillOpacity="0.25"
+              />
+              <path
+                d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,208C1248,192,1344,192,1392,192L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                fill="#ffffff"
+              />
+            </svg>
+          </div>
         </div>
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-5">

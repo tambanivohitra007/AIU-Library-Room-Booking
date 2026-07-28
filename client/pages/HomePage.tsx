@@ -446,7 +446,7 @@ const HomePage: React.FC<HomePageProps> = ({
             <button
               onClick={handleNewBooking}
               disabled={!activeRoom}
-              className="w-full py-2 px-4 bg-primary hover:bg-primary-light text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              className="w-full py-2 px-4 bg-primary-dark hover:bg-primary text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
             >
               <svg
                 className="w-4 h-4"

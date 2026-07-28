@@ -20,6 +20,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Behind a reverse proxy (nginx) in production: trust the first hop so req.ip and
+// express-rate-limit read the real client IP from X-Forwarded-For. Without this,
+// express-rate-limit v7 throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR on every proxied
+// request. Loopback-only in dev where there is no proxy.
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : 'loopback');
+
 // Security middleware
 app.use(helmet());
 app.use(cors({

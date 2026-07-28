@@ -467,16 +467,16 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
           <div className="bg-white rounded-xl max-w-lg w-full animate-scale-in max-h-[90vh] overflow-y-auto border border-slate-200">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-semibold text-slate-900">
+            <div className="p-6 border-b border-white/15 flex items-center justify-between sticky top-0 bg-primary-dark z-10">
+              <h3 className="text-lg font-semibold text-white">
                 {editing === 'new' ? 'Add Closure' : 'Edit Closure'}
               </h3>
               <button
                 onClick={() => setEditing(null)}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                 disabled={isSubmitting}
               >
-                <XIcon className="w-5 h-5 text-slate-600" />
+                <XIcon className="w-5 h-5 text-white/80" />
               </button>
             </div>
             <form onSubmit={handleSubmit}>

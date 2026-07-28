@@ -54,6 +54,11 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [importState, setImportState] = useState<ImportState | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // IDs created by the most recent import, for one-click undo
+  const [lastImportIds, setLastImportIds] = useState<string[] | null>(null);
+  // Bulk selection for mass cleanup
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [form, setForm] = useState<ClosureFormState>({
     name: '',
     startDate: '',
@@ -73,6 +78,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       ]);
       setClosures(ex);
       setDepartments(depts);
+      setSelectedIds(new Set());
     } catch {
       toast.error('Failed to load closures');
     } finally {
@@ -220,11 +226,11 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
       return;
     }
     setIsSubmitting(true);
-    let created = 0;
+    const createdIds: string[] = [];
     let failed = 0;
     for (const ev of selected) {
       try {
-        await api.createScheduleException({
+        const created = await api.createScheduleException({
           name: ev.name,
           startDate: ev.startDate,
           endDate: ev.endDate,
@@ -233,17 +239,62 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
           openHour: null,
           closeHour: null,
         });
-        created++;
+        createdIds.push(created.id);
       } catch {
         failed++;
       }
     }
     setIsSubmitting(false);
     setImportState(null);
+    setLastImportIds(createdIds.length > 0 ? createdIds : null);
     toast.success(
-      `Imported ${created} closure${created === 1 ? '' : 's'}${failed ? ` (${failed} failed)` : ''}`,
+      `Imported ${createdIds.length} closure${createdIds.length === 1 ? '' : 's'}${failed ? ` (${failed} failed)` : ''}`,
     );
     await load();
+  };
+
+  const handleUndoImport = async () => {
+    if (!lastImportIds) return;
+    setIsSubmitting(true);
+    let removed = 0;
+    for (const id of lastImportIds) {
+      try {
+        await api.deleteScheduleException(id);
+        removed++;
+      } catch {
+        // already deleted or no longer permitted - skip
+      }
+    }
+    setIsSubmitting(false);
+    setLastImportIds(null);
+    toast.success(`Import undone (${removed} closure${removed === 1 ? '' : 's'} removed)`);
+    await load();
+  };
+
+  const handleBulkDelete = async () => {
+    setIsSubmitting(true);
+    let removed = 0;
+    for (const id of selectedIds) {
+      try {
+        await api.deleteScheduleException(id);
+        removed++;
+      } catch {
+        // permission or already gone - skip
+      }
+    }
+    setIsSubmitting(false);
+    setConfirmBulkDelete(false);
+    toast.success(`Deleted ${removed} closure${removed === 1 ? '' : 's'}`);
+    await load();
+  };
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const formatRange = (ex: ScheduleException) => {
@@ -302,6 +353,56 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
         </div>
       </div>
 
+      {/* Undo banner for the most recent import */}
+      {lastImportIds && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <span>
+            Imported {lastImportIds.length} closure
+            {lastImportIds.length === 1 ? '' : 's'}. Not what you expected?
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleUndoImport}
+              disabled={isSubmitting}
+              className="px-3 py-1 text-sm font-bold text-blue-700 bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors disabled:opacity-50"
+            >
+              Undo import
+            </button>
+            <button
+              onClick={() => setLastImportIds(null)}
+              className="p-1 text-blue-400 hover:text-blue-600 transition-colors"
+              aria-label="Dismiss"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk delete action */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <span>
+            {selectedIds.size} closure{selectedIds.size === 1 ? '' : 's'}{' '}
+            selected
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setConfirmBulkDelete(true)}
+              className="px-3 py-1 text-sm font-bold text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-100 transition-colors"
+            >
+              Delete selected
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-1 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-100 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="glass rounded-xl border border-slate-200 p-8 text-center text-slate-500">
           Loading…
@@ -315,9 +416,19 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
           {closures.map((ex) => (
             <div
               key={ex.id}
-              className="flex items-center justify-between px-6 py-4 gap-4"
+              className="flex items-center justify-between px-4 sm:px-6 py-4 gap-4"
             >
-              <div className="min-w-0">
+              {canManage(ex) ? (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(ex.id)}
+                  onChange={() => toggleSelected(ex.id)}
+                  className="rounded border-slate-300 text-primary focus:ring-primary/20 shrink-0"
+                />
+              ) : (
+                <span className="w-4 shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
                 <p className="font-bold text-slate-800 truncate">{ex.name}</p>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {formatRange(ex)} ·{' '}
@@ -653,6 +764,17 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
           message={`Delete "${deleting.name}"? The weekly operating hours will apply on those dates again.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
+          isLoading={isSubmitting}
+        />
+      )}
+
+      {/* Bulk Delete Confirmation */}
+      {confirmBulkDelete && (
+        <ConfirmDeleteModal
+          title="Delete Selected Closures"
+          message={`Delete ${selectedIds.size} closure${selectedIds.size === 1 ? '' : 's'}? The weekly operating hours will apply on those dates again.`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setConfirmBulkDelete(false)}
           isLoading={isSubmitting}
         />
       )}

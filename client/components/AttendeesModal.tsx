@@ -82,7 +82,7 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({
                         )}
                       </div>
                       {attendee.isCompanion && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                        <span className="px-2 py-1 bg-primary/20 text-primary rounded text-xs font-medium">
                           Companion
                         </span>
                       )}

@@ -99,17 +99,17 @@ const UserImportModal: React.FC<UserImportModalProps> = ({
 
         <div className="p-6 space-y-6">
           {/* Instructions */}
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2">Instructions</h3>
-            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
+            <h3 className="font-semibold text-primary-dark mb-2">Instructions</h3>
+            <ul className="text-sm text-primary-dark space-y-1 list-disc list-inside">
               <li>
                 CSV file must contain columns:{' '}
-                <code className="bg-blue-100 px-1 rounded">name</code>,{' '}
-                <code className="bg-blue-100 px-1 rounded">email</code>
+                <code className="bg-primary/20 px-1 rounded">name</code>,{' '}
+                <code className="bg-primary/20 px-1 rounded">email</code>
               </li>
               <li>
                 Optional column:{' '}
-                <code className="bg-blue-100 px-1 rounded">role</code> (STUDENT
+                <code className="bg-primary/20 px-1 rounded">role</code> (STUDENT
                 or ADMIN, defaults to STUDENT)
               </li>
               <li>
@@ -120,7 +120,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({
             </ul>
             <button
               onClick={downloadSample}
-              className="mt-3 flex items-center gap-2 text-sm text-blue-700 hover:text-blue-800 font-medium"
+              className="mt-3 flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium"
             >
               <DownloadIcon className="w-4 h-4" />
               Download Sample CSV
@@ -199,7 +199,7 @@ const UserImportModal: React.FC<UserImportModalProps> = ({
                             className={`px-2 py-1 rounded-md text-xs font-medium ${
                               user.role === 'ADMIN'
                                 ? 'bg-purple-100 text-purple-700'
-                                : 'bg-blue-100 text-blue-700'
+                                : 'bg-primary/20 text-primary'
                             }`}
                           >
                             {user.role}

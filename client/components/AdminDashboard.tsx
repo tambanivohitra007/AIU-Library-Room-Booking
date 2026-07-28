@@ -333,7 +333,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={() => handleRemind(row.original.id)}
-                  className="px-3 py-1.5 bg-blue-50 hover:bg-blue-500 border border-blue-200 hover:border-blue-500 text-blue-600 hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
+                  className="px-3 py-1.5 bg-primary/10 hover:bg-primary border border-primary/20 hover:border-primary text-primary hover:text-white font-bold rounded-lg transition-all-smooth shadow-sm "
                   title="Send Reminder Email"
                 >
                   Remind
@@ -383,7 +383,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className={`px-3 py-1 rounded-lg text-xs font-bold  ${
               ['ADMIN', 'SUPERADMIN'].includes(row.original.role)
                 ? 'bg-purple-50 border border-purple-200 text-purple-700'
-                : 'bg-blue-50 border border-blue-200 text-blue-700'
+                : 'bg-primary/10 border border-primary/20 text-primary'
             }`}
           >
             {row.original.role}
@@ -628,7 +628,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </p>
             </div>
             <svg
-              className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 shrink-0"
+              className="w-10 h-10 sm:w-12 sm:h-12 text-primary shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1185,7 +1185,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className={`px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0 ${
                         user.role === 'ADMIN'
                           ? 'bg-purple-50 border border-purple-200 text-purple-700'
-                          : 'bg-blue-50 border border-blue-200 text-blue-700'
+                          : 'bg-primary/10 border border-primary/20 text-primary'
                       }`}
                     >
                       {user.role}

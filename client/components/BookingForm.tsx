@@ -234,7 +234,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
         className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar"
       >
         {checkingConflict && (
-          <div className="bg-blue-50 p-3 text-sm text-blue-600 rounded border border-blue-200 flex items-center gap-2">
+          <div className="bg-primary/10 p-3 text-sm text-primary rounded border border-primary/20 flex items-center gap-2">
             <LoadingSpinner size="sm" color="primary" />
             Checking availability...
           </div>

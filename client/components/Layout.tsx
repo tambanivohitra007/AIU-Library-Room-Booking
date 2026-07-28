@@ -65,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({
             <h1 className="font-bold text-base sm:text-lg text-white tracking-tight">
               {settings?.serviceName || 'Room Booking'}
             </h1>
-            <p className="text-xs text-blue-200 hidden sm:block font-medium">
+            <p className="text-xs text-white/80 hidden sm:block font-medium">
               {settings?.description || 'Room Booking System'}
             </p>
           </div>
@@ -87,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({
           </button>
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-white">{user.name}</p>
-            <p className="text-xs text-blue-200 font-medium flex items-center gap-1 justify-end">
+            <p className="text-xs text-white/80 font-medium flex items-center gap-1 justify-end">
               <span
                 className={`w-2 h-2 rounded-full ${isGlobalAdminRole(user.role) ? 'bg-accent' : 'bg-green-400'} animate-pulse`}
               ></span>

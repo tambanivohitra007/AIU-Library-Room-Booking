@@ -162,9 +162,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             </p>
 
             {user.provider === 'MICROSOFT' ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-start gap-2">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm text-primary-dark flex items-start gap-2">
                 <svg
-                  className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
+                  className="w-5 h-5 text-primary flex-shrink-0 mt-0.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

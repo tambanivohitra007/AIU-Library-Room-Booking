@@ -82,7 +82,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
         return 'bg-yellow-50 text-yellow-800 border-yellow-200';
       case 'info':
       default:
-        return 'bg-blue-50 text-blue-800 border-blue-200';
+        return 'bg-primary/10 text-primary-dark border-primary/20';
     }
   };
 
@@ -96,7 +96,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
         return 'text-yellow-500';
       case 'info':
       default:
-        return 'text-blue-500';
+        return 'text-primary';
     }
   };
 

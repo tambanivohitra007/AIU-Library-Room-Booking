@@ -355,7 +355,7 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
 
       {/* Undo banner for the most recent import */}
       {lastImportIds && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary-dark">
           <span>
             Imported {lastImportIds.length} closure
             {lastImportIds.length === 1 ? '' : 's'}. Not what you expected?
@@ -364,13 +364,13 @@ const ClosuresManager: React.FC<ClosuresManagerProps> = ({ currentUser }) => {
             <button
               onClick={handleUndoImport}
               disabled={isSubmitting}
-              className="px-3 py-1 text-sm font-bold text-blue-700 bg-white border border-blue-300 rounded-md hover:bg-blue-100 transition-colors disabled:opacity-50"
+              className="px-3 py-1 text-sm font-bold text-primary bg-white border border-primary/30 rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50"
             >
               Undo import
             </button>
             <button
               onClick={() => setLastImportIds(null)}
-              className="p-1 text-blue-400 hover:text-blue-600 transition-colors"
+              className="p-1 text-primary/70 hover:text-primary transition-colors"
               aria-label="Dismiss"
             >
               <XIcon className="w-4 h-4" />

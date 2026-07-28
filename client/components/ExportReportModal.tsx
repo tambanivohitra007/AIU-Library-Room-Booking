@@ -84,8 +84,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
         {
           label: 'Total Bookings',
           value: total,
-          color: 'text-blue-600',
-          bg: 'bg-blue-50',
+          color: 'text-primary',
+          bg: 'bg-primary/10',
         },
         {
           label: 'Confirmed',
@@ -117,8 +117,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
         {
           label: 'Total Users',
           value: total,
-          color: 'text-blue-600',
-          bg: 'bg-blue-50',
+          color: 'text-primary',
+          bg: 'bg-primary/10',
         },
         {
           label: 'Active',
@@ -149,8 +149,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
         {
           label: 'Total Rooms',
           value: total,
-          color: 'text-blue-600',
-          bg: 'bg-blue-50',
+          color: 'text-primary',
+          bg: 'bg-primary/10',
         },
         {
           label: 'Total Capacity',
@@ -289,8 +289,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
               </div>
             )}
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h4 className="font-bold text-blue-800 mb-1 flex items-center gap-2">
+            <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
+              <h4 className="font-bold text-primary-dark mb-1 flex items-center gap-2">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -306,7 +306,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                 </svg>
                 Tips
               </h4>
-              <p className="text-sm text-blue-700 leading-relaxed">
+              <p className="text-sm text-primary leading-relaxed">
                 Use your browser's print settings to save as PDF. Ensure
                 "Background graphics" is enabled for best results.
               </p>
@@ -519,7 +519,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                               className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${
                                 user.role === 'ADMIN'
                                   ? 'bg-purple-50 text-purple-700 border-purple-200'
-                                  : 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : 'bg-primary/10 text-primary border-primary/20'
                               } print:border-slate-300 print:text-black print:bg-transparent`}
                             >
                               {user.role}

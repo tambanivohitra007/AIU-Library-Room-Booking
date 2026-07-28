@@ -254,7 +254,7 @@ const Timeline: React.FC<TimelineProps> = ({
           style={{ height: hours.length * HOUR_PX }}
         >
           {/* Time Sidebar */}
-          <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-blue-200 font-bold flex flex-col relative z-30 pt-2 sticky left-0">
+          <div className="w-14 sm:w-16 shrink-0 glass-dark border-r border-white/10 text-[11px] sm:text-xs text-white/80 font-bold flex flex-col relative z-30 pt-2 sticky left-0">
             {hours.map((h, idx) => (
               <div
                 key={h}

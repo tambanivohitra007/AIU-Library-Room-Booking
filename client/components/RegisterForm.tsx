@@ -65,7 +65,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegister, error }) => {
               name: settings?.serviceName || t('common.appName'),
             })}
           </h1>
-          <p className="text-blue-100 text-sm font-medium">
+          <p className="text-white/80 text-sm font-medium">
             {t('register.subtitle')}
           </p>
 

@@ -249,7 +249,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                 alt={settings?.serviceName || 'Service Logo'}
                 className="mx-auto h-20 w-auto max-w-[220px] object-contain"
               />
-              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-blue-100">
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-white/80">
                 {serviceName}
               </p>
             </div>
@@ -283,7 +283,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, error }) => {
                       </span>
                       <span>
                         <span className="block text-sm font-semibold">{tip.title}</span>
-                        <span className="mt-0.5 block text-sm text-blue-100">{tip.text}</span>
+                        <span className="mt-0.5 block text-sm text-white/80">{tip.text}</span>
                       </span>
                     </div>
                   </li>

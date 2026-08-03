@@ -57,7 +57,7 @@ Everything admins can do, plus exclusively:
 │   ├── pages/                    # HomePage (calendar), MyBookingsPage, AdminPage, AuthCallbackPage
 │   ├── utils/                    # operatingHours helpers (parse, effective hours, closed ranges)
 │   ├── services/api.ts           # All HTTP calls; JWT in localStorage
-│   └── ecosystem.config.cjs      # PM2 config (serves dist/ on port 3000)
+│   └── ecosystem.config.cjs      # legacy PM2 config; deploy.sh serves dist/ via nginx instead
 ├── server/                       # Node.js + Express API
 │   ├── src/
 │   │   ├── routes/               # auth, users, rooms, bookings, departments, semesters, admin, settings
@@ -176,29 +176,37 @@ A booking request must pass **all** of these server-side checks:
 
 ### Quick Start (automated)
 
-Deploy everything with one script, run **on the production server** from the project root:
+Deploy everything with one script, run **on the production server** from the project root
+(update the code first — see [Updating to the Latest Version](#updating-to-the-latest-version)):
 
 ```bash
 chmod +x scripts/deploy.sh
-./scripts/deploy.sh          # interactive (asks for confirmation)
-./scripts/deploy.sh --yes    # non-interactive (CI / unattended)
+sudo ./scripts/deploy.sh          # interactive (asks for confirmation)
+sudo ./scripts/deploy.sh --yes    # non-interactive (CI / unattended)
 ```
 
 The script performs, in order:
 
-1. **Preflight checks** — verifies `node`, `npm`, `pm2` (and warns if `serve` is missing, which the web app needs), confirms `server/.env` exists, and validates its values. It **hard-fails if `JWT_SECRET` is missing or still a placeholder** — the server itself refuses to start in production without a real one.
+1. **Preflight checks** — verifies `node`, `npm`, `pm2` (and warns if `nginx` is missing, which serves the built client). If `server/.env` is absent it offers to build it interactively; otherwise it validates the values. It **hard-fails if `JWT_SECRET` is missing or still a placeholder** — the server itself refuses to start in production without a real one — and warns when `SMTP_USER` or any `AZURE_*` value is empty, since mail and SSO then fail silently at runtime.
 2. **Prisma provider alignment** — reads the `DATABASE_URL` scheme and automatically patches `schema.prisma` to `sqlite` / `mysql` / `postgresql`. You never edit the provider by hand; dev stays on SQLite while production uses MySQL/PostgreSQL.
 3. **Builds** — `npm ci` + TypeScript build for the server (includes `prisma generate`), then the client production build.
-4. **Database sync** — runs `prisma migrate deploy` when a migrations folder exists, otherwise `prisma db push`. Seeding is never run: the seed script wipes all data and independently refuses to run when `NODE_ENV=production`.
-5. **PM2** — starts or reloads both apps (`aiu-library-api` on port 5000, `aiu-library-web` serving the client on port 3000) and runs `pm2 save`.
-6. **Verification** — polls `GET /api/health` for up to 15 seconds and checks that the web app responds, then prints a post-deploy checklist.
+4. **Database backup** — dumps the current database to `./backups/` *before* any schema change (`mysqldump` / `pg_dump` / file copy for SQLite). A failed dump requires explicit confirmation to continue.
+5. **Database sync** — `prisma db push`, which applies additive changes and aborts rather than dropping data. Committed migrations are used instead only when `USE_MIGRATIONS=1`. Seeding is never run: the seed script wipes all data and independently refuses to run when `NODE_ENV=production`.
+6. **Serve + PM2** — hands `client/dist` to nginx (`chown www-data`, config test, reload) and starts or reloads the single API app `aiu-library-api` from `server/ecosystem.config.cjs`, then runs `pm2 save`. The client is **not** a PM2 app.
+7. **Verification** — polls `GET /api/health` for up to 15 seconds, confirms `client/dist/index.html` is in place, then prints a post-deploy checklist.
 
 ### Server Prerequisites (one-time)
 
 ```bash
-npm install -g pm2 serve
-pm2 startup     # so the apps restart after a reboot
+npm install -g pm2
+sudo apt install nginx          # serves the built client from client/dist
+pm2 startup                     # so the API restarts after a reboot
+sudo timedatectl set-timezone Asia/Bangkok   # match your institution's wall clock
 ```
+
+> **Timezone matters.** Operating-hours checks, the booking scheduler, and email timestamps all
+> use the server's local time. `server/ecosystem.config.cjs` pins `TZ`, but setting it on the host
+> too keeps log timestamps and cron backups consistent, and survives a host rebuild.
 
 ### Environment (`server/.env`)
 
@@ -225,8 +233,9 @@ SMTP_USER=notifications@example.edu                      # mailbox notifications
 3. **Admin → Settings**: service name/logo, contact emails, allowed email domains, global operating hours, self-registration on/off
 4. **Admin → Semesters**: create and activate a semester covering today — **bookings are rejected outside the active semester**
 5. **Admin → Departments**: create departments, set their hours/contacts, assign rooms and managers
-6. Point your reverse proxy (nginx + SSL) at port 3000 (web) and port 5000 (API)
-7. Set up database backups and monitoring (see docs/DEPLOYMENT_GUIDE.md)
+6. nginx serves `client/dist` as static files and proxies `/api` → `127.0.0.1:5000` (verify with `sudo nginx -t`)
+7. Hard-refresh the browser (Ctrl+Shift+R) — the client bundle is content-hashed, and a stale cache hides the new build
+8. Back up `server/.env` off the server, and set up database backups and monitoring (see docs/DEPLOYMENT_GUIDE.md)
 
 ## API Overview
 
@@ -283,23 +292,65 @@ Weekly schedules are stored as a JSON array of 7 entries (Sun–Sat), each `{ "o
 3. Delete `server/prisma/migrations/` if switching between engines (migrations are engine-specific)
 4. `npx prisma db push` (dev) to create the tables, then optionally `npm run prisma:seed`
 
-## Handling Updates
+## Updating to the Latest Version
+
+### See what's new first (optional)
 
 ```bash
-git pull origin main
+git fetch --all
+git log --oneline HEAD..origin/main     # commits you don't have yet
+git diff --stat HEAD origin/main        # files they touch
 ```
 
-**Development:**
+### Production
+
 ```bash
-cd server && npm install && npx prisma db push && npm run prisma:generate
+cd /path/to/AIU-Library-Room-Booking
+git fetch --all
+git reset --hard origin/main            # NOT git pull - see below
+sudo ./scripts/deploy.sh                # deps, build, DB backup + schema sync, PM2 reload, health check
+```
+
+> **Use `reset --hard`, not `git pull`.** `deploy.sh` rewrites the `provider` line in
+> `server/prisma/schema.prisma` on every run to match your `DATABASE_URL`, so the production
+> working tree is *always* modified and `git pull` will refuse or leave you resolving a
+> conflict. `reset --hard` discards that one local edit; the next deploy re-applies it.
+
+> **Never run `git clean -fdx` here.** `server/.env` is gitignored, so it is not in the
+> repository and nothing else on the server has a copy — cleaning untracked files destroys
+> your `JWT_SECRET` (unrecoverable; every user is signed out) and `DATABASE_URL`.
+> `git reset --hard` alone does *not* touch it. Keep a backup:
+> `sudo cp server/.env ~/aiu-env-backup-$(date +%F)`
+
+If `server/.env` is missing, `deploy.sh` walks you through recreating it interactively
+(database, URLs, notification sender, Microsoft SSO) and generates a fresh `JWT_SECRET`.
+
+### Development
+
+```bash
+git pull origin main                    # fine here - no provider rewriting locally
+
+cd server
+npm install
+npx prisma db push                      # apply any new columns to dev.db
+npm run prisma:generate                 # regenerate the Prisma client after schema changes
 cd ../client && npm install
 ```
 
-**Production:**
+Restart both dev servers afterwards. If `prisma generate` fails with `EPERM` on Windows, the
+running dev server is holding the query-engine DLL — stop it, regenerate, then start it again.
+
+### Rolling back
+
 ```bash
-# One command does it all: deps, builds, schema sync, PM2 reload, health check
-./scripts/deploy.sh --yes
+git log --oneline -10                   # find the commit that was live before
+git reset --hard <commit-sha>
+sudo ./scripts/deploy.sh
 ```
+
+Schema changes are additive (`prisma db push` never drops columns without
+`--accept-data-loss`), so rolling the code back is safe. Every deploy also writes a database
+dump to `./backups/` beforehand.
 
 ## Monitoring & Logs
 
@@ -308,11 +359,16 @@ cd ../client && npm install
 
 ```bash
 pm2 status
-pm2 logs aiu-library-api      # API logs
-pm2 logs aiu-library-web      # web server logs
+pm2 logs aiu-library-api      # API logs (the client is served by nginx, not PM2)
 pm2 monit                     # live resource view
 pm2 restart aiu-library-api
+sudo tail -f /var/log/nginx/error.log   # client / static-file issues
 ```
+
+The **Admin → Audit** tab records who approved, rejected, or cancelled each booking, plus
+room, department, closure, semester, user, and settings changes. Global admins see everything;
+department managers see only their own departments. It is append-only — there is no way to
+edit or delete entries through the app.
 
 ## Troubleshooting
 
@@ -323,6 +379,10 @@ pm2 restart aiu-library-api
 - **CORS errors** — `CLIENT_URL` in `server/.env` must match the URL the client is served from
 - **Port already in use** — `lsof -ti:5000 | xargs kill -9` (Linux/Mac) or `netstat -ano | findstr :5000` + `taskkill /PID <pid> /F` (Windows)
 - **TypeScript check** — `cd server && npx tsc --noEmit` / `cd client && npx tsc --noEmit`
+- **`git fetch` fails with "insufficient permission for adding an object"** — a previous `sudo git`/`sudo npm` left root-owned files. Fix with `sudo chown -R <user>:<user> /path/to/repo`; do **not** work around it with `sudo git`, which digs the hole deeper
+- **`ERROR: server/.env not found`** — recreate it by running `sudo ./scripts/deploy.sh` without `--yes` and answering the prompts; restore `DATABASE_URL` from your backup script rather than guessing
+- **Bookings rejected during opening hours** (e.g. "only available between 8:00 and 22:00" for an 8am slot) — the server is running in the wrong timezone. Check with `sudo pm2 exec aiu-library-api -- node -e "console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)"`; it must print your institution's zone, not `UTC`
+- **PM2 env changes not taking effect** — `pm2 restart <name> --update-env` re-reads the *calling shell*, not `ecosystem.config.cjs`. Pass the file (`pm2 startOrRestart ecosystem.config.cjs --update-env`), which is what `deploy.sh` does
 
 ## Documentation
 

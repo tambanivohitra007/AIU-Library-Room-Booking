@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { getServiceSettings, parseOperatingHoursJson } from '../services/settings.js';
+import { trReq } from '../services/i18n.js';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,7 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
         res.json(settings);
     } catch (error) {
         console.error('Error fetching settings:', error);
-        res.status(500).json({ message: 'Error fetching settings' });
+        res.status(500).json({ message: trReq(req, 'fetchSettingsFailed') });
     }
 };
 
@@ -21,7 +22,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
 
         // Reject malformed operating hours instead of silently breaking the schedule
         if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
-            res.status(400).json({ message: 'Invalid operating hours format' });
+            res.status(400).json({ message: trReq(req, 'invalidOperatingHours') });
             return;
         }
 
@@ -51,6 +52,6 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         res.json(settings);
     } catch (error) {
         console.error('Error updating settings:', error);
-        res.status(500).json({ message: 'Error updating settings' });
+        res.status(500).json({ message: trReq(req, 'updateSettingsFailed') });
     }
 };

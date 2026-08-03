@@ -4,6 +4,7 @@ import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth
 import { parseOperatingHoursJson } from '../services/settings.js';
 import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
 import logger from '../utils/logger.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
     })));
   } catch (error) {
     console.error('Error fetching departments:', error);
-    res.status(500).json({ error: 'Failed to fetch departments' });
+    res.status(500).json({ error: trReq(req, 'fetchDepartmentsFailed') });
   }
 });
 
@@ -35,11 +36,11 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
     const { name, contactEmail, operatingHours } = req.body;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Department name is required' });
+      return res.status(400).json({ error: trReq(req, 'departmentNameRequired') });
     }
 
     if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
-      return res.status(400).json({ error: 'Invalid operating hours format' });
+      return res.status(400).json({ error: trReq(req, 'invalidOperatingHours') });
     }
 
     const department = await prisma.department.create({
@@ -53,7 +54,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
     res.status(201).json(department);
   } catch (error) {
     console.error('Create department error:', error);
-    res.status(500).json({ error: 'Failed to create department' });
+    res.status(500).json({ error: trReq(req, 'createDepartmentFailed') });
   }
 });
 
@@ -67,7 +68,7 @@ router.get('/:id/admins', authenticateToken, requireAdmin, async (req: AuthReque
     res.json(admins.map((a: any) => a.user));
   } catch (error) {
     console.error('List department admins error:', error);
-    res.status(500).json({ error: 'Failed to fetch department managers' });
+    res.status(500).json({ error: trReq(req, 'fetchManagersFailed') });
   }
 });
 
@@ -77,22 +78,22 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const { name, contactEmail, operatingHours, adminUserIds } = req.body;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Department name is required' });
+      return res.status(400).json({ error: trReq(req, 'departmentNameRequired') });
     }
 
     if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
-      return res.status(400).json({ error: 'Invalid operating hours format' });
+      return res.status(400).json({ error: trReq(req, 'invalidOperatingHours') });
     }
 
     const existing = await prisma.department.findUnique({ where: { id: req.params.id } });
     if (!existing) {
-      return res.status(404).json({ error: 'Department not found' });
+      return res.status(404).json({ error: trReq(req, 'departmentNotFound') });
     }
 
     if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!canManageDepartment(req.userRole, managed, existing.id)) {
-        return res.status(403).json({ error: 'You can only manage your own department' });
+        return res.status(403).json({ error: trReq(req, 'manageOwnDepartment') });
       }
     }
 
@@ -110,7 +111,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       const userIds: string[] = [...new Set(adminUserIds.filter((id: any) => typeof id === 'string'))];
       const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true } });
       if (users.length !== userIds.length) {
-        return res.status(400).json({ error: 'One or more selected users do not exist' });
+        return res.status(400).json({ error: trReq(req, 'someUsersMissing') });
       }
       await prisma.departmentAdmin.deleteMany({ where: { departmentId: department.id } });
       if (userIds.length > 0) {
@@ -123,7 +124,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     res.json(department);
   } catch (error) {
     console.error('Update department error:', error);
-    res.status(500).json({ error: 'Failed to update department' });
+    res.status(500).json({ error: trReq(req, 'updateDepartmentFailed') });
   }
 });
 
@@ -132,16 +133,16 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
   try {
     const existing = await prisma.department.findUnique({ where: { id: req.params.id } });
     if (!existing) {
-      return res.status(404).json({ error: 'Department not found' });
+      return res.status(404).json({ error: trReq(req, 'departmentNotFound') });
     }
 
     await prisma.department.delete({ where: { id: req.params.id } });
 
     logger.info(`Department ${existing.name} deleted by user ${req.userId}`);
-    res.json({ message: 'Department deleted successfully. Its rooms are now unassigned.' });
+    res.json({ message: trReq(req, 'departmentDeleted') });
   } catch (error) {
     console.error('Delete department error:', error);
-    res.status(500).json({ error: 'Failed to delete department' });
+    res.status(500).json({ error: trReq(req, 'deleteDepartmentFailed') });
   }
 });
 

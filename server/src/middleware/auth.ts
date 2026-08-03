@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { trReq } from '../services/i18n.js';
 
 const prisma = new PrismaClient();
 
@@ -25,14 +26,14 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
+    return res.status(401).json({ error: trReq(req, 'tokenRequired') });
   }
 
   let decoded: { userId: string; role: string };
   try {
     decoded = jwt.verify(token, getJwtSecret()) as { userId: string; role: string };
   } catch (error) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    return res.status(403).json({ error: trReq(req, 'tokenInvalid') });
   }
 
   try {
@@ -44,40 +45,40 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Account no longer exists' });
+      return res.status(401).json({ error: trReq(req, 'accountGone') });
     }
     if (user.status === 'SUSPENDED') {
-      return res.status(403).json({ error: 'Your account has been suspended.' });
+      return res.status(403).json({ error: trReq(req, 'accountSuspended') });
     }
     if (user.status === 'PENDING') {
-      return res.status(403).json({ error: 'Your account is pending approval.' });
+      return res.status(403).json({ error: trReq(req, 'accountPending') });
     }
 
     req.userId = decoded.userId;
     req.userRole = user.role; // current role from DB, not the one baked into the token
     next();
   } catch (error) {
-    return res.status(500).json({ error: 'Authentication check failed' });
+    return res.status(500).json({ error: trReq(req, 'authCheckFailed') });
   }
 };
 
 export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ error: trReq(req, 'adminRequired') });
   }
   next();
 };
 
 export const requireSuperAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.userRole !== 'SUPERADMIN') {
-    return res.status(403).json({ error: 'Super admin access required' });
+    return res.status(403).json({ error: trReq(req, 'superAdminRequired') });
   }
   next();
 };
 
 export const requireAdminOrWorker = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN' && req.userRole !== 'STUDENT_WORKER') {
-    return res.status(403).json({ error: 'Access required' });
+    return res.status(403).json({ error: trReq(req, 'accessRequired') });
   }
   next();
 };

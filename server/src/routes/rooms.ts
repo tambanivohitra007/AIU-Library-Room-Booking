@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
 import { parseOperatingHoursJson } from '../services/settings.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
     }));
     res.json(roomsWithParsedFeatures);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch rooms' });
+    res.status(500).json({ error: trReq(req, 'fetchRoomsFailed') });
   }
 });
 
@@ -32,14 +33,14 @@ router.get('/:id', async (req, res) => {
       include: { department: true },
     });
     if (!room) {
-      return res.status(404).json({ error: 'Room not found' });
+      return res.status(404).json({ error: trReq(req, 'roomNotFound') });
     }
     res.json({
       ...room,
       features: JSON.parse(room.features),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch room' });
+    res.status(500).json({ error: trReq(req, 'fetchRoomFailed') });
   }
 });
 
@@ -51,41 +52,41 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (managed.length === 0) {
-        return res.status(403).json({ error: 'Admin access required' });
+        return res.status(403).json({ error: trReq(req, 'adminRequired') });
       }
       if (!canManageDepartment(req.userRole, managed, departmentId)) {
-        return res.status(403).json({ error: 'You can only create rooms in your own department' });
+        return res.status(403).json({ error: trReq(req, 'createOwnRooms') });
       }
     }
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
-      return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
+      return res.status(400).json({ error: trReq(req, 'roomFieldsRequired') });
     }
 
     const minCap = parseInt(minCapacity);
     const maxCap = parseInt(maxCapacity);
 
     if (minCap < 1) {
-      return res.status(400).json({ error: 'Minimum capacity must be at least 1' });
+      return res.status(400).json({ error: trReq(req, 'minCapacityMin') });
     }
 
     if (maxCap < 1) {
-      return res.status(400).json({ error: 'Maximum capacity must be at least 1' });
+      return res.status(400).json({ error: trReq(req, 'maxCapacityMin') });
     }
 
     if (minCap > maxCap) {
-      return res.status(400).json({ error: 'Minimum capacity cannot be greater than maximum capacity' });
+      return res.status(400).json({ error: trReq(req, 'minGreaterThanMax') });
     }
 
     if (departmentId) {
       const department = await prisma.department.findUnique({ where: { id: departmentId } });
       if (!department) {
-        return res.status(400).json({ error: 'Department not found' });
+        return res.status(400).json({ error: trReq(req, 'departmentNotFound') });
       }
     }
 
     if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
-      return res.status(400).json({ error: 'Invalid operating hours format' });
+      return res.status(400).json({ error: trReq(req, 'invalidOperatingHours') });
     }
 
     // Create room with features as JSON string
@@ -111,7 +112,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
   } catch (error) {
     console.error('Create room error:', error);
-    res.status(500).json({ error: 'Failed to create room' });
+    res.status(500).json({ error: trReq(req, 'createRoomFailed') });
   }
 });
 
@@ -124,34 +125,34 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       const managed = await getManagedDepartmentIds(req.userId);
       const current = await prisma.room.findUnique({ where: { id: req.params.id } });
       if (!current) {
-        return res.status(404).json({ error: 'Room not found' });
+        return res.status(404).json({ error: trReq(req, 'roomNotFound') });
       }
       if (!canManageDepartment(req.userRole, managed, current.departmentId)) {
-        return res.status(403).json({ error: 'You can only manage rooms in your own department' });
+        return res.status(403).json({ error: trReq(req, 'manageOwnRooms') });
       }
       // A department admin cannot move a room outside their own departments
       if (!canManageDepartment(req.userRole, managed, departmentId)) {
-        return res.status(403).json({ error: 'You can only assign rooms to your own department' });
+        return res.status(403).json({ error: trReq(req, 'assignOwnDepartment') });
       }
     }
 
     if (!name || !description || minCapacity === undefined || maxCapacity === undefined) {
-      return res.status(400).json({ error: 'Name, description, minimum capacity, and maximum capacity are required' });
+      return res.status(400).json({ error: trReq(req, 'roomFieldsRequired') });
     }
 
     const minCap = parseInt(minCapacity);
     const maxCap = parseInt(maxCapacity);
 
     if (minCap < 1) {
-      return res.status(400).json({ error: 'Minimum capacity must be at least 1' });
+      return res.status(400).json({ error: trReq(req, 'minCapacityMin') });
     }
 
     if (maxCap < 1) {
-      return res.status(400).json({ error: 'Maximum capacity must be at least 1' });
+      return res.status(400).json({ error: trReq(req, 'maxCapacityMin') });
     }
 
     if (minCap > maxCap) {
-      return res.status(400).json({ error: 'Minimum capacity cannot be greater than maximum capacity' });
+      return res.status(400).json({ error: trReq(req, 'minGreaterThanMax') });
     }
 
     // Check if room exists
@@ -160,18 +161,18 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!existingRoom) {
-      return res.status(404).json({ error: 'Room not found' });
+      return res.status(404).json({ error: trReq(req, 'roomNotFound') });
     }
 
     if (departmentId) {
       const department = await prisma.department.findUnique({ where: { id: departmentId } });
       if (!department) {
-        return res.status(400).json({ error: 'Department not found' });
+        return res.status(400).json({ error: trReq(req, 'departmentNotFound') });
       }
     }
 
     if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
-      return res.status(400).json({ error: 'Invalid operating hours format' });
+      return res.status(400).json({ error: trReq(req, 'invalidOperatingHours') });
     }
 
     // Update room
@@ -198,7 +199,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
   } catch (error) {
     console.error('Update room error:', error);
-    res.status(500).json({ error: 'Failed to update room' });
+    res.status(500).json({ error: trReq(req, 'updateRoomFailed') });
   }
 });
 
@@ -211,13 +212,13 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!existingRoom) {
-      return res.status(404).json({ error: 'Room not found' });
+      return res.status(404).json({ error: trReq(req, 'roomNotFound') });
     }
 
     if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!canManageDepartment(req.userRole, managed, existingRoom.departmentId)) {
-        return res.status(403).json({ error: 'You can only manage rooms in your own department' });
+        return res.status(403).json({ error: trReq(req, 'manageOwnRooms') });
       }
     }
 
@@ -246,10 +247,10 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
       where: { id: req.params.id },
     });
 
-    res.json({ message: 'Room deleted successfully' });
+    res.json({ message: trReq(req, 'roomDeleted') });
   } catch (error) {
     console.error('Delete room error:', error);
-    res.status(500).json({ error: 'Failed to delete room' });
+    res.status(500).json({ error: trReq(req, 'deleteRoomFailed') });
   }
 });
 

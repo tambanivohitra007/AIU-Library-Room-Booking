@@ -8,6 +8,7 @@ import logger from '../utils/logger.js';
 import { getAdminEmails } from '../config/admins.js';
 import { getServiceSettings, isEmailAllowed, allowedDomainsMessage } from '../services/settings.js';
 import { getManagedDepartmentIds } from '../services/permissions.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -24,7 +25,7 @@ router.get('/microsoft/url', (req: Request, res: Response) => {
 
   if (!tenantId || !clientId || !redirectUri) {
     logger.error('Missing Microsoft SSO configuration');
-    return res.status(500).json({ error: 'Server SSO configuration is missing (Tenant ID, Client ID, or Redirect URI)' });
+    return res.status(500).json({ error: trReq(req, 'ssoConfigMissingDetail') });
   }
 
   // Construct the authorization URL
@@ -42,7 +43,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
     const { code, redirectUri: clientRedirectUri } = req.body;
 
     if (!code) {
-      return res.status(400).json({ error: 'Authorization code is required' });
+      return res.status(400).json({ error: trReq(req, 'authCodeRequired') });
     }
 
     const tenantId = process.env.AZURE_TENANT_ID;
@@ -51,7 +52,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
     const redirectUri = clientRedirectUri || process.env.AZURE_REDIRECT_URI;
 
     if (!tenantId || !clientId || !clientSecret || !redirectUri) {
-      return res.status(500).json({ error: 'Server SSO configuration is missing' });
+      return res.status(500).json({ error: trReq(req, 'ssoConfigMissing') });
     }
 
     // A. Exchange Auth Code for Access Token
@@ -75,7 +76,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
 
     if (!tokenResponse.ok) {
       logger.error('Microsoft Token Exchange Failed:', tokenData);
-      return res.status(401).json({ error: 'Failed to authenticate with Microsoft', details: tokenData.error_description });
+      return res.status(401).json({ error: trReq(req, 'msAuthFailed'), details: tokenData.error_description });
     }
 
     const { access_token } = tokenData;
@@ -91,7 +92,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
 
     if (!graphResponse.ok) {
        logger.error('Microsoft Graph Fetch Failed:', graphData);
-       return res.status(401).json({ error: 'Failed to fetch user profile from Microsoft' });
+       return res.status(401).json({ error: trReq(req, 'msProfileFailed') });
     }
 
     // C. Validate Email Domain
@@ -100,7 +101,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
     const name = graphData.displayName || graphData.givenName;
 
     if (!email) {
-      return res.status(400).json({ error: 'Could not retrieve email from Microsoft account' });
+      return res.status(400).json({ error: trReq(req, 'msEmailMissing') });
     }
 
     // Domain check (configurable; empty allowlist = any domain)
@@ -167,7 +168,7 @@ router.post('/microsoft/login', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Microsoft Login Error:', error);
-    res.status(500).json({ error: 'Internal server error during SSO login' });
+    res.status(500).json({ error: trReq(req, 'ssoServerError') });
   }
 });
 
@@ -177,7 +178,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
     const { email, password, name } = req.body;
 
     if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email, password, and name are required' });
+      return res.status(400).json({ error: trReq(req, 'registerFieldsRequired') });
     }
 
     const settings = await getServiceSettings();
@@ -185,7 +186,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
     // Self-registration can be disabled entirely (SSO / admin-created accounts only)
     if (!settings.allowSelfRegistration) {
       return res.status(403).json({
-        error: 'Self-registration is disabled. Please sign in with your Microsoft account.',
+        error: trReq(req, 'selfRegistrationDisabled'),
       });
     }
 
@@ -200,7 +201,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists with this email' });
+      return res.status(400).json({ error: trReq(req, 'emailExists') });
     }
 
     // Hash password
@@ -219,7 +220,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
 
     // Does NOT return token. User must wait.
     res.status(201).json({
-      message: 'Registration successful. Your account is pending admin approval.',
+      message: trReq(req, 'registerPending'),
       user: {
         id: user.id,
         email: user.email,
@@ -230,7 +231,7 @@ router.post('/register', authLimiter, validateRegister, async (req: Request, res
     });
   } catch (error) {
     logger.error('Registration error:', error);
-    res.status(500).json({ error: 'Failed to register user' });
+    res.status(500).json({ error: trReq(req, 'registerFailed') });
   }
 });
 
@@ -240,7 +241,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ error: trReq(req, 'loginFieldsRequired') });
     }
 
     // Find user
@@ -249,26 +250,26 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: trReq(req, 'invalidCredentials') });
     }
 
     if (user.status === 'PENDING') {
-      return res.status(403).json({ error: 'Your account is pending approval. Please contact the administrator.' });
+      return res.status(403).json({ error: trReq(req, 'accountPendingContact') });
     }
 
     if (user.status === 'SUSPENDED') {
-      return res.status(403).json({ error: 'Your account has been suspended.' });
+      return res.status(403).json({ error: trReq(req, 'accountSuspended') });
     }
 
     // Verify password
     if (!user.password) {
-      return res.status(401).json({ error: 'Please sign in using your Microsoft account' });
+      return res.status(401).json({ error: trReq(req, 'useMicrosoftSignIn') });
     }
     
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: trReq(req, 'invalidCredentials') });
     }
 
     // Generate token
@@ -289,7 +290,7 @@ router.post('/login', authLimiter, validateLogin, async (req: Request, res: Resp
     });
   } catch (error) {
     logger.error('Login error:', error);
-    res.status(500).json({ error: 'Failed to login' });
+    res.status(500).json({ error: trReq(req, 'loginFailed') });
   }
 });
 
@@ -311,7 +312,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
 
     res.json({
@@ -320,7 +321,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
     });
   } catch (error) {
     logger.error('Get user error:', error);
-    res.status(500).json({ error: 'Failed to get user' });
+    res.status(500).json({ error: trReq(req, 'fetchMeFailed') });
   }
 });
 
@@ -330,11 +331,11 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Current password and new password are required' });
+      return res.status(400).json({ error: trReq(req, 'passwordFieldsRequired') });
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+      return res.status(400).json({ error: trReq(req, 'passwordTooShort') });
     }
 
     // Get user with password
@@ -343,19 +344,19 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
 
     // Check if user has a password set
     if (!user.password) {
-      return res.status(400).json({ error: 'Account uses external authentication. Password cannot be changed here.' });
+      return res.status(400).json({ error: trReq(req, 'externalAuthPassword') });
     }
 
     // Verify current password
     const isValidPassword = await bcrypt.compare(currentPassword, user.password);
 
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
+      return res.status(401).json({ error: trReq(req, 'currentPasswordWrong') });
     }
 
     // Hash new password
@@ -369,10 +370,10 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
 
     logger.info(`User ${user.email} changed their password`);
 
-    res.json({ message: 'Password changed successfully' });
+    res.json({ message: trReq(req, 'passwordChanged') });
   } catch (error) {
     logger.error('Change password error:', error);
-    res.status(500).json({ error: 'Failed to change password' });
+    res.status(500).json({ error: trReq(req, 'changePasswordFailed') });
   }
 });
 

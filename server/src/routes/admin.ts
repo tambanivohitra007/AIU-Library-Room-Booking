@@ -5,6 +5,7 @@ import { authenticateToken, requireAdmin, requireAdminOrWorker, requireSuperAdmi
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -16,7 +17,7 @@ router.use(authenticateToken);
 
 // Update user role (super admin only: role changes are privilege escalation)
 router.patch('/users/:id/role', requireSuperAdmin, [
-  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN']).withMessage('Invalid role'),
+  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN']).withMessage('invalidRole'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -39,7 +40,7 @@ router.patch('/users/:id/role', requireSuperAdmin, [
     res.json(user);
   } catch (error) {
     logger.error('Error updating user role:', error);
-    res.status(500).json({ error: 'Failed to update user role' });
+    res.status(500).json({ error: trReq(req, 'updateRoleFailed') });
   }
 });
 
@@ -50,12 +51,12 @@ router.delete('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
 
     // Prevent deleting self
     if (id === req.userId) {
-      return res.status(400).json({ error: 'Cannot delete your own account' });
+      return res.status(400).json({ error: trReq(req, 'cannotDeleteSelf') });
     }
 
     const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
     if (target && ['ADMIN', 'SUPERADMIN'].includes(target.role) && req.userRole !== 'SUPERADMIN') {
-      return res.status(403).json({ error: 'Only a super admin can delete admin accounts' });
+      return res.status(403).json({ error: trReq(req, 'superAdminDeleteAdmin') });
     }
 
     // Delete user's bookings first (cascade should handle this, but being explicit)
@@ -76,18 +77,18 @@ router.delete('/users/:id', requireAdmin, async (req: AuthRequest, res) => {
     });
 
     logger.info(`User deleted: ${id} by admin ${req.userId}`);
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: trReq(req, 'userDeleted') });
   } catch (error) {
     logger.error('Error deleting user:', error);
-    res.status(500).json({ error: 'Failed to delete user' });
+    res.status(500).json({ error: trReq(req, 'deleteUserFailed') });
   }
 });
 
 // Create admin user (super admin only)
 router.post('/users/admin', requireSuperAdmin, [
-  body('email').isEmail().withMessage('Invalid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('invalidEmail'),
+  body('password').isLength({ min: 6 }).withMessage('passwordMin6'),
+  body('name').trim().notEmpty().withMessage('nameRequired'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -98,7 +99,7 @@ router.post('/users/admin', requireSuperAdmin, [
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: trReq(req, 'userExists') });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -123,7 +124,7 @@ router.post('/users/admin', requireSuperAdmin, [
     res.status(201).json(user);
   } catch (error) {
     logger.error('Error creating admin user:', error);
-    res.status(500).json({ error: 'Failed to create admin user' });
+    res.status(500).json({ error: trReq(req, 'createAdminFailed') });
   }
 });
 
@@ -131,11 +132,11 @@ router.post('/users/admin', requireSuperAdmin, [
 
 // Create room
 router.post('/rooms', requireAdmin, [
-  body('name').trim().notEmpty().withMessage('Room name is required'),
-  body('minCapacity').isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
-  body('maxCapacity').isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
-  body('description').trim().notEmpty().withMessage('Description is required'),
-  body('features').isArray().withMessage('Features must be an array'),
+  body('name').trim().notEmpty().withMessage('roomNameRequired'),
+  body('minCapacity').isInt({ min: 1 }).withMessage('minCapacityMin'),
+  body('maxCapacity').isInt({ min: 1 }).withMessage('maxCapacityMin'),
+  body('description').trim().notEmpty().withMessage('descriptionRequired'),
+  body('features').isArray().withMessage('featuresArray'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -159,17 +160,17 @@ router.post('/rooms', requireAdmin, [
     });
   } catch (error) {
     logger.error('Error creating room:', error);
-    res.status(500).json({ error: 'Failed to create room' });
+    res.status(500).json({ error: trReq(req, 'createRoomFailed') });
   }
 });
 
 // Update room
 router.put('/rooms/:id', requireAdmin, [
-  body('name').optional().trim().notEmpty().withMessage('Room name cannot be empty'),
-  body('minCapacity').optional().isInt({ min: 1 }).withMessage('Min capacity must be at least 1'),
-  body('maxCapacity').optional().isInt({ min: 1 }).withMessage('Max capacity must be at least 1'),
-  body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
-  body('features').optional().isArray().withMessage('Features must be an array'),
+  body('name').optional().trim().notEmpty().withMessage('roomNameNotEmpty'),
+  body('minCapacity').optional().isInt({ min: 1 }).withMessage('minCapacityMin'),
+  body('maxCapacity').optional().isInt({ min: 1 }).withMessage('maxCapacityMin'),
+  body('description').optional().trim().notEmpty().withMessage('descriptionNotEmpty'),
+  body('features').optional().isArray().withMessage('featuresArray'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {
@@ -196,7 +197,7 @@ router.put('/rooms/:id', requireAdmin, [
     });
   } catch (error) {
     logger.error('Error updating room:', error);
-    res.status(500).json({ error: 'Failed to update room' });
+    res.status(500).json({ error: trReq(req, 'updateRoomFailed') });
   }
 });
 
@@ -218,7 +219,7 @@ router.delete('/rooms/:id', requireAdmin, async (req: AuthRequest, res) => {
 
     if (activeBookings > 0) {
       return res.status(400).json({
-        error: 'Cannot delete room with active bookings',
+        error: trReq(req, 'roomHasBookings'),
       });
     }
 
@@ -240,10 +241,10 @@ router.delete('/rooms/:id', requireAdmin, async (req: AuthRequest, res) => {
     });
 
     logger.info(`Room deleted: ${id} by admin ${req.userId}`);
-    res.json({ message: 'Room deleted successfully' });
+    res.json({ message: trReq(req, 'roomDeleted') });
   } catch (error) {
     logger.error('Error deleting room:', error);
-    res.status(500).json({ error: 'Failed to delete room' });
+    res.status(500).json({ error: trReq(req, 'deleteRoomFailed') });
   }
 });
 
@@ -305,7 +306,7 @@ router.get('/stats', requireAdminOrWorker, async (req: AuthRequest, res) => {
     });
   } catch (error) {
     logger.error('Error fetching admin stats:', error);
-    res.status(500).json({ error: 'Failed to fetch statistics' });
+    res.status(500).json({ error: trReq(req, 'fetchStatsFailed') });
   }
 });
 

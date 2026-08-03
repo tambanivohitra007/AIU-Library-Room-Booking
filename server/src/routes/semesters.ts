@@ -4,6 +4,7 @@ import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } fr
 import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -17,7 +18,7 @@ router.get('/active', async (req, res) => {
     res.json(activeSemester);
   } catch (error) {
     logger.error('Error fetching active semester:', error);
-    res.status(500).json({ error: 'Failed to fetch active semester' });
+    res.status(500).json({ error: trReq(req, 'fetchActiveSemesterFailed') });
   }
 });
 
@@ -33,7 +34,7 @@ router.get('/', requireAdminOrWorker, async (req: AuthRequest, res) => {
     res.json(semesters);
   } catch (error) {
     logger.error('Error fetching semesters:', error);
-    res.status(500).json({ error: 'Failed to fetch semesters' });
+    res.status(500).json({ error: trReq(req, 'fetchSemestersFailed') });
   }
 });
 
@@ -71,7 +72,7 @@ router.post('/', [
     res.status(201).json(semester);
   } catch (error) {
     logger.error('Error creating semester:', error);
-    res.status(500).json({ error: 'Failed to create semester' });
+    res.status(500).json({ error: trReq(req, 'createSemesterFailed') });
   }
 });
 
@@ -111,7 +112,7 @@ router.put('/:id', [
     res.json(semester);
   } catch (error) {
     logger.error('Error updating semester:', error);
-    res.status(500).json({ error: 'Failed to update semester' });
+    res.status(500).json({ error: trReq(req, 'updateSemesterFailed') });
   }
 });
 
@@ -121,10 +122,10 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
     const { id } = req.params;
     await prisma.semester.delete({ where: { id } });
     logger.info(`Semester deleted: ${id} by ${req.userId}`);
-    res.json({ message: 'Semester deleted successfully' });
+    res.json({ message: trReq(req, 'semesterDeleted') });
   } catch (error) {
     logger.error('Error deleting semester:', error);
-    res.status(500).json({ error: 'Failed to delete semester' });
+    res.status(500).json({ error: trReq(req, 'deleteSemesterFailed') });
   }
 });
 

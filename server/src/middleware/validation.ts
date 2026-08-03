@@ -1,32 +1,40 @@
 import { body, validationResult } from 'express-validator';
 import { Request, Response, NextFunction } from 'express';
+import { isMessageKey, trReq } from '../services/i18n.js';
 
+// Validators carry a message KEY rather than English prose, so the text is
+// resolved here where the request (and therefore Accept-Language) is available.
+// Anything that isn't a known key - e.g. an express-validator default - is
+// passed through unchanged.
 export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ error: errors.array()[0].msg });
+    const msg = errors.array()[0].msg;
+    return res.status(400).json({
+      error: isMessageKey(msg) ? trReq(req, msg) : msg,
+    });
   }
   next();
 };
 
 export const validateRegister = [
-  body('email').isEmail().withMessage('Invalid email address'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('invalidEmail'),
+  body('password').isLength({ min: 6 }).withMessage('passwordMin6'),
+  body('name').trim().notEmpty().withMessage('nameRequired'),
   handleValidationErrors,
 ];
 
 export const validateLogin = [
-  body('email').isEmail().withMessage('Invalid email address'),
-  body('password').notEmpty().withMessage('Password is required'),
+  body('email').isEmail().withMessage('invalidEmail'),
+  body('password').notEmpty().withMessage('passwordRequired'),
   handleValidationErrors,
 ];
 
 export const validateBooking = [
-  body('roomId').notEmpty().withMessage('Room ID is required'),
-  body('startTime').isISO8601().withMessage('Invalid start time'),
-  body('endTime').isISO8601().withMessage('Invalid end time'),
-  body('purpose').trim().notEmpty().withMessage('Purpose is required'),
-  body('attendees').isArray({ min: 1 }).withMessage('At least one attendee is required'),
+  body('roomId').notEmpty().withMessage('roomIdRequired'),
+  body('startTime').isISO8601().withMessage('invalidStartTime'),
+  body('endTime').isISO8601().withMessage('invalidEndTime'),
+  body('purpose').trim().notEmpty().withMessage('purposeRequired'),
+  body('attendees').isArray({ min: 1 }).withMessage('attendeeRequired'),
   handleValidationErrors,
 ];

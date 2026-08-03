@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -11,6 +12,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   color = 'primary',
   className = '',
 }) => {
+  const { t } = useTranslation();
   const sizeClasses = {
     sm: 'w-4 h-4 border-2',
     md: 'w-8 h-8 border-3',
@@ -32,7 +34,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         ${className}
       `}
       role="status"
-      aria-label="Loading"
+      aria-label={t('common.loading')}
     />
   );
 };

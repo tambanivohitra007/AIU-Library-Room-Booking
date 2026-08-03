@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -33,7 +34,7 @@ router.get('/', requireAdminOrWorker, async (req, res) => {
     const users = await prisma.user.findMany({ select: userSelect });
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: trReq(req, 'fetchUsersFailed') });
   }
 });
 
@@ -43,7 +44,7 @@ router.put('/me/language', async (req: AuthRequest, res) => {
   try {
     const { language } = req.body;
     if (language !== 'en' && language !== 'th') {
-      return res.status(400).json({ error: 'Unsupported language' });
+      return res.status(400).json({ error: trReq(req, 'unsupportedLanguage') });
     }
     await prisma.user.update({
       where: { id: req.userId },
@@ -51,7 +52,7 @@ router.put('/me/language', async (req: AuthRequest, res) => {
     });
     res.json({ language });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to save language preference' });
+    res.status(500).json({ error: trReq(req, 'saveLanguageFailed') });
   }
 });
 
@@ -63,11 +64,11 @@ router.get('/:id', requireAdminOrWorker, async (req, res) => {
       select: userSelect,
     });
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch user' });
+    res.status(500).json({ error: trReq(req, 'fetchUserFailed') });
   }
 });
 
@@ -78,11 +79,11 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
 
     // Validate required fields
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      return res.status(400).json({ error: trReq(req, 'userFieldsRequired') });
     }
 
     if (isPrivileged(role) && req.userRole !== 'SUPERADMIN') {
-      return res.status(403).json({ error: 'Only a super admin can create admin accounts' });
+      return res.status(403).json({ error: trReq(req, 'superAdminCreateAdmin') });
     }
 
     // Check if user already exists
@@ -91,7 +92,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+      return res.status(400).json({ error: trReq(req, 'userEmailExists') });
     }
 
     // Hash the password
@@ -111,7 +112,7 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
     const { password: _, ...userWithoutPassword } = user;
     res.status(201).json(userWithoutPassword);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to create user', details: error.message });
+    res.status(500).json({ error: trReq(req, 'createUserFailed'), details: error.message });
   }
 });
 
@@ -121,7 +122,7 @@ router.post('/import', requireAdmin, async (req: AuthRequest, res) => {
     const { users } = req.body;
     
     if (!Array.isArray(users) || users.length === 0) {
-      return res.status(400).json({ error: 'Invalid users data. Expected an array of users.' });
+      return res.status(400).json({ error: trReq(req, 'invalidUsersData') });
     }
 
     const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
@@ -191,7 +192,7 @@ router.post('/import', requireAdmin, async (req: AuthRequest, res) => {
       results,
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to import users', details: error.message });
+    res.status(500).json({ error: trReq(req, 'importUsersFailed'), details: error.message });
   }
 });
 
@@ -207,12 +208,12 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
     });
 
     if (!existingUser) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
 
     // Only super admins may grant privileged roles or modify privileged accounts
     if ((isPrivileged(role) || isPrivileged(existingUser.role)) && req.userRole !== 'SUPERADMIN') {
-      return res.status(403).json({ error: 'Only a super admin can manage admin accounts' });
+      return res.status(403).json({ error: trReq(req, 'superAdminManageAdmin') });
     }
 
     // If email is being changed, check if new email is already in use
@@ -222,7 +223,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
       });
 
       if (emailInUse) {
-        return res.status(400).json({ error: 'Email already in use' });
+        return res.status(400).json({ error: trReq(req, 'emailInUse') });
       }
     }
 
@@ -246,7 +247,7 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
     const { password: _, ...userWithoutPassword } = updatedUser;
     res.json(userWithoutPassword);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to update user', details: error.message });
+    res.status(500).json({ error: trReq(req, 'updateUserFailed'), details: error.message });
   }
 });
 
@@ -261,11 +262,11 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
 
     if (isPrivileged(user.role) && req.userRole !== 'SUPERADMIN') {
-      return res.status(403).json({ error: 'Only a super admin can delete admin accounts' });
+      return res.status(403).json({ error: trReq(req, 'superAdminDeleteAdmin') });
     }
 
     // Delete user (this will cascade delete their bookings due to foreign key)
@@ -273,9 +274,9 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
       where: { id },
     });
 
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: trReq(req, 'userDeleted') });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete user', details: error.message });
+    res.status(500).json({ error: trReq(req, 'deleteUserFailed'), details: error.message });
   }
 });
 

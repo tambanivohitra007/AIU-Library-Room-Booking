@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
-import { getLang, asLang, tr, statusName, dateLocaleTag } from '../services/i18n.js';
+import {getLang, asLang, tr, statusName, dateLocaleTag, trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -71,7 +71,7 @@ router.get('/', async (req: AuthRequest, res) => {
     res.json(formattedBookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
-    res.status(500).json({ error: 'Failed to fetch bookings' });
+    res.status(500).json({ error: trReq(req, 'fetchBookingsFailed') });
   }
 });
 
@@ -81,7 +81,7 @@ router.post('/check-conflicts', async (req: AuthRequest, res) => {
     const { roomId, startTime, endTime } = req.body;
 
     if (!roomId || !startTime || !endTime) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: trReq(req, 'missingFields') });
     }
 
     // Find all overlapping bookings
@@ -126,7 +126,7 @@ router.post('/check-conflicts', async (req: AuthRequest, res) => {
     });
   } catch (error) {
     console.error('Error checking conflicts:', error);
-    res.status(500).json({ error: 'Failed to check conflicts' });
+    res.status(500).json({ error: trReq(req, 'checkConflictsFailed') });
   }
 });
 
@@ -143,7 +143,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
     });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ error: trReq(req, 'bookingNotFound') });
     }
 
     // Full details only for the owner, staff, or a department admin of the room
@@ -152,7 +152,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
     if (!isOwner && !isStaff) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
-        return res.status(403).json({ error: 'Permission denied' });
+        return res.status(403).json({ error: trReq(req, 'permissionDenied') });
       }
     }
 
@@ -172,7 +172,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
       createdAt: booking.createdAt.toISOString(),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch booking' });
+    res.status(500).json({ error: trReq(req, 'fetchBookingFailed') });
   }
 });
 
@@ -425,7 +425,7 @@ router.post('/:id/approve', async (req: AuthRequest, res) => {
     res.json({ id: updated.id, status: updated.status });
   } catch (error) {
     logger.error('Error approving booking:', error);
-    res.status(500).json({ error: 'Failed to approve booking' });
+    res.status(500).json({ error: trReq(req, 'approveFailed') });
   }
 });
 
@@ -473,7 +473,7 @@ router.post('/:id/reject', async (req: AuthRequest, res) => {
     res.json({ id: updated.id, status: updated.status, cancellationReason: updated.cancellationReason });
   } catch (error) {
     logger.error('Error rejecting booking:', error);
-    res.status(500).json({ error: 'Failed to reject booking' });
+    res.status(500).json({ error: trReq(req, 'rejectFailed') });
   }
 });
 
@@ -486,25 +486,25 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
     });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      return res.status(404).json({ error: trReq(req, 'bookingNotFound') });
     }
 
     // Check permissions (Admin, Student Worker, Owner, or Department Admin of the room)
     if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
-        return res.status(403).json({ error: 'Permission denied' });
+        return res.status(403).json({ error: trReq(req, 'permissionDenied') });
       }
     }
 
     if (booking.status !== BookingStatus.CONFIRMED) {
-      return res.status(400).json({ error: 'Can only remind for confirmed bookings' });
+      return res.status(400).json({ error: trReq(req, 'remindConfirmedOnly') });
     }
     
     // Check if in past (allow if starts within 5 mins ago? No, strictly future or ongoing)
     // Actually, "Upcoming" implies future.
     if (booking.endTime < new Date()) {
-       return res.status(400).json({ error: 'Cannot remind for completed bookings' });
+       return res.status(400).json({ error: trReq(req, 'remindNotCompleted') });
     }
 
     if (booking.user.email) {
@@ -520,14 +520,14 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
         data: { reminderSent: true },
       });
       
-      return res.json({ message: 'Reminder sent successfully' });
+      return res.json({ message: trReq(req, 'reminderSent') });
     } else {
-      return res.status(400).json({ error: 'User has no email address' });
+      return res.status(400).json({ error: trReq(req, 'userNoEmail') });
     }
 
   } catch (error) {
     logger.error('Error sending manual reminder:', error);
-    res.status(500).json({ error: 'Failed to send reminder' });
+    res.status(500).json({ error: trReq(req, 'reminderFailed') });
   }
 });
 
@@ -607,7 +607,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       createdAt: updated.createdAt.toISOString(),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to cancel booking' });
+    res.status(500).json({ error: trReq(req, 'cancelFailed') });
   }
 });
 

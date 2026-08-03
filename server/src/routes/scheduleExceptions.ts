@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
 import logger from '../utils/logger.js';
+import { trReq } from '../services/i18n.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -50,7 +51,7 @@ router.get('/', async (req, res) => {
     res.json(exceptions);
   } catch (error) {
     console.error('Error fetching schedule exceptions:', error);
-    res.status(500).json({ error: 'Failed to fetch closures' });
+    res.status(500).json({ error: trReq(req, 'fetchClosuresFailed') });
   }
 });
 
@@ -62,11 +63,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 
     const departmentId = req.body.departmentId || null;
     if (!(await canManage(req, departmentId))) {
-      return res.status(403).json({ error: 'You can only create closures for your own department' });
+      return res.status(403).json({ error: trReq(req, 'createOwnClosures') });
     }
     if (departmentId) {
       const dept = await prisma.department.findUnique({ where: { id: departmentId } });
-      if (!dept) return res.status(400).json({ error: 'Department not found' });
+      if (!dept) return res.status(400).json({ error: trReq(req, 'departmentNotFound') });
     }
 
     const closed = req.body.closed !== false;
@@ -87,7 +88,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     res.status(201).json(exception);
   } catch (error) {
     console.error('Create schedule exception error:', error);
-    res.status(500).json({ error: 'Failed to create closure' });
+    res.status(500).json({ error: trReq(req, 'createClosureFailed') });
   }
 });
 
@@ -97,14 +98,14 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const existing = await prisma.scheduleException.findUnique({
       where: { id: req.params.id },
     });
-    if (!existing) return res.status(404).json({ error: 'Closure not found' });
+    if (!existing) return res.status(404).json({ error: trReq(req, 'closureNotFound') });
 
     const validationError = validateBody(req.body);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const departmentId = req.body.departmentId || null;
     if (!(await canManage(req, existing.departmentId)) || !(await canManage(req, departmentId))) {
-      return res.status(403).json({ error: 'You can only manage closures for your own department' });
+      return res.status(403).json({ error: trReq(req, 'manageOwnClosures') });
     }
 
     const closed = req.body.closed !== false;
@@ -125,7 +126,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     res.json(exception);
   } catch (error) {
     console.error('Update schedule exception error:', error);
-    res.status(500).json({ error: 'Failed to update closure' });
+    res.status(500).json({ error: trReq(req, 'updateClosureFailed') });
   }
 });
 
@@ -135,18 +136,18 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const existing = await prisma.scheduleException.findUnique({
       where: { id: req.params.id },
     });
-    if (!existing) return res.status(404).json({ error: 'Closure not found' });
+    if (!existing) return res.status(404).json({ error: trReq(req, 'closureNotFound') });
 
     if (!(await canManage(req, existing.departmentId))) {
-      return res.status(403).json({ error: 'You can only manage closures for your own department' });
+      return res.status(403).json({ error: trReq(req, 'manageOwnClosures') });
     }
 
     await prisma.scheduleException.delete({ where: { id: req.params.id } });
     logger.info(`Schedule exception "${existing.name}" deleted by user ${req.userId}`);
-    res.json({ message: 'Closure deleted' });
+    res.json({ message: trReq(req, 'closureDeleted') });
   } catch (error) {
     console.error('Delete schedule exception error:', error);
-    res.status(500).json({ error: 'Failed to delete closure' });
+    res.status(500).json({ error: trReq(req, 'deleteClosureFailed') });
   }
 });
 

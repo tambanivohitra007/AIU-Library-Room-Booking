@@ -263,7 +263,20 @@
       "deleteRoomFailed": "ลบห้องไม่สำเร็จ"
     },
     "deptAdminBadge": "ผู้ดูแลแผนก",
-    "deptAdminManages": "ดูแล: {{names}}"
+    "deptAdminManages": "ดูแล: {{names}}",
+    "roomsTable": {
+      "view": "มุมมอง",
+      "viewLabel": "รูปแบบรายการห้อง",
+      "viewCards": "การ์ด",
+      "viewTable": "ตาราง",
+      "hours": "เวลาทำการ",
+      "hoursCustom": "กำหนดเอง",
+      "hoursDepartment": "ตามแผนก",
+      "hoursGlobal": "ค่ากลาง",
+      "policy": "เงื่อนไข",
+      "approval": "ต้องอนุมัติ",
+      "terms": "ข้อกำหนด"
+    }
   },
   "departments": {
     "title": "แผนก",

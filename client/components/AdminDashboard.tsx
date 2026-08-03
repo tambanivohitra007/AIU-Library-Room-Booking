@@ -27,6 +27,7 @@ import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { ColumnDef } from '@tanstack/react-table';
+import { parseOperatingHoursOrNull } from '../utils/operatingHours';
 
 import ExportReportModal from './ExportReportModal';
 import SettingsTab from './SettingsTab';
@@ -111,6 +112,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       );
   }, [filteredAdminRooms, t]);
   const hasDepartmentGroups = roomGroups.some((g) => g.key !== 'none');
+
+  // Cards read well for a handful of rooms; the table scans and sorts across all
+  // of them and surfaces the policy fields the cards leave out. Remembered per
+  // device, like the UI language.
+  const [roomsView, setRoomsView] = useState<'cards' | 'table'>(() =>
+    localStorage.getItem('adminRoomsView') === 'table' ? 'table' : 'cards',
+  );
+  const changeRoomsView = (v: 'cards' | 'table') => {
+    setRoomsView(v);
+    localStorage.setItem('adminRoomsView', v);
+  };
+
+  // Which tier of the room -> department -> global schedule chain applies
+  const roomScheduleSource = (room: Room): string => {
+    if (parseOperatingHoursOrNull(room.operatingHours)) {
+      return t('admin.roomsTable.hoursCustom');
+    }
+    if (parseOperatingHoursOrNull(room.department?.operatingHours)) {
+      return t('admin.roomsTable.hoursDepartment');
+    }
+    return t('admin.roomsTable.hoursGlobal');
+  };
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -1530,6 +1553,152 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     </div>
   );
 
+  const roomTableColumns = useMemo<ColumnDef<Room, any>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: t('admin.columns.room'),
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <p className="font-bold text-slate-800 truncate">
+              {row.original.name}
+            </p>
+            <p className="text-xs text-slate-500 truncate max-w-xs">
+              {row.original.description}
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: 'department',
+        accessorFn: (r) => r.department?.name ?? '',
+        header: t('roomForm.department'),
+        cell: ({ row }) =>
+          row.original.department?.name ? (
+            <span className="text-sm text-slate-700">
+              {row.original.department.name}
+            </span>
+          ) : (
+            <span className="text-xs text-slate-400 italic">
+              {t('roomDetails.noDepartment')}
+            </span>
+          ),
+      },
+      {
+        id: 'capacity',
+        // Sort by the lower bound rather than the rendered string
+        accessorFn: (r) => r.minCapacity,
+        header: t('roomDetails.capacity'),
+        cell: ({ row }) => (
+          <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            {row.original.minCapacity}–{row.original.maxCapacity}
+          </span>
+        ),
+      },
+      {
+        id: 'hours',
+        accessorFn: (r) => roomScheduleSource(r),
+        header: t('admin.roomsTable.hours'),
+        cell: ({ row }) => {
+          const custom = !!parseOperatingHoursOrNull(row.original.operatingHours);
+          return (
+            <span
+              className={`px-2 py-1 rounded-md text-xs font-bold whitespace-nowrap ${
+                custom
+                  ? 'bg-teal-50 border border-teal-200 text-teal-700'
+                  : 'text-slate-500'
+              }`}
+            >
+              {roomScheduleSource(row.original)}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'policy',
+        accessorFn: (r) =>
+          `${r.requiresApproval ? 'approval' : ''} ${r.bookingTerms ? 'terms' : ''}`,
+        header: t('admin.roomsTable.policy'),
+        cell: ({ row }) => {
+          const { requiresApproval, bookingTerms } = row.original;
+          if (!requiresApproval && !bookingTerms) {
+            return <span className="text-xs text-slate-400">—</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {requiresApproval && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-amber-50 border border-amber-200 text-amber-700 whitespace-nowrap"
+                  title={t('roomForm.requireApprovalHint')}
+                >
+                  {t('admin.roomsTable.approval')}
+                </span>
+              )}
+              {bookingTerms && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 border border-slate-200 text-slate-600 whitespace-nowrap"
+                  title={bookingTerms}
+                >
+                  {t('admin.roomsTable.terms')}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'features',
+        accessorFn: (r) => r.features.join(', '),
+        header: t('roomDetails.features'),
+        cell: ({ row }) =>
+          row.original.features.length === 0 ? (
+            <span className="text-xs text-slate-400">—</span>
+          ) : (
+            <span
+              className="text-xs text-slate-600"
+              title={row.original.features.join(', ')}
+            >
+              {row.original.features.slice(0, 2).join(', ')}
+              {row.original.features.length > 2 &&
+                ` +${row.original.features.length - 2}`}
+            </span>
+          ),
+      },
+      {
+        id: 'actions',
+        header: t('admin.columns.actions'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex gap-1">
+            <button
+              onClick={() => setViewingRoom(row.original)}
+              className="px-2 py-1 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded"
+            >
+              {t('admin.view')}
+            </button>
+            {(isAdmin || isDeptAdminOnly) && (
+              <>
+                <button
+                  onClick={() => setEditingRoom(row.original)}
+                  className="px-2 py-1 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded"
+                >
+                  {t('admin.edit')}
+                </button>
+                <button
+                  onClick={() => setDeletingRoom(row.original)}
+                  className="px-2 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded"
+                >
+                  {t('admin.delete')}
+                </button>
+              </>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [t, isAdmin, isDeptAdminOnly],
+  );
+
   const renderRooms = () => (
     <>
       <div className="glass rounded-lg border border-slate-200 overflow-hidden animate-fade-in">
@@ -1551,6 +1720,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {t('admin.roomManagement')}
           </h3>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center">
+          <div
+            className="flex rounded-md border border-slate-200 overflow-hidden self-start"
+            role="group"
+            aria-label={t('admin.roomsTable.viewLabel')}
+          >
+            {(['cards', 'table'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => changeRoomsView(mode)}
+                aria-pressed={roomsView === mode}
+                className={`px-3 py-2 text-xs font-bold transition-colors ${
+                  roomsView === mode
+                    ? 'bg-primary text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {t(`admin.roomsTable.view${mode === 'cards' ? 'Cards' : 'Table'}`)}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
             value={roomsFilter}
@@ -1581,7 +1771,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
           </div>
         </div>
-        {hasDepartmentGroups ? (
+        {roomsView === 'table' ? (
+          // Department is a sortable column here rather than a grouping header:
+          // the point of the table is scanning and sorting ACROSS departments.
+          // Search stays on the toolbar input above, so there is only one box.
+          <div className="p-4 sm:p-5">
+            <DataTable
+              data={filteredAdminRooms}
+              columns={roomTableColumns}
+              globalFilter={false}
+              pageSize={15}
+              emptyMessage={t('calendar.noRoomsMatch')}
+            />
+          </div>
+        ) : hasDepartmentGroups ? (
           <div className="p-4 sm:p-5 space-y-6">
             {roomGroups.map((group) => (
               <div key={group.key}>

@@ -263,7 +263,20 @@
       "deleteRoomFailed": "Failed to delete room"
     },
     "deptAdminBadge": "Dept Admin",
-    "deptAdminManages": "Manages: {{names}}"
+    "deptAdminManages": "Manages: {{names}}",
+    "roomsTable": {
+      "view": "View",
+      "viewLabel": "Room list layout",
+      "viewCards": "Cards",
+      "viewTable": "Table",
+      "hours": "Hours",
+      "hoursCustom": "Custom",
+      "hoursDepartment": "Department",
+      "hoursGlobal": "Global",
+      "policy": "Policy",
+      "approval": "Approval",
+      "terms": "Terms"
+    }
   },
   "departments": {
     "title": "Departments",

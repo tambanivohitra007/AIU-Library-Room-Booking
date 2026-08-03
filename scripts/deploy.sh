@@ -80,7 +80,170 @@ command -v npm  >/dev/null 2>&1 || error "npm is not installed"
 command -v pm2  >/dev/null 2>&1 || error "pm2 is not installed (npm install -g pm2)"
 command -v nginx >/dev/null 2>&1 || warn "nginx not found - it serves the built client (client/dist); install/configure it separately"
 
-[ -f "server/.env" ] || error "server/.env not found - create it before deploying"
+# ---------- server/.env ----------
+# server/.env holds every secret the API reads and is gitignored, so a fresh clone
+# (or a stray `git clean -fdx`) leaves the deploy with nothing to read. Rather than
+# just failing, walk the operator through creating it. An EXISTING file is never
+# read-modified-written here - only created when absent.
+
+# Prompts read from /dev/tty so they still work if stdin is redirected.
+ask() {  # ask "question" "default" -> echoes the answer
+    local _reply
+    if [ -n "$2" ]; then
+        read -r -p "  $1 [$2]: " _reply < /dev/tty
+        printf '%s' "${_reply:-$2}"
+    else
+        read -r -p "  $1: " _reply < /dev/tty
+        printf '%s' "$_reply"
+    fi
+}
+
+ask_secret() {  # ask_secret "question" -> echoes the answer, no terminal echo
+    local _reply
+    read -r -s -p "  $1: " _reply < /dev/tty
+    echo > /dev/tty
+    printf '%s' "$_reply"
+}
+
+# Passwords routinely contain @ : / ? # - all of which break a bare URL
+urlencode() { node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$1"; }
+
+gen_secret() {
+    if command -v openssl >/dev/null 2>&1; then
+        openssl rand -base64 48 | tr -d '\n'
+    else
+        node -e "process.stdout.write(require('crypto').randomBytes(48).toString('base64'))"
+    fi
+}
+
+create_env_file() {
+    echo ""
+    warn "server/.env is missing - creating it now."
+    echo "  Written to server/.env with chmod 600. Nothing leaves this machine."
+    echo "  Press Enter to accept the [default] shown."
+    echo ""
+
+    echo "  --- Database ---"
+    local _db_url
+    _db_url="$(ask 'Full DATABASE_URL (leave blank to build a MySQL URL step by step)' '')"
+    if [ -z "$_db_url" ]; then
+        local _h _p _n _u _pw
+        _h="$(ask 'MySQL host' 'localhost')"
+        _p="$(ask 'MySQL port' '3306')"
+        _n="$(ask 'Database name' 'libbook')"
+        _u="$(ask 'Database user' '')"
+        _pw="$(ask_secret 'Database password')"
+        _db_url="mysql://${_u}:$(urlencode "$_pw")@${_h}:${_p}/${_n}"
+    fi
+
+    # Catch a wrong host/user/password NOW - a bad URL here plus `prisma db push`
+    # later would write this app's schema into whatever database it does reach.
+    if command -v mysql >/dev/null 2>&1; then
+        case "$_db_url" in
+            mysql://*)
+                local _t="${_db_url#mysql://}" _tc _tr _tu _tp _thp _th _tport _tdb
+                _tc="${_t%%@*}"; _tr="${_t#*@}"
+                _tu="${_tc%%:*}"; _tp="${_tc#*:}"; [ "$_tp" = "$_tc" ] && _tp=""
+                _thp="${_tr%%/*}"; _tdb="${_tr#*/}"; _tdb="${_tdb%%\?*}"
+                _th="${_thp%%:*}"; _tport="${_thp#*:}"; [ "$_tport" = "$_thp" ] && _tport="3306"
+                # The password is URL-encoded in the URL; decode it back for the client
+                _tp="$(node -e 'process.stdout.write(decodeURIComponent(process.argv[1]))' "$_tp")"
+                if MYSQL_PWD="$_tp" mysql -h "$_th" -P "$_tport" -u "$_tu" \
+                        -e "USE \`$_tdb\`; SELECT 1;" >/dev/null 2>&1; then
+                    success "Connected to MySQL database '$_tdb' on $_th"
+                else
+                    warn "Could NOT connect to MySQL database '$_tdb' on $_th with those credentials."
+                    warn "Deploying with a wrong DATABASE_URL would push this schema into the wrong database."
+                    local _c
+                    _c="$(ask 'Continue anyway? (yes/no)' 'no')"
+                    [ "$_c" = "yes" ] || error "Aborted - fix the database details and re-run"
+                fi
+                ;;
+        esac
+    fi
+
+    echo ""
+    echo "  --- Application ---"
+    local _client_url _port _admin_emails
+    _client_url="$(ask 'CLIENT_URL (public site URL, used for CORS and email links)' 'https://booking.apiu.edu')"
+    _port="$(ask 'API port' '5000')"
+    _admin_emails="$(ask 'ADMIN_EMAILS (comma-separated; auto-granted SUPERADMIN on first SSO login)' '')"
+
+    echo ""
+    echo "  --- Notification sender ---"
+    echo "  Notification email is sent through the Microsoft Graph API using the Azure"
+    echo "  app below. SMTP_USER is the MAILBOX those messages are sent FROM - it varies"
+    echo "  per institution/admin, so set it to the sending account for THIS deployment."
+    local _smtp_user
+    _smtp_user="$(ask 'SMTP_USER (sender mailbox, e.g. library-noreply@apiu.edu)' '')"
+
+    echo ""
+    echo "  --- Microsoft SSO / Graph (paste now, or leave blank and paste later) ---"
+    local _tenant _cid _csec _redirect
+    _tenant="$(ask 'AZURE_TENANT_ID' '')"
+    _cid="$(ask 'AZURE_CLIENT_ID' '')"
+    _csec="$(ask_secret 'AZURE_CLIENT_SECRET (hidden; Enter to skip)')"
+    _redirect="$(ask 'AZURE_REDIRECT_URI' "${_client_url%/}/auth/callback")"
+
+    local _jwt
+    _jwt="$(gen_secret)"
+
+    umask 077
+    cat > server/.env <<ENVEOF
+# Generated by scripts/deploy.sh on $(date '+%Y-%m-%d %H:%M:%S %Z')
+# This file is gitignored and holds live secrets - keep a copy somewhere safe.
+
+# --- Database ---
+DATABASE_URL="$_db_url"
+
+# --- Security ---
+# Generated with a CSPRNG. Changing it signs every user out (tokens stop verifying).
+JWT_SECRET="$_jwt"
+
+# --- Server ---
+PORT=$_port
+NODE_ENV=production
+
+# --- Client ---
+# Used for CORS and for links inside notification emails.
+CLIENT_URL="$_client_url"
+
+# Comma-separated; these accounts are granted SUPERADMIN on first SSO sign-in.
+ADMIN_EMAILS="$_admin_emails"
+
+# --- Notification sender ---
+# The mailbox notifications are sent FROM, via Microsoft Graph (not SMTP auth).
+# The Azure app below needs the Mail.Send application permission for this mailbox.
+SMTP_USER="$_smtp_user"
+
+# --- Microsoft SSO + Graph ---
+AZURE_TENANT_ID="$_tenant"
+AZURE_CLIENT_ID="$_cid"
+AZURE_CLIENT_SECRET="$_csec"
+AZURE_REDIRECT_URI="$_redirect"
+ENVEOF
+    umask 022
+
+    chmod 600 server/.env
+    # The repo is worked on by a normal user; don't leave a root-owned secret behind
+    local _owner
+    _owner="$(stat -c '%U:%G' . 2>/dev/null || echo '')"
+    [ -n "$_owner" ] && chown "$_owner" server/.env 2>/dev/null || true
+
+    success "server/.env created (chmod 600, owner ${_owner:-unchanged})"
+    echo ""
+    info "Back it up now - it is gitignored, so nothing else on this box has a copy:"
+    echo "     sudo cp server/.env ~/aiu-env-backup-$(date +%Y%m%d)"
+    echo ""
+}
+
+if [ ! -f "server/.env" ]; then
+    [ "$AUTO_YES" = "1" ] \
+        && error "server/.env not found. Re-run without --yes to create it interactively, or copy server/.env.production.example and fill it in."
+    [ -r /dev/tty ] \
+        || error "server/.env not found and no terminal is available to create it. Copy server/.env.production.example to server/.env and fill it in."
+    create_env_file
+fi
 
 # Read a value from server/.env (tolerates spaces around '=' and surrounding quotes)
 get_env() {
@@ -105,6 +268,26 @@ esac
 
 [ -n "$ADMIN_EMAILS" ] || warn "ADMIN_EMAILS is not set - no account will be auto-granted SUPERADMIN on SSO login"
 [ -n "$CLIENT_URL" ]   || warn "CLIENT_URL is not set - email links and CORS will fall back to http://localhost:3000"
+
+# These never abort the deploy - the API runs fine without them - but mail and SSO
+# fail silently at runtime, which is far harder to notice than a failed deploy.
+SMTP_USER="$(get_env SMTP_USER)"
+AZURE_TENANT_ID="$(get_env AZURE_TENANT_ID)"
+AZURE_CLIENT_ID="$(get_env AZURE_CLIENT_ID)"
+AZURE_CLIENT_SECRET="$(get_env AZURE_CLIENT_SECRET)"
+AZURE_REDIRECT_URI="$(get_env AZURE_REDIRECT_URI)"
+
+[ -n "$SMTP_USER" ] || warn "SMTP_USER is not set - no notification email will be sent (it is the Graph sender mailbox)"
+
+MISSING_SSO=""
+for _v in AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_REDIRECT_URI; do
+    eval "_val=\$$_v"
+    [ -n "$_val" ] || MISSING_SSO="$MISSING_SSO $_v"
+done
+if [ -n "$MISSING_SSO" ]; then
+    warn "Microsoft SSO/Graph not fully configured - missing:$MISSING_SSO"
+    warn "Sign-in with Microsoft AND all notification email will be unavailable until these are set in server/.env"
+fi
 
 case "$DATABASE_URL" in
     file:*) warn "DATABASE_URL points to SQLite - fine for a small deployment, but MySQL/PostgreSQL is recommended" ;;

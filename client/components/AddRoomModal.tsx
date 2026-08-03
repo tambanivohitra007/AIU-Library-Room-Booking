@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
-import { Department } from '../types';
+import { Department, OperatingHours } from '../types';
 import { XIcon, PlusIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { getEffectiveOperatingHours } from '../utils/operatingHours';
+import OperatingHoursEditor, {
+  validateOperatingHours,
+} from './OperatingHoursEditor';
 
 interface AddRoomModalProps {
   onClose: () => void;
@@ -28,6 +33,9 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
   const [departmentId, setDepartmentId] = useState('');
   const [bookingTerms, setBookingTerms] = useState('');
   const [requiresApproval, setRequiresApproval] = useState(false);
+  const { operatingHours: globalHours } = useSettings();
+  const [useCustomHours, setUseCustomHours] = useState(false);
+  const [hours, setHours] = useState<OperatingHours>(globalHours);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +54,21 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
       })
       .catch(() => {});
   }, []);
+
+  const selectedDepartment =
+    departments.find((d) => d.id === departmentId) || null;
+  const inheritedHours = getEffectiveOperatingHours(
+    null,
+    selectedDepartment,
+    globalHours,
+  );
+
+  // Seed the editor from whatever the room would otherwise inherit, resolved at
+  // toggle time so it reflects the department currently selected in the form.
+  const toggleCustomHours = (checked: boolean) => {
+    if (checked) setHours(inheritedHours);
+    setUseCustomHours(checked);
+  };
 
   const handleAddFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature.trim())) {
@@ -85,6 +108,14 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
       return;
     }
 
+    if (useCustomHours) {
+      const hoursError = validateOperatingHours(hours);
+      if (hoursError) {
+        setError(hoursError);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await api.createRoom({
@@ -96,6 +127,8 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
         departmentId: departmentId || null,
         bookingTerms: bookingTerms.trim() || null,
         requiresApproval,
+        // null = inherit the department's schedule (or the global one)
+        operatingHours: useCustomHours ? JSON.stringify(hours) : null,
       });
       toast.success(t('roomForm.created'));
       onSuccess();
@@ -220,6 +253,37 @@ const AddRoomModal: React.FC<AddRoomModalProps> = ({
                 </select>
               </div>
             )}
+
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  checked={useCustomHours}
+                  onChange={(e) => toggleCustomHours(e.target.checked)}
+                  className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm font-medium text-slate-700">
+                  {t('roomForm.useCustomHours')}
+                </span>
+              </label>
+              {useCustomHours ? (
+                <>
+                  <OperatingHoursEditor value={hours} onChange={setHours} />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t('roomForm.customHoursHint')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {selectedDepartment
+                    ? t('roomForm.followsDepartmentSchedule', {
+                        name: selectedDepartment.name,
+                      })
+                    : t('roomForm.followsGlobalSchedule')}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="flex items-center gap-2 cursor-pointer">

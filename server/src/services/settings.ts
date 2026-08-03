@@ -80,12 +80,19 @@ export const getOperatingHours = (settings: ServiceSettings): OperatingHours => 
   return parseOperatingHoursJson(settings.operatingHours) || DEFAULT_OPERATING_HOURS;
 };
 
-// Department hours override the global schedule when set
+// Most specific schedule wins: room overrides department, department overrides global.
+// A set schedule replaces the one above it outright - it is not intersected with it,
+// so a room may open earlier or later than its department.
 export const getEffectiveOperatingHours = (
   settings: ServiceSettings,
-  departmentHours: string | null | undefined
+  departmentHours: string | null | undefined,
+  roomHours?: string | null
 ): OperatingHours => {
-  return parseOperatingHoursJson(departmentHours) || getOperatingHours(settings);
+  return (
+    parseOperatingHoursJson(roomHours) ||
+    parseOperatingHoursJson(departmentHours) ||
+    getOperatingHours(settings)
+  );
 };
 
 const formatHour = (h: number) => `${h}:00`;

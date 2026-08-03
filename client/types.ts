@@ -52,6 +52,7 @@ export interface Room {
   features: string[];
   bookingTerms?: string | null; // terms & conditions; null = no acceptance required
   requiresApproval?: boolean; // bookings start as PENDING until approved
+  operatingHours?: string | null; // JSON-encoded OperatingHours; null = inherit the department (or global) schedule
   departmentId?: string | null;
   department?: Department | null;
 }

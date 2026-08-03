@@ -41,7 +41,7 @@ const DayView: React.FC<DayViewProps> = ({
   const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const operatingHours = useMemo(
-    () => getEffectiveOperatingHours(room.department, globalHours),
+    () => getEffectiveOperatingHours(room, room.department, globalHours),
     [room.department, globalHours],
   );
   const { open: gridOpen, close: gridClose } = useMemo(

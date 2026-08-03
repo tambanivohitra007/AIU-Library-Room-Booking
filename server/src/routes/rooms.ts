@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
+import { parseOperatingHoursJson } from '../services/settings.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -45,7 +46,7 @@ router.get('/:id', async (req, res) => {
 // Create new room (global admin, or a department admin within their department)
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval, operatingHours } = req.body;
 
     if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
@@ -83,6 +84,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       }
     }
 
+    if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
+      return res.status(400).json({ error: 'Invalid operating hours format' });
+    }
+
     // Create room with features as JSON string
     const room = await prisma.room.create({
       data: {
@@ -94,6 +99,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         departmentId: departmentId || null,
         bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
         requiresApproval: requiresApproval === true,
+        // null = inherit the department's schedule (or the global one)
+        operatingHours: operatingHours || null,
       },
       include: { department: true },
     });
@@ -111,7 +118,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 // Update room (global admin, or a department admin for rooms in their department)
 router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval } = req.body;
+    const { name, description, minCapacity, maxCapacity, features, departmentId, bookingTerms, requiresApproval, operatingHours } = req.body;
 
     if (!isGlobalAdmin(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
@@ -163,6 +170,10 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       }
     }
 
+    if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
+      return res.status(400).json({ error: 'Invalid operating hours format' });
+    }
+
     // Update room
     const room = await prisma.room.update({
       where: { id: req.params.id },
@@ -175,6 +186,8 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
         departmentId: departmentId || null,
         bookingTerms: (typeof bookingTerms === 'string' && bookingTerms.trim()) || null,
         requiresApproval: requiresApproval === true,
+        // null = inherit the department's schedule (or the global one)
+        operatingHours: operatingHours || null,
       },
       include: { department: true },
     });

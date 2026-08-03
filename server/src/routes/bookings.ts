@@ -223,7 +223,11 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     }
 
     const settings = await getServiceSettings();
-    const effectiveHours = getEffectiveOperatingHours(settings, room.department?.operatingHours);
+    const effectiveHours = getEffectiveOperatingHours(
+      settings,
+      room.department?.operatingHours,
+      room.operatingHours,
+    );
 
     // Date-specific closures/special hours for this day and department
     const dayStart = new Date(bookingStart);

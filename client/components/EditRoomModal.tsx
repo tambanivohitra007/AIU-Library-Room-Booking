@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
-import { Room, Department } from '../types';
+import { Room, Department, OperatingHours } from '../types';
 import { XIcon, PlusIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
+import {
+  getEffectiveOperatingHours,
+  parseOperatingHoursOrNull,
+} from '../utils/operatingHours';
+import OperatingHoursEditor, {
+  validateOperatingHours,
+} from './OperatingHoursEditor';
 
 interface EditRoomModalProps {
   room: Room;
@@ -32,6 +40,14 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
   const [requiresApproval, setRequiresApproval] = useState(
     !!room.requiresApproval,
   );
+  const { operatingHours: globalHours } = useSettings();
+  const roomHours = parseOperatingHoursOrNull(room.operatingHours);
+  const [useCustomHours, setUseCustomHours] = useState(roomHours !== null);
+  // Seed the editor with whatever this room currently follows, so switching to
+  // custom starts from the inherited schedule rather than an unrelated default.
+  const [hours, setHours] = useState<OperatingHours>(
+    roomHours || getEffectiveOperatingHours(null, room.department, globalHours),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +63,21 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
       })
       .catch(() => {});
   }, []);
+
+  const selectedDepartment =
+    departments.find((d) => d.id === departmentId) || null;
+
+  // Seed the editor from whatever the room would otherwise inherit, resolved at
+  // toggle time so it reflects the department currently selected in the form.
+  const toggleCustomHours = (checked: boolean) => {
+    if (checked) {
+      setHours(
+        roomHours ||
+          getEffectiveOperatingHours(null, selectedDepartment, globalHours),
+      );
+    }
+    setUseCustomHours(checked);
+  };
 
   const handleAddFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature.trim())) {
@@ -86,6 +117,14 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
       return;
     }
 
+    if (useCustomHours) {
+      const hoursError = validateOperatingHours(hours);
+      if (hoursError) {
+        setError(hoursError);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await api.updateRoom(room.id, {
@@ -97,6 +136,8 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
         departmentId: departmentId || null,
         bookingTerms: bookingTerms.trim() || null,
         requiresApproval,
+        // null = inherit the department's schedule (or the global one)
+        operatingHours: useCustomHours ? JSON.stringify(hours) : null,
       });
       toast.success(t('roomForm.updated'));
       onSuccess();
@@ -221,6 +262,37 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({
                 </select>
               </div>
             )}
+
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  checked={useCustomHours}
+                  onChange={(e) => toggleCustomHours(e.target.checked)}
+                  className="rounded border-slate-300 text-primary focus:ring-primary/20"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm font-medium text-slate-700">
+                  {t('roomForm.useCustomHours')}
+                </span>
+              </label>
+              {useCustomHours ? (
+                <>
+                  <OperatingHoursEditor value={hours} onChange={setHours} />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t('roomForm.customHoursHint')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {selectedDepartment
+                    ? t('roomForm.followsDepartmentSchedule', {
+                        name: selectedDepartment.name,
+                      })
+                    : t('roomForm.followsGlobalSchedule')}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="flex items-center gap-2 cursor-pointer">

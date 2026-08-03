@@ -20,7 +20,9 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
-  const hours = getEffectiveOperatingHours(room.department, globalHours);
+  const hours = getEffectiveOperatingHours(room, room.department, globalHours);
+  // Which tier the displayed schedule came from: room > department > global
+  const usesRoomSchedule = parseOperatingHoursOrNull(room.operatingHours) !== null;
   const usesDepartmentSchedule =
     parseOperatingHoursOrNull(room.department?.operatingHours) !== null;
 
@@ -96,11 +98,13 @@ const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
               {t('roomDetails.operatingHours')}
               <span className="normal-case font-medium text-slate-400 ml-2">
                 (
-                {usesDepartmentSchedule
-                  ? t('roomDetails.departmentSchedule', {
-                      name: room.department?.name,
-                    })
-                  : t('roomDetails.globalSchedule')}
+                {usesRoomSchedule
+                  ? t('roomDetails.roomSchedule')
+                  : usesDepartmentSchedule
+                    ? t('roomDetails.departmentSchedule', {
+                        name: room.department?.name,
+                      })
+                    : t('roomDetails.globalSchedule')}
                 )
               </span>
             </p>

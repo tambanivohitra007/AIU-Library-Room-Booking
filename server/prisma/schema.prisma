@@ -92,6 +92,7 @@ model Room {
   features     String      // JSON string array
   bookingTerms String?     // terms & conditions text; null = no acceptance required
   requiresApproval Boolean @default(false) // bookings start as PENDING until approved
+  operatingHours String?   // same JSON format as ServiceSettings.operatingHours; null = inherit the department (or global) schedule
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   bookings     Booking[]

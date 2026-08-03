@@ -45,8 +45,8 @@ const Timeline: React.FC<TimelineProps> = ({
   const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
   const operatingHours = useMemo(
-    () => getEffectiveOperatingHours(room.department, globalHours),
-    [room.department, globalHours],
+    () => getEffectiveOperatingHours(room, room.department, globalHours),
+    [room, globalHours],
   );
   const { open: boundsOpen, close: boundsClose } = useMemo(
     () => getGridBounds(operatingHours),

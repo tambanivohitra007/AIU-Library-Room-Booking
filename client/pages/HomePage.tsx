@@ -142,7 +142,7 @@ const HomePage: React.FC<HomePageProps> = ({
   // within the room's operating hours and clear of existing bookings.
   const handleNewBooking = () => {
     if (!activeRoom) return;
-    const hours = getEffectiveOperatingHours(activeRoom.department, globalHours);
+    const hours = getEffectiveOperatingHours(activeRoom, activeRoom.department, globalHours);
     const roomBookings = bookings.filter(
       (b) =>
         b.roomId === activeRoom.id &&

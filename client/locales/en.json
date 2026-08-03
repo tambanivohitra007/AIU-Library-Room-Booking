@@ -163,7 +163,8 @@
     "globalSchedule": "global schedule",
     "departmentSchedule": "{{name}} schedule",
     "noDepartment": "No department",
-    "terms": "Terms & Conditions"
+    "terms": "Terms & Conditions",
+    "roomSchedule": "room schedule"
   },
   "admin": {
     "title": "Admin Dashboard",
@@ -375,7 +376,11 @@
     "creating": "Creating...",
     "updating": "Updating...",
     "createRoom": "Create Room",
-    "updateRoom": "Update Room"
+    "updateRoom": "Update Room",
+    "useCustomHours": "Use custom operating hours for this room",
+    "customHoursHint": "Applies to this room only and replaces the department's schedule (it does not have to stay within it). Enforced server-side.",
+    "followsDepartmentSchedule": "This room follows the {{name}} department schedule.",
+    "followsGlobalSchedule": "This room follows the global schedule from Settings."
   },
   "userForm": {
     "addTitle": "Add New User",

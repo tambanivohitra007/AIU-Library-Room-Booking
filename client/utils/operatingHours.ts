@@ -2,6 +2,7 @@ import {
   DayHours,
   Department,
   OperatingHours,
+  Room,
   ScheduleException,
 } from '../types';
 import { OPENING_HOUR, CLOSING_HOUR } from '../constants';
@@ -41,12 +42,20 @@ export const parseOperatingHours = (json: string | null | undefined): OperatingH
   return parseOperatingHoursOrNull(json) || DEFAULT_OPERATING_HOURS;
 };
 
-// A department's custom schedule overrides the global one when set
+// Most specific schedule wins: room overrides department, department overrides global.
+// A set schedule replaces the one above it outright - it is not intersected with it,
+// so a room may open earlier or later than its department.
+// Mirrors getEffectiveOperatingHours in server/src/services/settings.ts.
 export const getEffectiveOperatingHours = (
+  room: Room | null | undefined,
   department: Department | null | undefined,
   globalHours: OperatingHours
 ): OperatingHours => {
-  return parseOperatingHoursOrNull(department?.operatingHours) || globalHours;
+  return (
+    parseOperatingHoursOrNull(room?.operatingHours) ||
+    parseOperatingHoursOrNull(department?.operatingHours) ||
+    globalHours
+  );
 };
 
 // Grid bounds for the timeline: earliest open and latest close across open days

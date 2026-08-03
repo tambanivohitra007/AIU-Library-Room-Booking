@@ -198,7 +198,12 @@ const HomePage: React.FC<HomePageProps> = ({
     const date = new Date(d);
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(date.setDate(diff));
+    date.setDate(diff);
+    // Must be midnight: Timeline filters the week with `start >= weekStart`, so
+    // carrying the current clock time here hides every booking earlier that day
+    // on the first day of the week.
+    date.setHours(0, 0, 0, 0);
+    return date;
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -609,6 +614,7 @@ const HomePage: React.FC<HomePageProps> = ({
                   onRangeSelect={handleRangeSelect}
                   onBookingClick={handleBookingClick}
                   selectedRange={selectedRange}
+                  selectedDate={currentDate}
                 />
               )}
               {calendarView === 'day' && (

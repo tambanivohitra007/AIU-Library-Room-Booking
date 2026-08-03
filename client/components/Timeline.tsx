@@ -30,6 +30,13 @@ interface TimelineProps {
   onRangeSelect: (start: Date, end: Date) => void;
   onBookingClick: (booking: Booking) => void;
   selectedRange?: { start: Date; end: Date } | null;
+  /**
+   * The date currently picked in the mini calendar. The week view keeps showing
+   * the whole week (picking a date navigates, it does not drill down), so this
+   * only marks which column was chosen - without it, choosing a day inside the
+   * week already on screen would produce no visible change at all.
+   */
+  selectedDate?: Date;
 }
 
 const Timeline: React.FC<TimelineProps> = ({
@@ -41,6 +48,7 @@ const Timeline: React.FC<TimelineProps> = ({
   onRangeSelect,
   onBookingClick,
   selectedRange,
+  selectedDate,
 }) => {
   const { t } = useTranslation();
   const { operatingHours: globalHours } = useSettings();
@@ -184,14 +192,14 @@ const Timeline: React.FC<TimelineProps> = ({
     };
   };
 
-  const isToday = (d: Date) => {
-    const now = new Date();
-    return (
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    );
-  };
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear();
+
+  const isToday = (d: Date) => isSameDay(d, new Date());
+
+  const isSelected = (d: Date) => !!selectedDate && isSameDay(d, selectedDate);
 
   // Start scrolled to the earliest opening hour (the 6:00 grid start is
   // usually closed time nobody needs to see first)
@@ -227,21 +235,30 @@ const Timeline: React.FC<TimelineProps> = ({
           <div className="flex-1 grid grid-cols-7 divide-x divide-slate-100">
             {days.map((day, i) => {
               const today = isToday(day);
+              const selected = isSelected(day);
               return (
                 <div
                   key={i}
-                  className={`text-center py-3 sm:py-4 transition-colors ${today ? 'bg-primary/10' : 'glass'}`}
+                  aria-current={selected ? 'date' : undefined}
+                  className={`relative text-center py-3 sm:py-4 transition-colors ${
+                    selected ? 'bg-primary/10' : today ? 'bg-primary/10' : 'glass'
+                  }`}
                 >
                   <div
-                    className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today ? 'text-primary' : 'text-slate-600'}`}
+                    className={`text-[11px] sm:text-xs font-bold uppercase tracking-wide mb-1 ${today || selected ? 'text-primary' : 'text-slate-600'}`}
                   >
                     {day.toLocaleDateString(dateLocale(), { weekday: 'short' })}
                   </div>
                   <div
-                    className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-primary w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto' : 'text-slate-800'}`}
+                    className={`text-sm sm:text-lg font-semibold ${today ? 'text-white bg-primary w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mx-auto' : selected ? 'text-primary' : 'text-slate-800'}`}
                   >
                     {day.getDate()}
                   </div>
+                  {/* The picked day keeps its own marker so it stays distinct from
+                      today's filled circle when they are different days */}
+                  {selected && (
+                    <span className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
+                  )}
                 </div>
               );
             })}
@@ -355,7 +372,13 @@ const Timeline: React.FC<TimelineProps> = ({
               return (
                 <div
                   key={dayIndex}
-                  className={`relative h-full group ${today ? 'bg-indigo-50/20' : ''}`}
+                  className={`relative h-full group ${
+                    isSelected(day)
+                      ? 'bg-primary/5'
+                      : today
+                        ? 'bg-indigo-50/20'
+                        : ''
+                  }`}
                 >
                   {/* Time Slots (Interactivity) */}
                   {hours.map((h, hIndex) => (

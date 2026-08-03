@@ -173,6 +173,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ onClose, onSuccess }) => {
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="STUDENT">{t('userForm.roleStudent')}</option>
+              <option value="FACULTY">{t('userForm.roleFaculty')}</option>
               <option value="STUDENT_WORKER">
                 {t('userForm.roleStudentWorker')}
               </option>

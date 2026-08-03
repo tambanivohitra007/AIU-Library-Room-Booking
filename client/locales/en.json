@@ -242,7 +242,8 @@
       "SUPERADMIN": "Super Admin",
       "ADMIN": "Admin",
       "STUDENT_WORKER": "Student Worker",
-      "STUDENT": "Student"
+      "STUDENT": "Student",
+      "FACULTY": "Faculty"
     },
     "userStatus": {
       "ACTIVE": "Active",
@@ -433,7 +434,8 @@
     "creating": "Creating...",
     "createUser": "Create User",
     "updating": "Updating...",
-    "updateUser": "Update User"
+    "updateUser": "Update User",
+    "roleFaculty": "Faculty"
   },
   "userImport": {
     "title": "Import Users",

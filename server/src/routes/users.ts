@@ -10,6 +10,9 @@ const prisma = new PrismaClient();
 
 const DEFAULT_PASSWORD = 'Password123!';
 
+// Must match the UserRole enum in schema.prisma
+const VALID_ROLES = ['STUDENT', 'FACULTY', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN'];
+
 // Appointing or managing privileged accounts is reserved for super admins
 const PRIVILEGED_ROLES = ['ADMIN', 'SUPERADMIN'];
 const isPrivileged = (role: string | null | undefined) => !!role && PRIVILEGED_ROLES.includes(role);
@@ -243,6 +246,12 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
 
     if (!existingUser) {
       return res.status(404).json({ error: trReq(req, 'userNotFound') });
+    }
+
+    // Reject an unknown role here; otherwise Prisma throws on the enum and the
+    // caller gets a 500 "Failed to update user" instead of a usable message.
+    if (role !== undefined && !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ error: trReq(req, 'invalidRole') });
     }
 
     // Only super admins may grant privileged roles or modify privileged accounts

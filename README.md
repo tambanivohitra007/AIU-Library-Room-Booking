@@ -8,7 +8,7 @@ A production-ready, white-label room booking application with a React + TypeScri
 - **Departments** — group rooms by department, each with its own operating hours, contact emails, and appointed managers who approve/cancel bookings for their rooms only
 - **Booking policies per room** — capacity ranges, terms & conditions with recorded acceptance, and an optional approval workflow (requests hold the slot as *Pending* until a manager approves)
 - **Microsoft SSO** (Azure AD) plus local accounts, with a configurable email-domain allowlist and a self-registration toggle
-- **Role hierarchy** — SUPERADMIN → ADMIN → STUDENT_WORKER → STUDENT, plus per-department managers assignable to any user
+- **Role hierarchy** — SUPERADMIN → ADMIN → STUDENT_WORKER → FACULTY / STUDENT, plus per-department managers assignable to any user
 - **Email notifications** via Microsoft Graph — approval requests, approvals, rejections, cancellations, and automatic reminders
 - **Server-enforced rules** — operating hours, semester windows, capacities, terms, approvals, and permissions are all validated by the API, never just the UI
 
@@ -144,7 +144,7 @@ cd client && npm run dev     # http://localhost:3000
 
 ## Roles & Permissions
 
-| Capability | STUDENT | STUDENT_WORKER | Dept. Manager* | ADMIN | SUPERADMIN |
+| Capability | STUDENT / FACULTY | STUDENT_WORKER | Dept. Manager* | ADMIN | SUPERADMIN |
 |---|---|---|---|---|---|
 | Book rooms, manage own bookings | ✅ | ✅ | ✅ | ✅ | ✅ |
 | See all booking details / cancel / remind | — | ✅ | own depts | ✅ | ✅ |
@@ -156,7 +156,7 @@ cd client && npm run dev     # http://localhost:3000
 | Change roles / manage admin accounts | — | — | — | — | ✅ |
 | Service Settings (branding, domains, hours) | — | — | — | — | ✅ |
 
-\* Department manager is an assignment (Admin → Departments), independent of role — a STUDENT can manage a department. All checks are enforced server-side.
+\* Department manager is an assignment (Admin → Departments), independent of role. **It grants scope, it does not remove any** — a user whose role is ADMIN keeps global powers over every department regardless of the assignment. To confine someone to their own department, set their role to **FACULTY** (or STUDENT) *and* add them to that department's managers. `FACULTY` and `STUDENT` have identical permissions; `FACULTY` exists so a department head is not labelled a student. All checks are enforced server-side.
 
 ## Booking Rules
 
@@ -273,7 +273,7 @@ All routes are prefixed with `/api`. Authenticated routes expect `Authorization:
 
 ## Database Schema (key points)
 
-- **User** — role (`STUDENT | STUDENT_WORKER | ADMIN | SUPERADMIN`), status (`PENDING | ACTIVE | SUSPENDED`), provider (`LOCAL | MICROSOFT`)
+- **User** — role (`STUDENT | FACULTY | STUDENT_WORKER | ADMIN | SUPERADMIN`; `FACULTY` is `STUDENT` with a different label), status (`PENDING | ACTIVE | SUSPENDED`), provider (`LOCAL | MICROSOFT`)
 - **Department** — name, `contactEmail` (comma-separated list), `operatingHours` (JSON weekly schedule; null = inherit global)
 - **DepartmentAdmin** — join table granting a user management rights over one department
 - **Room** — capacity range, `features` (JSON string array), `bookingTerms` (null = no acceptance step), `requiresApproval`, optional `departmentId` (SetNull on department delete)

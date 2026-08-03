@@ -242,7 +242,8 @@
       "SUPERADMIN": "ผู้ดูแลระบบสูงสุด",
       "ADMIN": "ผู้ดูแลระบบ",
       "STUDENT_WORKER": "นักศึกษาช่วยงาน",
-      "STUDENT": "นักศึกษา"
+      "STUDENT": "นักศึกษา",
+      "FACULTY": "อาจารย์"
     },
     "userStatus": {
       "ACTIVE": "ใช้งานอยู่",
@@ -433,7 +434,8 @@
     "creating": "กำลังสร้าง...",
     "createUser": "สร้างผู้ใช้",
     "updating": "กำลังอัปเดต...",
-    "updateUser": "อัปเดตผู้ใช้"
+    "updateUser": "อัปเดตผู้ใช้",
+    "roleFaculty": "อาจารย์"
   },
   "userImport": {
     "title": "นำเข้าผู้ใช้",

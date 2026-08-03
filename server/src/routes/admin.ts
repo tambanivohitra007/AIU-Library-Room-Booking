@@ -18,7 +18,7 @@ router.use(authenticateToken);
 
 // Update user role (super admin only: role changes are privilege escalation)
 router.patch('/users/:id/role', requireSuperAdmin, [
-  body('role').isIn(['STUDENT', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN']).withMessage('invalidRole'),
+  body('role').isIn(['STUDENT', 'FACULTY', 'STUDENT_WORKER', 'ADMIN', 'SUPERADMIN']).withMessage('invalidRole'),
   handleValidationErrors,
 ], async (req: AuthRequest, res: Response) => {
   try {

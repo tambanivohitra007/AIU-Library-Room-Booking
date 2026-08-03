@@ -12,6 +12,10 @@ datasource db {
 
 enum UserRole {
   STUDENT
+  // Same permissions as STUDENT (book rooms, no global powers). Exists so a
+  // department manager is not labelled a student - the scope comes from the
+  // DepartmentAdmin grant, never from the role.
+  FACULTY
   STUDENT_WORKER
   ADMIN
   SUPERADMIN

@@ -1,5 +1,8 @@
 export enum UserRole {
   STUDENT = 'STUDENT',
+  // Same powers as STUDENT; a separate label so department managers are not
+  // shown as students. Department scope comes from the DepartmentAdmin grant.
+  FACULTY = 'FACULTY',
   STUDENT_WORKER = 'STUDENT_WORKER',
   ADMIN = 'ADMIN',
   SUPERADMIN = 'SUPERADMIN'

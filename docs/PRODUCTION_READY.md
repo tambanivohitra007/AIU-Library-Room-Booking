@@ -100,7 +100,7 @@ npm install && npm run build
 npx prisma migrate deploy
 
 # 5. Start with PM2
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
 ```
@@ -154,7 +154,7 @@ chmod +x scripts/production-check.sh
 ### PM2 Management
 ```bash
 # Start
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # Logs
 pm2 logs aiu-library-api

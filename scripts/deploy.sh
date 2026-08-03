@@ -286,14 +286,18 @@ if [ -z "$APP_NAME" ]; then
     done
 fi
 
-if [ -n "$APP_NAME" ] && $SUDO pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-    info "Reloading existing PM2 app '$APP_NAME'"
-    $SUDO pm2 restart "$APP_NAME" --update-env
-else
-    info "No API app registered yet - starting from ecosystem.config.cjs (name: aiu-library-api)"
-    $SUDO pm2 startOrRestart ecosystem.config.cjs --update-env
-    APP_NAME="aiu-library-api"
+# Always (re)start through the ecosystem file: `pm2 restart <name> --update-env` refreshes
+# the env from the calling shell only, so settings declared in the config (e.g. TZ) would
+# never reach a long-running app. Passing the file is what re-reads them.
+CONFIG_APP_NAME="aiu-library-api"
+if [ -n "$APP_NAME" ] && [ "$APP_NAME" != "$CONFIG_APP_NAME" ] && $SUDO pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+    info "Removing legacy PM2 app '$APP_NAME' (config declares '$CONFIG_APP_NAME')"
+    # Without this the next line would start a SECOND process on the same port.
+    $SUDO pm2 delete "$APP_NAME" || true
 fi
+info "Starting/reloading the API from ecosystem.config.cjs (name: $CONFIG_APP_NAME)"
+$SUDO pm2 startOrRestart ecosystem.config.cjs --update-env
+APP_NAME="$CONFIG_APP_NAME"
 $SUDO pm2 save
 cd ..
 success "API running under PM2 as '$APP_NAME' (process list saved)"

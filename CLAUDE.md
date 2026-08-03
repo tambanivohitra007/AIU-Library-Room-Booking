@@ -35,8 +35,12 @@ npm run prisma:generate       # Regenerate Prisma client after schema changes
 ```bash
 ./scripts/deploy.sh           # Full build + deploy
 ./scripts/production-check.sh # Pre-deploy readiness check
-pm2 start ecosystem.config.js # Start via PM2 (server/)
+pm2 start ecosystem.config.cjs # Start via PM2 (server/) — .cjs, since the package is ESM
 ```
+
+Server wall-clock times (operating-hours checks, the booking scheduler, email
+timestamps) use the process's local timezone via `Date#getHours`. `ecosystem.config.cjs`
+pins `TZ=Asia/Bangkok` so production doesn't inherit the host default (UTC).
 
 ## Architecture
 

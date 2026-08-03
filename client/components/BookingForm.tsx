@@ -160,14 +160,26 @@ const BookingForm: React.FC<BookingFormProps> = ({
     const minAttendees = selectedRoom.minCapacity;
     const maxAttendees = selectedRoom.maxCapacity;
 
-    if (uniqueRaw.length + 1 < minAttendees) {
+    // Same totals framing as the live counter, so the error cannot contradict it
+    const total = uniqueRaw.length + 1;
+    if (total < minAttendees) {
       setError(
-        t('booking.minPeople', { min: minAttendees, others: minAttendees - 1 }),
+        t('booking.needMorePeople', {
+          missing: minAttendees - total,
+          total,
+          min: minAttendees,
+        }),
       );
       return;
     }
-    if (uniqueRaw.length + 1 > maxAttendees) {
-      setError(t('booking.maxPeople', { max: maxAttendees }));
+    if (total > maxAttendees) {
+      setError(
+        t('booking.tooManyPeople', {
+          extra: total - maxAttendees,
+          total,
+          max: maxAttendees,
+        }),
+      );
       return;
     }
 
@@ -210,9 +222,15 @@ const BookingForm: React.FC<BookingFormProps> = ({
     }
   };
 
-  const isCountValid =
-    attendeeCount + 1 >= selectedRoom.minCapacity &&
-    attendeeCount + 1 <= selectedRoom.maxCapacity;
+  // Room capacity counts the booker, the textarea does not. Everything shown to
+  // the user is expressed as a TOTAL so it can be compared with the room limits
+  // directly, instead of asking them to add themselves in their head.
+  const totalPeople = attendeeCount + 1;
+  const missingPeople = Math.max(0, selectedRoom.minCapacity - totalPeople);
+  const extraPeople = Math.max(0, totalPeople - selectedRoom.maxCapacity);
+  const isCountValid = missingPeople === 0 && extraPeople === 0;
+  // A room that seats one is bookable alone, so companions are optional there
+  const companionsRequired = selectedRoom.minCapacity > 1;
   const durationMinutes =
     (bookingEnd.getTime() - bookingStart.getTime()) / 60000;
 
@@ -327,11 +345,15 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            {t('booking.otherAttendees')}
+            {companionsRequired
+              ? t('booking.otherAttendeesRequired', {
+                  min: selectedRoom.minCapacity - 1,
+                })
+              : t('booking.otherAttendeesOptional')}
           </label>
           <div className="relative">
             <textarea
-              required
+              required={companionsRequired}
               rows={3}
               value={attendeeInput}
               onChange={(e) => setAttendeeInput(e.target.value)}
@@ -340,14 +362,34 @@ const BookingForm: React.FC<BookingFormProps> = ({
             />
             <UsersIcon className="w-4 h-4 absolute right-2 top-2 text-slate-300" />
           </div>
-          <div className="flex justify-between mt-1 text-xs">
+          <div className="flex justify-between items-start gap-2 mt-1 text-xs">
+            {/* Always a TOTAL, in the same unit as the room limits beside it */}
             <span
-              className={isCountValid ? 'text-green-600' : 'text-orange-500'}
+              className={
+                isCountValid ? 'text-green-600 font-medium' : 'text-orange-500 font-medium'
+              }
             >
-              {t('booking.count', { count: attendeeCount })}
+              {missingPeople > 0
+                ? t('booking.needMorePeople', {
+                    missing: missingPeople,
+                    total: totalPeople,
+                    min: selectedRoom.minCapacity,
+                  })
+                : extraPeople > 0
+                  ? t('booking.tooManyPeople', {
+                      extra: extraPeople,
+                      total: totalPeople,
+                      max: selectedRoom.maxCapacity,
+                    })
+                  : attendeeCount === 0
+                    ? t('booking.justYou')
+                    : t('booking.totalPeople', {
+                        total: totalPeople,
+                        others: attendeeCount,
+                      })}
             </span>
-            <span className="text-slate-400">
-              {t('booking.minMax', {
+            <span className="text-slate-400 text-right shrink-0">
+              {t('booking.roomSeats', {
                 min: selectedRoom.minCapacity,
                 max: selectedRoom.maxCapacity,
               })}

@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
+import { recordAudit } from '../services/audit.js';
 import {getLang, asLang, tr, statusName, dateLocaleTag, trReq } from '../services/i18n.js';
 
 const router = Router();
@@ -422,6 +423,15 @@ router.post('/:id/approve', async (req: AuthRequest, res) => {
     }
 
     logger.info(`Booking ${booking.id} approved by user ${req.userId}`);
+    await recordAudit(req, {
+      action: 'BOOKING_APPROVE',
+      targetType: 'Booking',
+      targetId: booking.id,
+      targetLabel: `${booking.room.name} - ${booking.user.name}`,
+      departmentId: booking.room.departmentId,
+      summary: `Approved booking for ${booking.user.email}`,
+      metadata: { start: booking.startTime.toISOString(), bookerId: booking.userId },
+    });
     res.json({ id: updated.id, status: updated.status });
   } catch (error) {
     logger.error('Error approving booking:', error);
@@ -470,6 +480,15 @@ router.post('/:id/reject', async (req: AuthRequest, res) => {
     }
 
     logger.info(`Booking ${booking.id} rejected by user ${req.userId}. Reason: ${rejectionReason}`);
+    await recordAudit(req, {
+      action: 'BOOKING_REJECT',
+      targetType: 'Booking',
+      targetId: booking.id,
+      targetLabel: `${booking.room.name} - ${booking.user.name}`,
+      departmentId: booking.room.departmentId,
+      summary: `Rejected booking for ${booking.user.email}`,
+      metadata: { reason: rejectionReason, start: booking.startTime.toISOString() },
+    });
     res.json({ id: updated.id, status: updated.status, cancellationReason: updated.cancellationReason });
   } catch (error) {
     logger.error('Error rejecting booking:', error);
@@ -519,7 +538,17 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
         where: { id: booking.id },
         data: { reminderSent: true },
       });
-      
+
+      await recordAudit(req, {
+        action: 'BOOKING_REMIND',
+        targetType: 'Booking',
+        targetId: booking.id,
+        targetLabel: `${booking.room.name} - ${booking.user.name}`,
+        departmentId: booking.room.departmentId,
+        summary: `Sent a reminder to ${booking.user.email}`,
+        metadata: { start: booking.startTime.toISOString() },
+      });
+
       return res.json({ message: trReq(req, 'reminderSent') });
     } else {
       return res.status(400).json({ error: trReq(req, 'userNoEmail') });
@@ -591,6 +620,23 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     }
 
     logger.info(`Booking ${updated.id} cancelled by user ${req.userId}. Reason: ${reason || 'None'}`);
+    await recordAudit(req, {
+      action: 'BOOKING_CANCEL',
+      targetType: 'Booking',
+      targetId: updated.id,
+      targetLabel: `${updated.room.name} - ${updated.user.name}`,
+      departmentId: updated.room.departmentId,
+      // Cancelling someone else's booking is the case worth being able to find
+      summary:
+        updated.userId === req.userId
+          ? 'Cancelled their own booking'
+          : `Cancelled a booking belonging to ${updated.user.email}`,
+      metadata: {
+        onBehalf: updated.userId !== req.userId,
+        reason: reason || null,
+        start: updated.startTime.toISOString(),
+      },
+    });
 
     res.json({
       id: updated.id,

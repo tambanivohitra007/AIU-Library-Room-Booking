@@ -182,7 +182,8 @@
       "departments": "แผนก",
       "semesters": "ภาคการศึกษา",
       "closures": "วันปิดทำการ",
-      "settings": "การตั้งค่า"
+      "settings": "การตั้งค่า",
+      "audit": "การตรวจสอบ"
     },
     "stats": {
       "totalBookings": "การจองทั้งหมด",
@@ -658,5 +659,63 @@
     "loggedOut": "คุณได้ออกจากระบบแล้ว",
     "passwordChanged": "เปลี่ยนรหัสผ่านสำเร็จ",
     "checkingAuth": "กำลังตรวจสอบการยืนยันตัวตน..."
+  },
+  "audit": {
+    "title": "บันทึกการตรวจสอบ",
+    "subtitleAdmin": "ทุกการดำเนินการที่ใช้สิทธิ์ พร้อมผู้ดำเนินการ อ่านได้อย่างเดียวและเพิ่มต่อท้ายเท่านั้น",
+    "subtitleDept": "การดำเนินการที่มีผลต่อแผนกของคุณ รวมถึงที่ดำเนินการโดยผู้ดูแลระบบส่วนกลาง",
+    "loadFailed": "ดึงข้อมูลบันทึกการตรวจสอบไม่สำเร็จ",
+    "empty": "ยังไม่มีการดำเนินการที่บันทึกไว้",
+    "emptyFiltered": "ไม่พบรายการที่ตรงกับตัวกรอง",
+    "filterAction": "การดำเนินการ",
+    "filterDepartment": "แผนก",
+    "filterFrom": "ตั้งแต่",
+    "filterTo": "ถึง",
+    "allActions": "ทุกการดำเนินการ",
+    "allDepartments": "ทุกแผนก",
+    "clearFilters": "ล้างตัวกรอง",
+    "showDetails": "รายละเอียด",
+    "hideDetails": "ซ่อน",
+    "systemActor": "ระบบ (อัตโนมัติ)",
+    "previous": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "pageOf": "หน้า {{page}} จาก {{pages}} · {{total}} รายการ",
+    "groups": {
+      "bookings": "การจอง",
+      "rooms": "ห้อง",
+      "departments": "แผนก",
+      "closures": "วันหยุด",
+      "semesters": "ภาคการศึกษา",
+      "users": "ผู้ใช้",
+      "platform": "ระบบ"
+    },
+    "actions": {
+      "BOOKING_APPROVE": "อนุมัติการจอง",
+      "BOOKING_REJECT": "ปฏิเสธการจอง",
+      "BOOKING_CANCEL": "ยกเลิกการจอง",
+      "BOOKING_REMIND": "ส่งการแจ้งเตือน",
+      "BOOKING_AUTO_CANCEL": "ยกเลิกอัตโนมัติ",
+      "BOOKING_AUTO_COMPLETE": "ปิดรายการอัตโนมัติ",
+      "ROOM_CREATE": "สร้างห้อง",
+      "ROOM_UPDATE": "แก้ไขห้อง",
+      "ROOM_DELETE": "ลบห้อง",
+      "DEPARTMENT_CREATE": "สร้างแผนก",
+      "DEPARTMENT_UPDATE": "แก้ไขแผนก",
+      "DEPARTMENT_DELETE": "ลบแผนก",
+      "DEPARTMENT_MANAGERS_UPDATE": "เปลี่ยนผู้ดูแลแผนก",
+      "CLOSURE_CREATE": "สร้างวันหยุด",
+      "CLOSURE_UPDATE": "แก้ไขวันหยุด",
+      "CLOSURE_DELETE": "ลบวันหยุด",
+      "SEMESTER_CREATE": "สร้างภาคการศึกษา",
+      "SEMESTER_UPDATE": "แก้ไขภาคการศึกษา",
+      "SEMESTER_DELETE": "ลบภาคการศึกษา",
+      "USER_CREATE": "สร้างผู้ใช้",
+      "USER_UPDATE": "แก้ไขผู้ใช้",
+      "USER_DELETE": "ลบผู้ใช้",
+      "USER_IMPORT": "นำเข้าผู้ใช้",
+      "USER_ROLE_CHANGE": "เปลี่ยนบทบาท",
+      "USER_STATUS_CHANGE": "เปลี่ยนสถานะ",
+      "SETTINGS_UPDATE": "แก้ไขการตั้งค่าระบบ"
+    }
   }
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
+import { recordAudit } from '../services/audit.js';
 import logger from '../utils/logger.js';
 import { trReq } from '../services/i18n.js';
 
@@ -85,6 +86,22 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     logger.info(`Schedule exception "${exception.name}" created by user ${req.userId}`);
+    await recordAudit(req, {
+      action: 'CLOSURE_CREATE',
+      targetType: 'ScheduleException',
+      targetId: exception.id,
+      targetLabel: exception.name,
+      departmentId: exception.departmentId,
+      summary: exception.closed
+        ? `Created closure "${exception.name}"`
+        : `Created special hours "${exception.name}"`,
+      metadata: {
+        from: exception.startDate.toISOString().slice(0, 10),
+        to: exception.endDate.toISOString().slice(0, 10),
+        scope: exception.departmentId ? 'department' : 'service-wide',
+      },
+    });
+
     res.status(201).json(exception);
   } catch (error) {
     console.error('Create schedule exception error:', error);
@@ -123,6 +140,19 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       include: { department: { select: { id: true, name: true } } },
     });
 
+    await recordAudit(req, {
+      action: 'CLOSURE_UPDATE',
+      targetType: 'ScheduleException',
+      targetId: exception.id,
+      targetLabel: exception.name,
+      departmentId: exception.departmentId,
+      summary: `Updated closure "${exception.name}"`,
+      metadata: {
+        from: exception.startDate.toISOString().slice(0, 10),
+        to: exception.endDate.toISOString().slice(0, 10),
+      },
+    });
+
     res.json(exception);
   } catch (error) {
     console.error('Update schedule exception error:', error);
@@ -143,6 +173,15 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     await prisma.scheduleException.delete({ where: { id: req.params.id } });
+
+    await recordAudit(req, {
+      action: 'CLOSURE_DELETE',
+      targetType: 'ScheduleException',
+      targetId: existing.id,
+      targetLabel: existing.name,
+      departmentId: existing.departmentId,
+      summary: `Deleted closure "${existing.name}"`,
+    });
     logger.info(`Schedule exception "${existing.name}" deleted by user ${req.userId}`);
     res.json({ message: trReq(req, 'closureDeleted') });
   } catch (error) {

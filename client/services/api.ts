@@ -6,6 +6,7 @@ import {
   Semester,
   Department,
   ScheduleException,
+  AuditPage,
 } from '../types';
 
 // Use environment variable or fallback to relative path (for dev proxy)
@@ -324,6 +325,24 @@ export const api = {
   },
 
   // Schedule exceptions (closures / special hours)
+  // Audit trail (read-only; global admins see everything, department admins only theirs)
+  getAuditLog: async (params: {
+    limit?: number;
+    offset?: number;
+    action?: string;
+    targetType?: string;
+    departmentId?: string;
+    from?: string;
+    to?: string;
+  } = {}): Promise<AuditPage> => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+    });
+    const q = qs.toString();
+    return fetchAPI<AuditPage>(`/audit${q ? `?${q}` : ''}`);
+  },
+
   getScheduleExceptions: async (): Promise<ScheduleException[]> => {
     return fetchAPI<ScheduleException[]>('/schedule-exceptions');
   },

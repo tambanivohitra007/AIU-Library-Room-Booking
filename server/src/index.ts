@@ -11,6 +11,7 @@ import { semesterRouter } from './routes/semesters.js';
 import { settingsRouter } from './routes/settingsRoutes.js';
 import { departmentRouter } from './routes/departments.js';
 import { scheduleExceptionRouter } from './routes/scheduleExceptions.js';
+import { auditRouter } from './routes/audit.js';
 import { apiLimiter } from './middleware/security.js';
 import { startBookingScheduler } from './services/bookingScheduler.js';
 import logger from './utils/logger.js';
@@ -59,6 +60,7 @@ app.use('/api/semesters', semesterRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/departments', departmentRouter);
 app.use('/api/schedule-exceptions', scheduleExceptionRouter);
+app.use('/api/audit', auditRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

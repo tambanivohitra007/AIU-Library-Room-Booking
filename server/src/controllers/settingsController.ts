@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { getServiceSettings, parseOperatingHoursJson } from '../services/settings.js';
 import { trReq } from '../services/i18n.js';
+import { recordAudit } from '../services/audit.js';
+import { AuthRequest } from '../middleware/auth.js';
 
 const prisma = new PrismaClient();
 
@@ -48,6 +50,30 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
         } else {
             settings = await prisma.serviceSettings.create({ data });
         }
+
+        // Service-wide config: the domain allowlist gates who may register at all,
+        // and operatingHours is the default schedule for every room.
+        const changed: string[] = [];
+        if (existing) {
+            if (existing.serviceName !== settings.serviceName) changed.push('serviceName');
+            if (existing.allowedEmailDomains !== settings.allowedEmailDomains) changed.push('allowedEmailDomains');
+            if (existing.operatingHours !== settings.operatingHours) changed.push('operatingHours');
+            if (existing.allowSelfRegistration !== settings.allowSelfRegistration) changed.push('allowSelfRegistration');
+        }
+        await recordAudit(req as AuthRequest, {
+            action: 'SETTINGS_UPDATE',
+            targetType: 'ServiceSettings',
+            targetId: settings.id,
+            targetLabel: settings.serviceName,
+            summary: changed.length
+                ? `Updated service settings: ${changed.join(', ')}`
+                : 'Updated service settings',
+            metadata: {
+                changed,
+                domainsFrom: changed.includes('allowedEmailDomains') ? existing?.allowedEmailDomains : undefined,
+                domainsTo: changed.includes('allowedEmailDomains') ? settings.allowedEmailDomains : undefined,
+            },
+        });
 
         res.json(settings);
     } catch (error) {

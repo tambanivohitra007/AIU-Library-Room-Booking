@@ -4,6 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
 import { parseOperatingHoursJson } from '../services/settings.js';
 import { trReq } from '../services/i18n.js';
+import { recordAudit } from '../services/audit.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -106,6 +107,16 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       include: { department: true },
     });
 
+    await recordAudit(req, {
+      action: 'ROOM_CREATE',
+      targetType: 'Room',
+      targetId: room.id,
+      targetLabel: room.name,
+      departmentId: room.departmentId,
+      summary: `Created room "${room.name}"`,
+      metadata: { capacity: `${room.minCapacity}-${room.maxCapacity}`, requiresApproval: room.requiresApproval },
+    });
+
     res.status(201).json({
       ...room,
       features: JSON.parse(room.features),
@@ -193,6 +204,20 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       include: { department: true },
     });
 
+    await recordAudit(req, {
+      action: 'ROOM_UPDATE',
+      targetType: 'Room',
+      targetId: room.id,
+      targetLabel: room.name,
+      departmentId: room.departmentId,
+      summary: `Updated room "${room.name}"`,
+      metadata: {
+        renamedFrom: existingRoom.name !== room.name ? existingRoom.name : undefined,
+        movedDepartment: existingRoom.departmentId !== room.departmentId || undefined,
+        hoursChanged: existingRoom.operatingHours !== room.operatingHours || undefined,
+      },
+    });
+
     res.json({
       ...room,
       features: JSON.parse(room.features),
@@ -232,19 +257,30 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     if (activeBookingsCount > 0) {
       return res.status(400).json({
-        error: `Cannot delete room with active bookings. This room has ${activeBookingsCount} active booking(s). Please cancel them first.`
+        error: trReq(req, 'roomHasActiveBookingsCount', { count: activeBookingsCount })
       });
     }
 
     // Delete all bookings associated with this room first (including CANCELLED and COMPLETED)
     // This is necessary because there is no CASCADE delete on the database schema
-    await prisma.booking.deleteMany({
+    const removedBookings = await prisma.booking.deleteMany({
       where: { roomId: req.params.id }
     });
 
     // Delete room
     await prisma.room.delete({
       where: { id: req.params.id },
+    });
+
+    // Deleting a room silently destroys its whole booking history - record how much
+    await recordAudit(req, {
+      action: 'ROOM_DELETE',
+      targetType: 'Room',
+      targetId: existingRoom.id,
+      targetLabel: existingRoom.name,
+      departmentId: existingRoom.departmentId,
+      summary: `Deleted room "${existingRoom.name}" and ${removedBookings.count} booking record(s)`,
+      metadata: { deletedBookings: removedBookings.count },
     });
 
     res.json({ message: trReq(req, 'roomDeleted') });

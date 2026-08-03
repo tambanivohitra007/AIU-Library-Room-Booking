@@ -149,3 +149,32 @@ model ServiceSettings {
   updatedAt    DateTime @updatedAt
 }
 
+// Append-only trail of privileged actions: who did what, to what, and when.
+//
+// The actor is stored DENORMALISED with no foreign key to User on purpose. A
+// relation would either block deleting a user or (matching Booking's cascade)
+// erase their history along with them - and "the admin who did this no longer
+// exists" is exactly when the trail matters most. The same applies to
+// targetLabel: it captures the name as it was, so renaming or deleting a room
+// later does not rewrite the past.
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String?  // null = performed by the system (e.g. the booking scheduler)
+  actorEmail   String   @default("system")
+  actorName    String   @default("System")
+  actorRole    String   @default("SYSTEM")
+  action       String   // e.g. BOOKING_APPROVE, ROOM_UPDATE, USER_ROLE_CHANGE
+  targetType   String   // Booking | Room | Department | ScheduleException | Semester | User | ServiceSettings
+  targetId     String?
+  targetLabel  String?  // human-readable identity at the time of the action
+  departmentId String?  // scopes the trail so a department admin sees only their own
+  summary      String?  // short sentence describing the change
+  metadata     String?  // compact JSON: reason, before/after values
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@index([departmentId])
+}
+

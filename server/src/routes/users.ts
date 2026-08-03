@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { authenticateToken, requireAdmin, requireAdminOrWorker, AuthRequest } from '../middleware/auth.js';
 import { trReq } from '../services/i18n.js';
+import { recordAudit } from '../services/audit.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -121,6 +122,15 @@ router.post('/', requireAdmin, async (req: AuthRequest, res) => {
       },
     });
 
+    await recordAudit(req, {
+      action: 'USER_CREATE',
+      targetType: 'User',
+      targetId: user.id,
+      targetLabel: user.email,
+      summary: `Created user ${user.email} with role ${user.role}`,
+      metadata: { role: user.role },
+    });
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
     res.status(201).json(userWithoutPassword);
@@ -199,8 +209,19 @@ router.post('/import', requireAdmin, async (req: AuthRequest, res) => {
       }
     }
 
+    await recordAudit(req, {
+      action: 'USER_IMPORT',
+      targetType: 'User',
+      targetLabel: `${results.success.length} user(s)`,
+      summary: `Imported ${results.success.length} user(s), ${results.failed.length} failed`,
+      metadata: { succeeded: results.success.length, failed: results.failed.length },
+    });
+
     res.status(200).json({
-      message: `Import completed: ${results.success.length} successful, ${results.failed.length} failed`,
+      message: trReq(req, 'importCompleted', {
+        success: results.success.length,
+        failed: results.failed.length,
+      }),
       defaultPassword: DEFAULT_PASSWORD,
       results,
     });
@@ -256,6 +277,31 @@ router.put('/:id', requireAdmin, async (req: AuthRequest, res) => {
       data: updateData,
     });
 
+    const roleChanged = existingUser.role !== updatedUser.role;
+    const statusChanged = existingUser.status !== updatedUser.status;
+    await recordAudit(req, {
+      action: roleChanged
+        ? 'USER_ROLE_CHANGE'
+        : statusChanged
+          ? 'USER_STATUS_CHANGE'
+          : 'USER_UPDATE',
+      targetType: 'User',
+      targetId: updatedUser.id,
+      targetLabel: updatedUser.email,
+      summary: roleChanged
+        ? `Changed role of ${updatedUser.email}: ${existingUser.role} -> ${updatedUser.role}`
+        : statusChanged
+          ? `Changed status of ${updatedUser.email}: ${existingUser.status} -> ${updatedUser.status}`
+          : `Updated account ${updatedUser.email}`,
+      metadata: {
+        roleFrom: roleChanged ? existingUser.role : undefined,
+        roleTo: roleChanged ? updatedUser.role : undefined,
+        statusFrom: statusChanged ? existingUser.status : undefined,
+        statusTo: statusChanged ? updatedUser.status : undefined,
+        passwordReset: req.body.password ? true : undefined,
+      },
+    });
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = updatedUser;
     res.json(userWithoutPassword);
@@ -283,8 +329,18 @@ router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
     }
 
     // Delete user (this will cascade delete their bookings due to foreign key)
+    const lostBookings = await prisma.booking.count({ where: { userId: id } });
     await prisma.user.delete({
       where: { id },
+    });
+
+    await recordAudit(req, {
+      action: 'USER_DELETE',
+      targetType: 'User',
+      targetId: id,
+      targetLabel: user.email,
+      summary: `Deleted user ${user.email} (${user.role}) and ${lostBookings} booking(s)`,
+      metadata: { role: user.role, cascadedBookings: lostBookings },
     });
 
     res.json({ message: trReq(req, 'userDeleted') });

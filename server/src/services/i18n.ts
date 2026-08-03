@@ -119,6 +119,10 @@ const MESSAGES = {
     en: 'Booking request rejected',
     th: 'คำขอจองถูกปฏิเสธ',
   },
+  autoCancelledUnapproved: {
+    en: 'Not approved before the booking start time',
+    th: 'ไม่ได้รับการอนุมัติก่อนถึงเวลาเริ่มจอง',
+  },
   cancelOwnOnly: {
     en: 'You can only cancel your own bookings',
     th: 'คุณสามารถยกเลิกได้เฉพาะการจองของตนเอง',
@@ -463,6 +467,14 @@ const MESSAGES = {
     en: 'Cannot delete room with active bookings',
     th: 'ไม่สามารถลบห้องที่ยังมีการจองอยู่',
   },
+  roomHasActiveBookingsCount: {
+    en: 'Cannot delete this room: it has {count} active booking(s). Cancel them first.',
+    th: 'ไม่สามารถลบห้องนี้ได้ เนื่องจากยังมีการจองที่ใช้งานอยู่ {count} รายการ กรุณายกเลิกก่อน',
+  },
+  importCompleted: {
+    en: 'Import completed: {success} successful, {failed} failed',
+    th: 'นำเข้าเสร็จสิ้น: สำเร็จ {success} รายการ ไม่สำเร็จ {failed} รายการ',
+  },
   createOwnRooms: {
     en: 'You can only create rooms in your own department',
     th: 'คุณสร้างห้องได้เฉพาะในแผนกของคุณเท่านั้น',
@@ -586,6 +598,10 @@ const MESSAGES = {
   fetchStatsFailed: {
     en: 'Failed to fetch statistics',
     th: 'ดึงข้อมูลสถิติไม่สำเร็จ',
+  },
+  fetchAuditFailed: {
+    en: 'Failed to fetch the audit log',
+    th: 'ดึงข้อมูลบันทึกการตรวจสอบไม่สำเร็จ',
   },
   fetchSettingsFailed: {
     en: 'Error fetching settings',

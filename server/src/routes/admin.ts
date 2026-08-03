@@ -6,6 +6,7 @@ import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { trReq } from '../services/i18n.js';
+import { recordAudit } from '../services/audit.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -24,6 +25,8 @@ router.patch('/users/:id/role', requireSuperAdmin, [
     const { id } = req.params;
     const { role } = req.body;
 
+    const before = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+
     const user = await prisma.user.update({
       where: { id },
       data: { role: role as UserRole },
@@ -37,6 +40,14 @@ router.patch('/users/:id/role', requireSuperAdmin, [
     });
 
     logger.info(`User role updated: ${id} to ${role} by admin ${req.userId}`);
+    await recordAudit(req, {
+      action: 'USER_ROLE_CHANGE',
+      targetType: 'User',
+      targetId: user.id,
+      targetLabel: user.email,
+      summary: `Changed role of ${user.email}: ${before?.role ?? 'unknown'} -> ${user.role}`,
+      metadata: { from: before?.role ?? null, to: user.role },
+    });
     res.json(user);
   } catch (error) {
     logger.error('Error updating user role:', error);

@@ -182,7 +182,8 @@
       "departments": "Departments",
       "semesters": "Semesters",
       "closures": "Closures",
-      "settings": "Settings"
+      "settings": "Settings",
+      "audit": "Audit"
     },
     "stats": {
       "totalBookings": "Total Bookings",
@@ -658,5 +659,63 @@
     "loggedOut": "You have been logged out",
     "passwordChanged": "Password changed successfully",
     "checkingAuth": "Checking authentication..."
+  },
+  "audit": {
+    "title": "Audit trail",
+    "subtitleAdmin": "Every privileged action, with who performed it. Read-only and append-only.",
+    "subtitleDept": "Privileged actions affecting your departments, including those taken by service-wide admins.",
+    "loadFailed": "Failed to load the audit trail",
+    "empty": "No actions recorded yet.",
+    "emptyFiltered": "No actions match these filters.",
+    "filterAction": "Action",
+    "filterDepartment": "Department",
+    "filterFrom": "From",
+    "filterTo": "To",
+    "allActions": "All actions",
+    "allDepartments": "All departments",
+    "clearFilters": "Clear filters",
+    "showDetails": "Details",
+    "hideDetails": "Hide",
+    "systemActor": "System (automatic)",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{pages}} · {{total}} entries",
+    "groups": {
+      "bookings": "Bookings",
+      "rooms": "Rooms",
+      "departments": "Departments",
+      "closures": "Closures",
+      "semesters": "Semesters",
+      "users": "Users",
+      "platform": "Platform"
+    },
+    "actions": {
+      "BOOKING_APPROVE": "Booking approved",
+      "BOOKING_REJECT": "Booking rejected",
+      "BOOKING_CANCEL": "Booking cancelled",
+      "BOOKING_REMIND": "Reminder sent",
+      "BOOKING_AUTO_CANCEL": "Auto-cancelled",
+      "BOOKING_AUTO_COMPLETE": "Auto-completed",
+      "ROOM_CREATE": "Room created",
+      "ROOM_UPDATE": "Room updated",
+      "ROOM_DELETE": "Room deleted",
+      "DEPARTMENT_CREATE": "Department created",
+      "DEPARTMENT_UPDATE": "Department updated",
+      "DEPARTMENT_DELETE": "Department deleted",
+      "DEPARTMENT_MANAGERS_UPDATE": "Department managers changed",
+      "CLOSURE_CREATE": "Closure created",
+      "CLOSURE_UPDATE": "Closure updated",
+      "CLOSURE_DELETE": "Closure deleted",
+      "SEMESTER_CREATE": "Semester created",
+      "SEMESTER_UPDATE": "Semester updated",
+      "SEMESTER_DELETE": "Semester deleted",
+      "USER_CREATE": "User created",
+      "USER_UPDATE": "User updated",
+      "USER_DELETE": "User deleted",
+      "USER_IMPORT": "Users imported",
+      "USER_ROLE_CHANGE": "Role changed",
+      "USER_STATUS_CHANGE": "Status changed",
+      "SETTINGS_UPDATE": "Service settings updated"
+    }
   }
 }

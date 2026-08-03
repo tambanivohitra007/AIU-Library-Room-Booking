@@ -5,6 +5,7 @@ import { body } from 'express-validator';
 import { handleValidationErrors } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { trReq } from '../services/i18n.js';
+import { recordAudit } from '../services/audit.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -69,6 +70,19 @@ router.post('/', [
     });
 
     logger.info(`Semester created: ${semester.name} by ${req.userId}`);
+    await recordAudit(req, {
+      action: 'SEMESTER_CREATE',
+      targetType: 'Semester',
+      targetId: semester.id,
+      targetLabel: semester.name,
+      summary: `Created semester "${semester.name}"${semester.isActive ? ' (active)' : ''}`,
+      metadata: {
+        from: semester.startDate.toISOString().slice(0, 10),
+        to: semester.endDate.toISOString().slice(0, 10),
+        isActive: semester.isActive,
+      },
+    });
+
     res.status(201).json(semester);
   } catch (error) {
     logger.error('Error creating semester:', error);
@@ -109,6 +123,20 @@ router.put('/:id', [
     });
 
     logger.info(`Semester updated: ${semester.name} by ${req.userId}`);
+    await recordAudit(req, {
+      action: 'SEMESTER_UPDATE',
+      targetType: 'Semester',
+      targetId: semester.id,
+      targetLabel: semester.name,
+      // Activating a semester silently changes which dates everyone can book
+      summary: `Updated semester "${semester.name}"${semester.isActive ? ' (now active)' : ''}`,
+      metadata: {
+        from: semester.startDate.toISOString().slice(0, 10),
+        to: semester.endDate.toISOString().slice(0, 10),
+        isActive: semester.isActive,
+      },
+    });
+
     res.json(semester);
   } catch (error) {
     logger.error('Error updating semester:', error);
@@ -120,8 +148,18 @@ router.put('/:id', [
 router.delete('/:id', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
+    // Read it before deleting so the trail can name what disappeared
+    const existing = await prisma.semester.findUnique({ where: { id } });
     await prisma.semester.delete({ where: { id } });
     logger.info(`Semester deleted: ${id} by ${req.userId}`);
+    await recordAudit(req, {
+      action: 'SEMESTER_DELETE',
+      targetType: 'Semester',
+      targetId: id,
+      targetLabel: existing?.name ?? id,
+      summary: `Deleted semester "${existing?.name ?? id}"`,
+      metadata: existing ? { wasActive: existing.isActive } : undefined,
+    });
     res.json({ message: trReq(req, 'semesterDeleted') });
   } catch (error) {
     logger.error('Error deleting semester:', error);

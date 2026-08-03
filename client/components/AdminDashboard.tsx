@@ -21,6 +21,7 @@ import RoomDetailsModal from './RoomDetailsModal';
 import SemestersManager from './SemestersManager';
 import DepartmentsManager from './DepartmentsManager';
 import ClosuresManager from './ClosuresManager';
+import AuditLogViewer from './AuditLogViewer';
 import AttendeesModal from './AttendeesModal';
 import DataTable from './DataTable';
 import { useToast } from '../contexts/ToastContext';
@@ -121,6 +122,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     | 'departments'
     | 'semesters'
     | 'closures'
+    | 'audit'
     | 'settings'
   >(isDeptAdminOnly ? 'bookings' : 'overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -1656,13 +1658,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
     { id: 'semesters', label: t('admin.tabs.semesters'), Icon: CalendarIcon },
     { id: 'closures', label: t('admin.tabs.closures'), Icon: CalendarIcon },
+    { id: 'audit', label: t('admin.tabs.audit'), Icon: BarChartIcon },
     { id: 'settings', label: t('admin.tabs.settings'), Icon: SettingsIcon },
   ].filter((tab) => {
     if (tab.id === 'settings') return isSuperAdmin; // platform config is super admin only
     if (isAdmin) return true;
     if (isDeptAdminOnly)
-      return ['bookings', 'rooms', 'departments', 'closures'].includes(tab.id);
-    return !['departments', 'semesters', 'closures'].includes(tab.id);
+      // Department admins see the trail for their own departments only (scoped server-side)
+      return ['bookings', 'rooms', 'departments', 'closures', 'audit'].includes(
+        tab.id,
+      );
+    // Staff without a department grant have no audit access (the API denies it too)
+    return !['departments', 'semesters', 'closures', 'audit'].includes(tab.id);
   });
 
   const activeTab = tabs.find((t) => t.id === selectedTab);
@@ -1754,6 +1761,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
           )}
           {selectedTab === 'semesters' && <SemestersManager />}
+          {selectedTab === 'audit' && (
+            <AuditLogViewer currentUser={currentUser} />
+          )}
           {selectedTab === 'closures' && (
             <ClosuresManager currentUser={currentUser} />
           )}

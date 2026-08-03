@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
 import { parseOperatingHoursJson } from '../services/settings.js';
 import { getManagedDepartmentIds, canManageDepartment, isGlobalAdmin } from '../services/permissions.js';
+import { recordAudit } from '../services/audit.js';
 import logger from '../utils/logger.js';
 import { trReq } from '../services/i18n.js';
 
@@ -49,6 +50,15 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res) 
         contactEmail: contactEmail || null,
         operatingHours: operatingHours || null,
       },
+    });
+
+    await recordAudit(req, {
+      action: 'DEPARTMENT_CREATE',
+      targetType: 'Department',
+      targetId: department.id,
+      targetLabel: department.name,
+      departmentId: department.id,
+      summary: `Created department "${department.name}"`,
     });
 
     res.status(201).json(department);
@@ -113,13 +123,51 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       if (users.length !== userIds.length) {
         return res.status(400).json({ error: trReq(req, 'someUsersMissing') });
       }
+      const previous = await prisma.departmentAdmin.findMany({
+        where: { departmentId: department.id },
+        select: { user: { select: { email: true } } },
+      });
+
       await prisma.departmentAdmin.deleteMany({ where: { departmentId: department.id } });
       if (userIds.length > 0) {
         await prisma.departmentAdmin.createMany({
           data: userIds.map((userId) => ({ userId, departmentId: department.id })),
         });
       }
+
+      // Granting department management is a privilege change - record it separately
+      // from the department edit so it is findable on its own.
+      const after = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { email: true },
+      });
+      const before = previous.map((p) => p.user.email).sort();
+      const now = after.map((u) => u.email).sort();
+      if (before.join(',') !== now.join(',')) {
+        await recordAudit(req, {
+          action: 'DEPARTMENT_MANAGERS_UPDATE',
+          targetType: 'Department',
+          targetId: department.id,
+          targetLabel: department.name,
+          departmentId: department.id,
+          summary: `Changed managers of "${department.name}" to ${now.length ? now.join(', ') : 'nobody'}`,
+          metadata: { before, after: now },
+        });
+      }
     }
+
+    await recordAudit(req, {
+      action: 'DEPARTMENT_UPDATE',
+      targetType: 'Department',
+      targetId: department.id,
+      targetLabel: department.name,
+      departmentId: department.id,
+      summary: `Updated department "${department.name}"`,
+      metadata: {
+        renamedFrom: existing.name !== department.name ? existing.name : undefined,
+        hoursChanged: existing.operatingHours !== department.operatingHours || undefined,
+      },
+    });
 
     res.json(department);
   } catch (error) {
@@ -137,6 +185,15 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
     }
 
     await prisma.department.delete({ where: { id: req.params.id } });
+
+    await recordAudit(req, {
+      action: 'DEPARTMENT_DELETE',
+      targetType: 'Department',
+      targetId: existing.id,
+      targetLabel: existing.name,
+      departmentId: existing.id,
+      summary: `Deleted department "${existing.name}"; its rooms are now unassigned`,
+    });
 
     logger.info(`Department ${existing.name} deleted by user ${req.userId}`);
     res.json({ message: trReq(req, 'departmentDeleted') });

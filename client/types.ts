@@ -22,6 +22,32 @@ export interface User {
   managedDepartments?: { id: string; name: string }[]; // same grant, named, as listed by GET /users for admin screens
 }
 
+// One recorded privileged action. Append-only: the API exposes no way to
+// create, edit or delete these from the app.
+export interface AuditEntry {
+  id: string;
+  actorId: string | null; // null = performed by the system (scheduler)
+  actorEmail: string;
+  actorName: string;
+  actorRole: string;
+  action: string; // e.g. BOOKING_APPROVE
+  targetType: string;
+  targetId: string | null;
+  targetLabel: string | null;
+  departmentId: string | null;
+  departmentName: string | null;
+  summary: string | null;
+  metadata: Record<string, unknown> | string | null;
+  createdAt: string;
+}
+
+export interface AuditPage {
+  total: number;
+  limit: number;
+  offset: number;
+  entries: AuditEntry[];
+}
+
 // Date-specific schedule override: a closure (holiday, maintenance) or
 // special hours; departmentId null = applies service-wide
 export interface ScheduleException {

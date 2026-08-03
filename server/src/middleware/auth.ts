@@ -19,6 +19,9 @@ const getJwtSecret = (): string => {
 export interface AuthRequest extends Request {
   userId?: string;
   userRole?: string;
+  // Carried so the audit trail can name the actor without a second query
+  userEmail?: string;
+  userName?: string;
 }
 
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -41,7 +44,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     // take effect immediately instead of when the 7-day token expires.
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { role: true, status: true },
+      select: { role: true, status: true, email: true, name: true },
     });
 
     if (!user) {
@@ -56,6 +59,8 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 
     req.userId = decoded.userId;
     req.userRole = user.role; // current role from DB, not the one baked into the token
+    req.userEmail = user.email;
+    req.userName = user.name;
     next();
   } catch (error) {
     return res.status(500).json({ error: trReq(req, 'authCheckFailed') });

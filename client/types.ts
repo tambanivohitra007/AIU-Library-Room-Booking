@@ -18,7 +18,8 @@ export interface User {
   language?: 'en' | 'th'; // notification email preference (UI language is per-device)
   avatarUrl?: string;
   createdAt?: string;
-  managedDepartmentIds?: string[]; // departments this user administers (any role)
+  managedDepartmentIds?: string[]; // departments this user administers (any role); sent for the signed-in user
+  managedDepartments?: { id: string; name: string }[]; // same grant, named, as listed by GET /users for admin screens
 }
 
 // Date-specific schedule override: a closure (holiday, maintenance) or

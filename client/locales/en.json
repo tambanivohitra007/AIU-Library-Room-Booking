@@ -258,7 +258,9 @@
       "approveUserFailed": "Failed to approve user",
       "roomDeleted": "Room deleted successfully",
       "deleteRoomFailed": "Failed to delete room"
-    }
+    },
+    "deptAdminBadge": "Dept Admin",
+    "deptAdminManages": "Manages: {{names}}"
   },
   "departments": {
     "title": "Departments",

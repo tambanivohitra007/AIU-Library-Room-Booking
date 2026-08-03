@@ -258,7 +258,9 @@
       "approveUserFailed": "อนุมัติผู้ใช้ไม่สำเร็จ",
       "roomDeleted": "ลบห้องสำเร็จ",
       "deleteRoomFailed": "ลบห้องไม่สำเร็จ"
-    }
+    },
+    "deptAdminBadge": "ผู้ดูแลแผนก",
+    "deptAdminManages": "ดูแล: {{names}}"
   },
   "departments": {
     "title": "แผนก",

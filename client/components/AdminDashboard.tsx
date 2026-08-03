@@ -391,17 +391,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {
         accessorKey: 'role',
         header: t('admin.columns.role'),
-        cell: ({ row }) => (
-          <span
-            className={`px-3 py-1 rounded-lg text-xs font-bold  ${
-              ['ADMIN', 'SUPERADMIN'].includes(row.original.role)
-                ? 'bg-purple-50 border border-purple-200 text-purple-700'
-                : 'bg-primary/10 border border-primary/20 text-primary'
-            }`}
-          >
-            {t(`admin.roles.${row.original.role}`)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          // Managing a department is a grant, not a role, so it never shows in
+          // `role` - surface it beside the role or it is invisible here.
+          const depts = row.original.managedDepartments || [];
+          return (
+            <div className="flex flex-wrap items-center gap-1">
+              <span
+                className={`px-3 py-1 rounded-lg text-xs font-bold  ${
+                  ['ADMIN', 'SUPERADMIN'].includes(row.original.role)
+                    ? 'bg-purple-50 border border-purple-200 text-purple-700'
+                    : 'bg-primary/10 border border-primary/20 text-primary'
+                }`}
+              >
+                {t(`admin.roles.${row.original.role}`)}
+              </span>
+              {depts.length > 0 && (
+                <span
+                  className="px-3 py-1 rounded-lg text-xs font-bold bg-teal-50 border border-teal-200 text-teal-700"
+                  title={t('admin.deptAdminManages', {
+                    names: depts.map((d) => d.name).join(', '),
+                  })}
+                >
+                  {t('admin.deptAdminBadge')}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'status',
@@ -1222,6 +1239,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     >
                       {t(`admin.roles.${user.role}`)}
                     </span>
+                    {(user.managedDepartments?.length || 0) > 0 && (
+                      <span
+                        className="px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0 bg-teal-50 border border-teal-200 text-teal-700"
+                        title={t('admin.deptAdminManages', {
+                          names: (user.managedDepartments || [])
+                            .map((d) => d.name)
+                            .join(', '),
+                        })}
+                      >
+                        {t('admin.deptAdminBadge')}
+                      </span>
+                    )}
                     <span
                       className={`px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0 ${
                         user.status === 'ACTIVE'

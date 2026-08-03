@@ -26,13 +26,26 @@ const userSelect = {
   status: true,
   avatarUrl: true,
   createdAt: true,
+  // Department management is a grant, not a role, so it is invisible in `role`.
+  // Ship it alongside so admin screens can show who manages what.
+  managedDepartments: {
+    select: { department: { select: { id: true, name: true } } },
+  },
 };
+
+// Flatten the DepartmentAdmin join rows to plain { id, name } departments
+const shapeUser = (user: any) => ({
+  ...user,
+  managedDepartments: (user.managedDepartments || []).map(
+    (m: any) => m.department,
+  ),
+});
 
 // Get all users
 router.get('/', requireAdminOrWorker, async (req, res) => {
   try {
     const users = await prisma.user.findMany({ select: userSelect });
-    res.json(users);
+    res.json(users.map(shapeUser));
   } catch (error) {
     res.status(500).json({ error: trReq(req, 'fetchUsersFailed') });
   }
@@ -66,7 +79,7 @@ router.get('/:id', requireAdminOrWorker, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: trReq(req, 'userNotFound') });
     }
-    res.json(user);
+    res.json(shapeUser(user));
   } catch (error) {
     res.status(500).json({ error: trReq(req, 'fetchUserFailed') });
   }

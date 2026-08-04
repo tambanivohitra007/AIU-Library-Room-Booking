@@ -11,6 +11,7 @@ import { User, UserRole, Room, Booking, isGlobalAdminRole } from '../types';
 import logo from '../assets/logo_small.jpg';
 import { useSettings } from '../contexts/SettingsContext';
 import GlobalSearch from './GlobalSearch';
+import NotificationBell from './NotificationBell';
 import { useTranslation } from 'react-i18next';
 import { setLanguage, AppLanguage } from '../i18n';
 import { api } from '../services/api';
@@ -91,6 +92,7 @@ const Layout: React.FC<LayoutProps> = ({
           >
             {i18n.language === 'th' ? 'EN' : 'ไทย'}
           </button>
+          <NotificationBell user={user} rooms={rooms} bookings={bookings} />
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-white">{user.name}</p>
             <p className="text-xs text-white/80 font-medium flex items-center gap-1 justify-end">

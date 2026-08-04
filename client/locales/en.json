@@ -24,6 +24,17 @@
     "changePassword": "Change Password",
     "signOut": "Sign Out"
   },
+  "notifications": {
+    "title": "Notifications",
+    "aria_one": "Notifications, {{count}} awaiting approval",
+    "aria_other": "Notifications, {{count}} awaiting approval",
+    "awaiting_one": "{{count}} awaiting",
+    "awaiting_other": "{{count}} awaiting",
+    "empty": "Nothing needs your approval",
+    "requestedBy": "Requested by {{name}}",
+    "urgent": "Starts within the hour",
+    "viewAll": "View all pending requests"
+  },
   "login": {
     "welcomeBack": "Welcome Back",
     "emailAddress": "Email Address",
@@ -231,6 +242,11 @@
       "subtitle": "Requests are cancelled automatically once their start time passes.",
       "reviewNow": "Review now",
       "showAll": "Show all"
+    },
+    "focus": {
+      "showingOne": "Showing one request from your notifications.",
+      "gone": "That request is no longer in the list — it may already have been handled.",
+      "clear": "Show all bookings"
     },
     "remind": "Remind",
     "remindTooltip": "Send Reminder Email",

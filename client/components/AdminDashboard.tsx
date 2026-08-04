@@ -150,6 +150,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   >(isDeptAdminOnly ? 'bookings' : 'overview');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
+  // Set by a notification deep link: narrows the list to the one request the
+  // admin clicked. Cleared from a visible chip so they are never stuck in it.
+  const [focusedBookingId, setFocusedBookingId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showMoreSheet, setShowMoreSheet] = useState(false);
@@ -613,8 +616,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     [bookings],
   );
 
+  // A focused booking that no longer exists (already handled, or handled by
+  // someone else) must not leave an empty list with no explanation.
+  const focusedBookingMissing =
+    !!focusedBookingId && !bookings.some((b) => b.id === focusedBookingId);
+
   const filteredBookings = useMemo(() => {
     const visible = bookings.filter((b) => {
+      if (focusedBookingId && !focusedBookingMissing) {
+        return b.id === focusedBookingId;
+      }
       if (filterStatus !== 'all' && b.status !== filterStatus) return false;
       if (filterRoom !== 'all' && b.roomId !== filterRoom) return false;
       return true;
@@ -630,7 +641,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
       );
     });
-  }, [bookings, filterStatus, filterRoom]);
+  }, [bookings, filterStatus, filterRoom, focusedBookingId, focusedBookingMissing]);
 
   const renderOverview = () => (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -886,6 +897,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const renderBookings = () => (
     <div className="space-y-3 sm:space-y-4 animate-fade-in">
+      {/* Arrived from a notification: say so, and offer the way back out */}
+      {focusedBookingId && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center justify-between gap-3 animate-slide-up">
+          <p className="text-sm font-semibold text-primary">
+            {focusedBookingMissing
+              ? t('admin.focus.gone')
+              : t('admin.focus.showingOne')}
+          </p>
+          <button
+            onClick={() => setFocusedBookingId(null)}
+            className="px-3 py-1.5 bg-primary hover:bg-primary-light text-white rounded-md font-bold text-sm transition-all-smooth shrink-0"
+          >
+            {t('admin.focus.clear')}
+          </button>
+        </div>
+      )}
+
       {/* Approval queue: only rendered when something is actually waiting, so it
           stays a signal rather than permanent furniture */}
       {pendingCount > 0 && (
@@ -1963,14 +1991,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const activeTab = tabs.find((t) => t.id === selectedTab);
 
-  // Global search navigates here with ?tab=<id> (and optionally ?q=<text>
-  // to pre-filter the users table) to open a specific tab
+  // Deep links land here with ?tab=<id>. Global search adds ?q=<text> to
+  // pre-filter the users table; the notification bell adds ?status=PENDING and
+  // ?focus=<bookingId> so a notification opens on exactly the request it named.
   useEffect(() => {
     const tab = searchParams.get('tab');
     const q = searchParams.get('q');
+    const status = searchParams.get('status');
+    const focus = searchParams.get('focus');
     if (tab && tabs.some((t) => t.id === tab)) {
       setSelectedTab(tab as any);
       if (tab === 'users') setUsersFilter(q || '');
+      if (tab === 'bookings') {
+        setFilterStatus(status || 'all');
+        setFocusedBookingId(focus);
+      }
       setSearchParams({}, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

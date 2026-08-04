@@ -23,6 +23,10 @@ const SettingsTab: React.FC = () => {
   const [allowSelfRegistration, setAllowSelfRegistration] = useState(
     !!settings?.allowSelfRegistration,
   );
+  // Kept as a string so the field can be cleared while typing without snapping to 0
+  const [approvalLeadTime, setApprovalLeadTime] = useState(
+    String(settings?.approvalLeadTimeMinutes ?? 60),
+  );
   const [hours, setHours] = useState<OperatingHours>(
     parseOperatingHours(settings?.operatingHours),
   );
@@ -39,6 +43,7 @@ const SettingsTab: React.FC = () => {
       });
       setHours(parseOperatingHours(settings.operatingHours));
       setAllowSelfRegistration(!!settings.allowSelfRegistration);
+      setApprovalLeadTime(String(settings.approvalLeadTimeMinutes ?? 60));
     }
   }, [settings]);
 
@@ -55,11 +60,23 @@ const SettingsTab: React.FC = () => {
       toast.error(hoursError);
       return;
     }
+    // Mirrors the server bound (0..7 days) so a typo is caught before the round trip
+    const leadMinutes = Number(approvalLeadTime);
+    if (
+      approvalLeadTime.trim() === '' || // Number('') is 0, which would silently disable the rule
+      !Number.isInteger(leadMinutes) ||
+      leadMinutes < 0 ||
+      leadMinutes > 10080
+    ) {
+      toast.error(t('settingsTab.approvalLeadTimeInvalid'));
+      return;
+    }
     try {
       await updateSettings({
         ...formData,
         operatingHours: JSON.stringify(hours),
         allowSelfRegistration,
+        approvalLeadTimeMinutes: leadMinutes,
       });
       toast.success(t('settingsTab.updated'));
     } catch (error) {
@@ -177,6 +194,28 @@ const SettingsTab: React.FC = () => {
           </label>
           <p className="text-xs text-slate-500 mt-1 ml-6">
             {t('settingsTab.allowSelfRegistrationHint')}
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-slate-700 mb-2">
+            {t('settingsTab.approvalLeadTime')}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              max={10080}
+              step={5}
+              value={approvalLeadTime}
+              onChange={(e) => setApprovalLeadTime(e.target.value)}
+              className="w-32 px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+            <span className="text-sm text-slate-600 font-medium">
+              {t('settingsTab.minutes')}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {t('settingsTab.approvalLeadTimeHint')}
           </p>
         </div>
         <div>

@@ -1,7 +1,7 @@
 
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { getServiceSettings, parseOperatingHoursJson } from '../services/settings.js';
+import { getServiceSettings, parseOperatingHoursJson, MAX_APPROVAL_LEAD_MINUTES } from '../services/settings.js';
 import { trReq } from '../services/i18n.js';
 import { recordAudit } from '../services/audit.js';
 import { AuthRequest } from '../middleware/auth.js';
@@ -20,12 +20,22 @@ export const getSettings = async (req: Request, res: Response): Promise<void> =>
 
 export const updateSettings = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { serviceName, logoUrl, contactEmail, websiteUrl, description, allowedEmailDomains, operatingHours, allowSelfRegistration } = req.body;
+        const { serviceName, logoUrl, contactEmail, websiteUrl, description, allowedEmailDomains, operatingHours, allowSelfRegistration, approvalLeadTimeMinutes } = req.body;
 
         // Reject malformed operating hours instead of silently breaking the schedule
         if (operatingHours && !parseOperatingHoursJson(operatingHours)) {
             res.status(400).json({ message: trReq(req, 'invalidOperatingHours') });
             return;
+        }
+
+        // A bad lead time silently makes every approval-gated room unbookable,
+        // so validate it here rather than clamping it out of sight.
+        if (approvalLeadTimeMinutes !== undefined) {
+            const lead = Number(approvalLeadTimeMinutes);
+            if (!Number.isInteger(lead) || lead < 0 || lead > MAX_APPROVAL_LEAD_MINUTES) {
+                res.status(400).json({ message: trReq(req, 'invalidApprovalLeadTime') });
+                return;
+            }
         }
 
         const data = {
@@ -37,6 +47,9 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
             allowedEmailDomains,
             operatingHours,
             ...(typeof allowSelfRegistration === 'boolean' ? { allowSelfRegistration } : {}),
+            ...(approvalLeadTimeMinutes !== undefined
+                ? { approvalLeadTimeMinutes: Number(approvalLeadTimeMinutes) }
+                : {}),
         };
 
         const existing = await prisma.serviceSettings.findFirst();
@@ -59,6 +72,7 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
             if (existing.allowedEmailDomains !== settings.allowedEmailDomains) changed.push('allowedEmailDomains');
             if (existing.operatingHours !== settings.operatingHours) changed.push('operatingHours');
             if (existing.allowSelfRegistration !== settings.allowSelfRegistration) changed.push('allowSelfRegistration');
+            if (existing.approvalLeadTimeMinutes !== settings.approvalLeadTimeMinutes) changed.push('approvalLeadTimeMinutes');
         }
         await recordAudit(req as AuthRequest, {
             action: 'SETTINGS_UPDATE',

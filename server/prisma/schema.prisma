@@ -149,6 +149,11 @@ model ServiceSettings {
   allowedEmailDomains String?  // comma-separated list; null/empty = any domain may sign up
   operatingHours      String?  // JSON array of 7 entries (Sun..Sat): {open, close} in hours, or null = closed; null field = default hours
   allowSelfRegistration Boolean @default(false) // false = accounts only via SSO, admin creation, or import
+  // Minimum notice for rooms with requiresApproval: a request starting sooner
+  // than this is refused outright. Without it a booker can request a slot that
+  // begins in minutes, which nobody can realistically approve in time - the
+  // scheduler would just auto-cancel it. 0 disables the rule.
+  approvalLeadTimeMinutes Int @default(60)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

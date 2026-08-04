@@ -87,6 +87,12 @@
     "conflictsWith": "Conflicts with booking by {{name}} ({{start}} - {{end}})",
     "selectDifferentTime": "Please select a different time slot.",
     "approvalNotice": "This room requires approval. Your booking will be <1>pending</1> (the time slot is reserved for you) until a department admin approves it.",
+    "approvalLeadTimeNotice": "Requests must be made at least {{duration}} before the booking starts.",
+    "approvalLeadTime": "This room needs approval, so requests must be made at least {{duration}} before the booking starts. Please choose a later time.",
+    "durationMinutes_one": "1 minute",
+    "durationMinutes_other": "{{count}} minutes",
+    "durationHours_one": "1 hour",
+    "durationHours_other": "{{count}} hours",
     "startTime": "Start Time",
     "endTime": "End Time",
     "duration": "Duration: {{hours}}h {{minutes}}m",
@@ -628,6 +634,10 @@
     "allowSelfRegistration": "Allow self-registration",
     "allowSelfRegistrationHint": "When off, the \"Create an Account\" option is hidden and new users can only join via Microsoft sign-in, admin creation, or bulk import.",
     "operatingHoursHint": "Default schedule for all rooms. Departments with custom hours override it. Enforced by the server.",
+    "approvalLeadTime": "Approval notice period",
+    "minutes": "minutes",
+    "approvalLeadTimeHint": "Minimum notice for rooms that require approval. A request starting sooner than this is refused, so nobody books a slot that would be auto-cancelled before an admin sees it. Set to 0 to allow last-minute requests.",
+    "approvalLeadTimeInvalid": "Approval notice must be a whole number of minutes between 0 and 10080 (7 days).",
     "saveChanges": "Save Changes"
   },
   "monthView": {

@@ -67,6 +67,30 @@ const MESSAGES = {
     en: "You must accept this room's terms and conditions to book it.",
     th: 'คุณต้องยอมรับข้อกำหนดและเงื่อนไขของห้องนี้ก่อนจอง',
   },
+  approvalLeadTime: {
+    en: 'This room needs approval, so requests must be made at least {duration} before the booking starts. Please choose a later time.',
+    th: 'ห้องนี้ต้องได้รับการอนุมัติ จึงต้องส่งคำขอล่วงหน้าอย่างน้อย {duration} ก่อนเวลาเริ่มจอง กรุณาเลือกเวลาที่ช้ากว่านี้',
+  },
+  durationMinute: {
+    en: '1 minute',
+    th: '1 นาที',
+  },
+  durationMinutes: {
+    en: '{count} minutes',
+    th: '{count} นาที',
+  },
+  durationHour: {
+    en: '1 hour',
+    th: '1 ชั่วโมง',
+  },
+  durationHours: {
+    en: '{count} hours',
+    th: '{count} ชั่วโมง',
+  },
+  invalidApprovalLeadTime: {
+    en: 'Approval notice must be a whole number of minutes between 0 and 10080 (7 days).',
+    th: 'ระยะเวลาแจ้งล่วงหน้าสำหรับการอนุมัติต้องเป็นจำนวนเต็มนาทีระหว่าง 0 ถึง 10080 (7 วัน)',
+  },
   sameDay: {
     en: 'Bookings must start and end on the same day.',
     th: 'การจองต้องเริ่มและสิ้นสุดภายในวันเดียวกัน',

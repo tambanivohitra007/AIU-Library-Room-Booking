@@ -138,6 +138,7 @@ export interface ServiceSettings {
   allowedEmailDomains?: string; // comma-separated; empty = any domain
   operatingHours?: string; // JSON-encoded OperatingHours
   allowSelfRegistration?: boolean; // false = accounts only via SSO, admin creation, or import
+  approvalLeadTimeMinutes?: number; // minimum notice for rooms needing approval; 0 = no minimum
   updatedAt?: string;
 }
 

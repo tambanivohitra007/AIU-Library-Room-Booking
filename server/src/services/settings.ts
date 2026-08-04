@@ -30,6 +30,32 @@ export const getServiceSettings = async (): Promise<ServiceSettings> => {
   });
 };
 
+// Upper bound on the notice period an admin can demand (7 days). Anything
+// larger is a mistyped value rather than a policy, and would quietly make
+// approval-gated rooms unbookable.
+export const MAX_APPROVAL_LEAD_MINUTES = 7 * 24 * 60;
+
+// Stored as a plain Int, so guard against a value written before validation
+// existed (or edited directly in the DB) turning every request into an error.
+export const getApprovalLeadMinutes = (settings: ServiceSettings): number => {
+  const raw = (settings as { approvalLeadTimeMinutes?: number }).approvalLeadTimeMinutes;
+  if (!Number.isFinite(raw) || (raw as number) <= 0) return 0;
+  return Math.min(Math.floor(raw as number), MAX_APPROVAL_LEAD_MINUTES);
+};
+
+// Human-readable notice period, used in the booking-rejection message
+export const formatLeadTime = (minutes: number, lang: Lang): string => {
+  if (minutes >= 60 && minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return hours === 1
+      ? tr(lang, 'durationHour')
+      : tr(lang, 'durationHours', { count: hours });
+  }
+  return minutes === 1
+    ? tr(lang, 'durationMinute')
+    : tr(lang, 'durationMinutes', { count: minutes });
+};
+
 export const parseAllowedDomains = (settings: ServiceSettings): string[] => {
   return (settings.allowedEmailDomains || '')
     .split(',')

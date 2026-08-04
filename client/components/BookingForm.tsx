@@ -6,7 +6,15 @@ import { Room, Attendee } from '../types';
 import { api } from '../services/api';
 import { UsersIcon, ClockIcon, AlertTriangleIcon, XIcon } from './Icons';
 import { useToast } from '../contexts/ToastContext';
+import { useSettings } from '../contexts/SettingsContext';
 import LoadingSpinner from './LoadingSpinner';
+
+// Matches server/src/services/settings.ts formatLeadTime, so the warning shown
+// here and the error the API returns describe the same period the same way.
+const formatLeadTime = (minutes: number, t: (k: string, o?: any) => string) =>
+  minutes >= 60 && minutes % 60 === 0
+    ? t('booking.durationHours', { count: minutes / 60 })
+    : t('booking.durationMinutes', { count: minutes });
 
 interface BookingFormProps {
   selectedRoom: Room;
@@ -25,9 +33,20 @@ const BookingForm: React.FC<BookingFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const toast = useToast();
+  const { settings } = useSettings();
   // Local state for time selection (allows editing in form)
   const [bookingStart, setBookingStart] = useState(initialStartTime);
   const [bookingEnd, setBookingEnd] = useState(initialEndTime);
+
+  // Approval-gated rooms need enough notice for someone to respond; the server
+  // enforces this, we just say so before the user fills the whole form in.
+  const leadMinutes = selectedRoom.requiresApproval
+    ? (settings?.approvalLeadTimeMinutes ?? 0)
+    : 0;
+  const earliestApprovalStart =
+    leadMinutes > 0 ? new Date(Date.now() + leadMinutes * 60000) : null;
+  const violatesLeadTime =
+    !!earliestApprovalStart && bookingStart < earliestApprovalStart;
 
   const [purpose, setPurpose] = useState('');
   const [attendeeInput, setAttendeeInput] = useState('');
@@ -148,6 +167,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
     if (bookingStart >= bookingEnd) {
       setError(t('booking.endAfterStart'));
+      return;
+    }
+
+    // Re-checked against the clock at submit time, not the render-time value
+    if (leadMinutes > 0 && bookingStart < new Date(now.getTime() + leadMinutes * 60000)) {
+      setError(
+        t('booking.approvalLeadTime', {
+          duration: formatLeadTime(leadMinutes, t),
+        }),
+      );
       return;
     }
 
@@ -289,11 +318,28 @@ const BookingForm: React.FC<BookingFormProps> = ({
         )}
 
         {selectedRoom.requiresApproval && (
-          <div className="bg-amber-50 p-3 text-xs text-amber-800 rounded border border-amber-200">
+          <div
+            className={`p-3 text-xs rounded border ${
+              violatesLeadTime
+                ? 'bg-red-50 text-red-700 border-red-300'
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}
+          >
             <Trans
               i18nKey="booking.approvalNotice"
               components={{ 1: <strong /> }}
             />
+            {leadMinutes > 0 && (
+              <div className="mt-1">
+                {violatesLeadTime
+                  ? t('booking.approvalLeadTime', {
+                      duration: formatLeadTime(leadMinutes, t),
+                    })
+                  : t('booking.approvalLeadTimeNotice', {
+                      duration: formatLeadTime(leadMinutes, t),
+                    })}
+              </div>
+            )}
           </div>
         )}
 
@@ -447,6 +493,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
             isSubmitting ||
             hasConflict ||
             checkingConflict ||
+            violatesLeadTime ||
             (!!selectedRoom.bookingTerms && !termsAccepted)
           }
           className="flex-1 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"

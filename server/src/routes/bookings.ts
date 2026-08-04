@@ -4,7 +4,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
-import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule } from '../services/settings.js';
+import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule, getApprovalLeadMinutes, formatLeadTime } from '../services/settings.js';
 import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
 import { recordAudit } from '../services/audit.js';
 import {getLang, asLang, tr, statusName, dateLocaleTag, trReq } from '../services/i18n.js';
@@ -224,6 +224,25 @@ router.post('/', validateBooking, async (req: AuthRequest, res: Response) => {
     }
 
     const settings = await getServiceSettings();
+
+    // Approval-gated rooms need enough notice for a human to actually respond.
+    // Without this a request can start minutes from now, and the scheduler will
+    // auto-cancel it before anyone sees it - a booking that was never going to
+    // succeed. Refuse it up front instead, while the booker can still re-pick.
+    if (room.requiresApproval) {
+      const leadMinutes = getApprovalLeadMinutes(settings);
+      if (leadMinutes > 0) {
+        const earliestStart = new Date(now.getTime() + leadMinutes * 60000);
+        if (bookingStart < earliestStart) {
+          return res.status(400).json({
+            error: tr(lang, 'approvalLeadTime', {
+              duration: formatLeadTime(leadMinutes, lang),
+            }),
+          });
+        }
+      }
+    }
+
     const effectiveHours = getEffectiveOperatingHours(
       settings,
       room.department?.operatingHours,

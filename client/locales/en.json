@@ -219,6 +219,13 @@
     "attendeesCount": "{{count}} Attendees",
     "approve": "Approve",
     "reject": "Reject",
+    "pendingBanner": {
+      "title_one": "{{count}} booking awaiting approval",
+      "title_other": "{{count}} bookings awaiting approval",
+      "subtitle": "Requests are cancelled automatically once their start time passes.",
+      "reviewNow": "Review now",
+      "showAll": "Show all"
+    },
     "remind": "Remind",
     "remindTooltip": "Send Reminder Email",
     "rejectReasonPrompt": "Reason for rejection (optional):",

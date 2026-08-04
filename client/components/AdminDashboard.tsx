@@ -605,11 +605,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const filteredBookings = bookings.filter((b) => {
-    if (filterStatus !== 'all' && b.status !== filterStatus) return false;
-    if (filterRoom !== 'all' && b.roomId !== filterRoom) return false;
-    return true;
-  });
+  // A PENDING request auto-cancels once its start time passes, so the approval
+  // queue is the one thing here with a deadline. Count it separately to drive
+  // the banner and the tab badge.
+  const pendingCount = useMemo(
+    () => bookings.filter((b) => b.status === 'PENDING').length,
+    [bookings],
+  );
+
+  const filteredBookings = useMemo(() => {
+    const visible = bookings.filter((b) => {
+      if (filterStatus !== 'all' && b.status !== filterStatus) return false;
+      if (filterRoom !== 'all' && b.roomId !== filterRoom) return false;
+      return true;
+    });
+    // The API returns every booking by startTime ascending, which buries a new
+    // request behind months of finished ones. Float pending to the top - soonest
+    // first, since that one runs out of time first - and leave the rest as-is.
+    return visible.sort((a, b) => {
+      const aPending = a.status === 'PENDING' ? 0 : 1;
+      const bPending = b.status === 'PENDING' ? 0 : 1;
+      if (aPending !== bPending) return aPending - bPending;
+      return (
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+    });
+  }, [bookings, filterStatus, filterRoom]);
 
   const renderOverview = () => (
     <div className="space-y-4 sm:space-y-6 animate-fade-in">
@@ -865,6 +886,37 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const renderBookings = () => (
     <div className="space-y-3 sm:space-y-4 animate-fade-in">
+      {/* Approval queue: only rendered when something is actually waiting, so it
+          stays a signal rather than permanent furniture */}
+      {pendingCount > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between animate-slide-up">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            <div>
+              <p className="font-bold text-amber-900">
+                {t('admin.pendingBanner.title', { count: pendingCount })}
+              </p>
+              <p className="text-sm text-amber-800">
+                {t('admin.pendingBanner.subtitle')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() =>
+              setFilterStatus(filterStatus === 'PENDING' ? 'all' : 'PENDING')
+            }
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-md font-bold text-sm transition-all-smooth shadow-sm shrink-0"
+          >
+            {filterStatus === 'PENDING'
+              ? t('admin.pendingBanner.showAll')
+              : t('admin.pendingBanner.reviewNow')}
+          </button>
+        </div>
+      )}
+
       {/* Additional Filters */}
       <div className="glass rounded-lg border border-slate-200 p-4 ">
         <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
@@ -875,6 +927,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="px-4 py-2.5 border border-slate-200 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white transition-all-smooth font-medium "
             >
               <option value="all">{t('admin.filters.allStatus')}</option>
+              <option value="PENDING">{t('status.PENDING')}</option>
               <option value="CONFIRMED">{t('status.CONFIRMED')}</option>
               <option value="CANCELLED">{t('status.CANCELLED')}</option>
               <option value="COMPLETED">{t('status.COMPLETED')}</option>
@@ -964,7 +1017,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           filteredBookings.map((booking, idx) => (
             <div
               key={booking.id}
-              className="glass rounded-lg border border-slate-200 p-4 transition-all-smooth animate-slide-up"
+              className={`glass rounded-lg border p-4 transition-all-smooth animate-slide-up ${
+                booking.status === 'PENDING'
+                  ? 'border-amber-300 ring-1 ring-amber-200'
+                  : 'border-slate-200'
+              }`}
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -997,9 +1054,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className={`px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0 ${
                     booking.status === 'CONFIRMED'
                       ? 'bg-green-50 border border-green-200 text-green-700'
-                      : booking.status === 'CANCELLED'
-                        ? 'bg-red-50 border border-red-200 text-red-700'
-                        : 'bg-slate-50 border border-slate-200 text-slate-700'
+                      : booking.status === 'PENDING'
+                        ? 'bg-amber-50 border border-amber-200 text-amber-700'
+                        : booking.status === 'CANCELLED'
+                          ? 'bg-red-50 border border-red-200 text-red-700'
+                          : 'bg-slate-50 border border-slate-200 text-slate-700'
                   }`}
                 >
                   {t(`status.${booking.status}`)}
@@ -1085,6 +1144,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     })}
                   </span>
                 </button>
+                {booking.status === 'PENDING' && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(booking.id)}
+                      className="flex-1 px-3 py-2 bg-green-50 hover:bg-green-500 border border-green-200 hover:border-green-500 text-green-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm "
+                    >
+                      {t('admin.approve')}
+                    </button>
+                    <button
+                      onClick={() => handleReject(booking.id)}
+                      className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-500 border border-red-200 hover:border-red-500 text-red-600 hover:text-white font-bold rounded-md transition-all-smooth shadow-sm "
+                    >
+                      {t('admin.reject')}
+                    </button>
+                  </>
+                )}
                 {booking.status === 'CONFIRMED' && (
                   <button
                     onClick={() => onCancelBooking(booking.id)}
@@ -1849,9 +1924,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     </>
   );
 
-  const tabs = [
+  const tabs: {
+    id: string;
+    label: string;
+    Icon: React.ComponentType<{ className?: string }>;
+    badge?: number;
+  }[] = [
     { id: 'overview', label: t('admin.tabs.overview'), Icon: BarChartIcon },
-    { id: 'bookings', label: t('admin.tabs.bookings'), Icon: CalendarIcon },
+    {
+      id: 'bookings',
+      label: t('admin.tabs.bookings'),
+      Icon: CalendarIcon,
+      // Approvals are time-limited, so the count has to be visible from any tab
+      badge: pendingCount,
+    },
     { id: 'users', label: t('admin.tabs.users'), Icon: UsersIcon },
     { id: 'rooms', label: t('admin.tabs.rooms'), Icon: BuildingIcon },
     {
@@ -1946,6 +2032,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className={`w-5 h-5 ${selectedTab === tab.id ? '' : ''} transition-transform flex-shrink-0`}
                 />
                 <span className="leading-tight">{tab.label}</span>
+                {!!tab.badge && (
+                  <span
+                    className="ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-bold text-center"
+                    title={t('admin.pendingBanner.title', {
+                      count: tab.badge,
+                    })}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -1982,6 +2078,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       >
         {activeTab && <activeTab.Icon className="w-5 h-5" />}
         <span>{activeTab?.label || t('admin.menu')}</span>
+        {pendingCount > 0 && selectedTab !== 'bookings' && (
+          <span className="min-w-[20px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-bold text-center">
+            {pendingCount}
+          </span>
+        )}
         <svg
           className="w-4 h-4 opacity-80"
           fill="none"
@@ -2021,6 +2122,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 >
                   <tab.Icon className="w-5 h-5" />
                   {tab.label}
+                  {!!tab.badge && (
+                    <span className="ml-auto min-w-[20px] px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-xs font-bold text-center">
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>

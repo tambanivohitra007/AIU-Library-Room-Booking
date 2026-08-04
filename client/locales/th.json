@@ -219,6 +219,12 @@
     "attendeesCount": "ผู้เข้าร่วม {{count}} คน",
     "approve": "อนุมัติ",
     "reject": "ปฏิเสธ",
+    "pendingBanner": {
+      "title_other": "มีการจอง {{count}} รายการรออนุมัติ",
+      "subtitle": "คำขอจะถูกยกเลิกโดยอัตโนมัติเมื่อถึงเวลาเริ่มต้น",
+      "reviewNow": "ตรวจสอบทันที",
+      "showAll": "แสดงทั้งหมด"
+    },
     "remind": "แจ้งเตือน",
     "remindTooltip": "ส่งอีเมลแจ้งเตือน",
     "rejectReasonPrompt": "เหตุผลในการปฏิเสธ (ไม่บังคับ):",

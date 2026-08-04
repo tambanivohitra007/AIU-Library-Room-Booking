@@ -5,7 +5,7 @@ import { validateBooking } from '../middleware/validation.js';
 import logger from '../utils/logger.js';
 import { sendCancellationEmail, sendReminderEmail, sendApprovalEmail, sendApprovalRequestEmail, parseEmails } from '../services/email.js';
 import { getServiceSettings, getEffectiveOperatingHours, checkBookingSchedule, getApprovalLeadMinutes, formatLeadTime } from '../services/settings.js';
-import { getManagedDepartmentIds, isGlobalAdmin } from '../services/permissions.js';
+import { getManagedDepartmentIds, isStaff } from '../services/permissions.js';
 import { recordAudit } from '../services/audit.js';
 import {getLang, asLang, tr, statusName, dateLocaleTag, trReq } from '../services/i18n.js';
 
@@ -20,7 +20,7 @@ const BLOCKING_STATUSES = [BookingStatus.CONFIRMED, BookingStatus.PENDING];
 
 // Staff, or a department admin of the room's department, may approve/reject/cancel
 const canModerateBooking = async (req: AuthRequest, departmentId: string | null): Promise<boolean> => {
-  if (isGlobalAdmin(req.userRole) || req.userRole === 'STUDENT_WORKER') return true;
+  if (isStaff(req.userRole)) return true;
   const managed = await getManagedDepartmentIds(req.userId);
   return !!departmentId && managed.includes(departmentId);
 };
@@ -39,15 +39,18 @@ router.get('/', async (req: AuthRequest, res) => {
       },
     });
 
-    const isStudent = req.userRole === 'STUDENT';
-    // Department admins see full details for their departments' rooms
-    const managedDepartmentIds = isStudent ? await getManagedDepartmentIds(req.userId) : [];
+    // Staff see everything. Everyone else - STUDENT, FACULTY, or any base role
+    // added later - gets details only for their own bookings and for the
+    // departments they were explicitly granted; the rest are redacted to a
+    // busy slot. Mirrors the check on GET /bookings/:id.
+    const staff = isStaff(req.userRole);
+    const managedDepartmentIds = staff ? [] : await getManagedDepartmentIds(req.userId);
 
     // Format bookings to match client expectations
     const formattedBookings = bookings.map((booking: any) => {
       const isOwner = booking.userId === req.userId;
       const managesRoom = !!booking.room.departmentId && managedDepartmentIds.includes(booking.room.departmentId);
-      const canViewDetails = !isStudent || isOwner || managesRoom;
+      const canViewDetails = staff || isOwner || managesRoom;
 
       return {
         id: booking.id,
@@ -149,8 +152,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 
     // Full details only for the owner, staff, or a department admin of the room
     const isOwner = booking.userId === req.userId;
-    const isStaff = isGlobalAdmin(req.userRole) || req.userRole === 'STUDENT_WORKER';
-    if (!isOwner && !isStaff) {
+    if (!isOwner && !isStaff(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
         return res.status(403).json({ error: trReq(req, 'permissionDenied') });
@@ -528,7 +530,7 @@ router.post('/:id/remind', async (req: AuthRequest, res) => {
     }
 
     // Check permissions (Admin, Student Worker, Owner, or Department Admin of the room)
-    if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
+    if (booking.userId !== req.userId && !isStaff(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
         return res.status(403).json({ error: trReq(req, 'permissionDenied') });
@@ -594,7 +596,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     }
 
     // Check if user owns the booking, is admin/worker, or manages the room's department
-    if (booking.userId !== req.userId && !isGlobalAdmin(req.userRole) && req.userRole !== 'STUDENT_WORKER') {
+    if (booking.userId !== req.userId && !isStaff(req.userRole)) {
       const managed = await getManagedDepartmentIds(req.userId);
       if (!booking.room.departmentId || !managed.includes(booking.room.departmentId)) {
         return res.status(403).json({ error: tr(lang, 'cancelOwnOnly') });

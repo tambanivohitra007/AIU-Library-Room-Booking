@@ -15,6 +15,16 @@ export const getManagedDepartmentIds = async (userId: string | undefined): Promi
 export const isGlobalAdmin = (role: string | undefined): boolean =>
   role === 'ADMIN' || role === 'SUPERADMIN';
 
+// Roles with unrestricted operational visibility: they may see every booking's
+// details and moderate anywhere.
+//
+// This is deliberately an ALLOWLIST. Asking "is this user a student?" instead
+// silently promotes every base role added later - FACULTY was exposed that way,
+// seeing every booker's name, email and attendees system-wide. Anyone not named
+// here sees only their own bookings plus the departments they were granted.
+export const isStaff = (role: string | undefined): boolean =>
+  isGlobalAdmin(role) || role === 'STUDENT_WORKER';
+
 // Global admins manage everything; department admins manage only their departments
 export const canManageDepartment = (
   role: string | undefined,

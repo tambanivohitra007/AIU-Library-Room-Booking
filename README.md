@@ -387,8 +387,10 @@ edit or delete entries through the app.
 ## Documentation
 
 - **README.md** — this file: overview, setup, deployment
+- **[docs/MANUAL.md](docs/MANUAL.md)** — operations manual in three parts: booking a room, approving requests, and administering the service
 - **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** — server setup, SSL, backups, troubleshooting
 - **[docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md)** — pre/post deployment checklist
+- **[docs/USER_IMPORT.md](docs/USER_IMPORT.md)** — bulk CSV user import
 - **CLAUDE.md** — codebase conventions and commands for AI-assisted development
 
 ## Contributing

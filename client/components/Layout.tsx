@@ -114,25 +114,26 @@ const Layout: React.FC<LayoutProps> = ({
                 className={`w-2 h-2 rounded-full ${isGlobalAdminRole(user.role) ? 'bg-accent' : 'bg-green-400'} animate-pulse`}
               ></span>
               {t(`admin.roles.${user.role}`, { defaultValue: user.role })}
-              {/* Managing a department is a grant, not a role, so it never
-                  reaches `role`. Without this the manager approving requests
-                  reads as a plain student to themselves. */}
-              {isDeptAdmin && (
-                <span
-                  className="px-1.5 py-0.5 rounded bg-white/15 border border-white/25 text-white font-bold"
-                  title={
-                    managedDeptNames.length > 0
-                      ? t('admin.deptAdminManages', {
-                          names: managedDeptNames.join(', '),
-                        })
-                      : undefined
-                  }
-                >
-                  {t('admin.deptAdminBadge')}
-                </span>
-              )}
             </p>
           </div>
+          {/* Managing a department is a grant, not a role, so it never reaches
+              `role`. Deliberately outside the name block above, which is
+              desktop-only: on a phone this badge is the only thing telling a
+              manager why they receive approval requests. */}
+          {isDeptAdmin && (
+            <span
+              className="px-1.5 py-0.5 rounded bg-white/15 border border-white/25 text-white text-[10px] sm:text-xs font-bold whitespace-nowrap flex-shrink-0"
+              title={
+                managedDeptNames.length > 0
+                  ? t('admin.deptAdminManages', {
+                      names: managedDeptNames.join(', '),
+                    })
+                  : undefined
+              }
+            >
+              {t('admin.deptAdminBadge')}
+            </span>
+          )}
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="group relative bg-white/10 hover:bg-white/20 rounded-md p-2 transition-all-smooth "

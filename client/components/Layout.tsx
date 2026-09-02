@@ -43,6 +43,20 @@ const Layout: React.FC<LayoutProps> = ({
   ];
 
   const isDeptAdmin = (user.managedDepartmentIds?.length || 0) > 0;
+  // The signed-in user carries only department ids; resolve the names from the
+  // rooms already loaded so the badge can say WHICH departments are managed.
+  const managedDeptNames = [
+    ...new Set(
+      rooms
+        .filter(
+          (r) =>
+            r.departmentId &&
+            (user.managedDepartmentIds || []).includes(r.departmentId),
+        )
+        .map((r) => r.department?.name)
+        .filter((n): n is string => !!n),
+    ),
+  ];
   if (
     isGlobalAdminRole(user.role) ||
     user.role === UserRole.STUDENT_WORKER ||
@@ -99,7 +113,24 @@ const Layout: React.FC<LayoutProps> = ({
               <span
                 className={`w-2 h-2 rounded-full ${isGlobalAdminRole(user.role) ? 'bg-accent' : 'bg-green-400'} animate-pulse`}
               ></span>
-              {user.role}
+              {t(`admin.roles.${user.role}`, { defaultValue: user.role })}
+              {/* Managing a department is a grant, not a role, so it never
+                  reaches `role`. Without this the manager approving requests
+                  reads as a plain student to themselves. */}
+              {isDeptAdmin && (
+                <span
+                  className="px-1.5 py-0.5 rounded bg-white/15 border border-white/25 text-white font-bold"
+                  title={
+                    managedDeptNames.length > 0
+                      ? t('admin.deptAdminManages', {
+                          names: managedDeptNames.join(', '),
+                        })
+                      : undefined
+                  }
+                >
+                  {t('admin.deptAdminBadge')}
+                </span>
+              )}
             </p>
           </div>
           <button

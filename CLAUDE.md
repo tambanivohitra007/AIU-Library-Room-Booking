@@ -8,6 +8,13 @@ AIU Library Room Booking System — a full-stack monorepo for Adventist Internat
 
 ## Development Commands
 
+### Root (run from repo root)
+```bash
+npm run dev              # Start server + client together (concurrently, prefixed logs)
+npm run build            # Build server then client
+npm run install:all      # npm install in root, server/ and client/
+```
+
 ### Server (run from `server/`)
 ```bash
 npm run dev              # Start with tsx watch (hot reload) on port 5000
